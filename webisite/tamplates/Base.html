@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Home{% endblock %}</title>
+
+  <!-- Link to CSS file -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-container">
+      <div class="search-container">
+        <img src="{{ url_for('static', filename='assets/ProNearBy_Icon.jpg') }}" alt="logo" class="icon" />
+        <input type="text" placeholder="Search for a Pro..." class="search-input" />
+        <input type="text" placeholder="Which location are you in?" class="search-input" />
+        <button class="search-button">Search</button>
+      </div>
+      <div class="icons-container">
+        <img src="{{ url_for('static', filename='assets/message.jpg') }}" alt="message_icon" class="icon" />
+        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="notification_icon" class="icon" />
+      </div>
+    </div>
+  </header>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ProNearBy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}" />
+</head>
+<body>
+    <header>
+       <div class="logo-container">
+         <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="CompanyLogo" class="logo" />
+       </div>
+    </header>
+
+    <div class="parent">
+        {% block div %}
+        <div class="container">
+            <label for="username">Email:</label>
+            <input type="text" id="username" name="username" />
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" />
+        </div>
+        {% endblock %}
+    </div>
+
+    <footer>
+        <div class="textC">
+          <p>© 2025 ProNearBy. All rights reserved.</p>
+          <p><a href="/privacy">Privacy Policy</a> | <a href="/terms">Terms of Service</a></p>
+        </div>
+    </footer>
+</body>
+</html>
