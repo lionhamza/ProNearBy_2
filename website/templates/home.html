@@ -1,3 +1,65 @@
-{% extends 'Base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Home Page{% endblock %}
+{% block title %}Home - ProNearBy{% endblock %}
+
+{% block body %}
+<header>
+  <div class="header-container">
+    <div class="search-container">
+      <img src="{{ url_for('static', filename='assets/ProNearBy_Icon.jpg') }}" alt="logo" class="icon" />
+      <input type="text" placeholder="Search for a Pro..." class="search-input" />
+      <input type="text" placeholder="Which location are you in?" class="search-input" />
+      <button class="search-button">Search</button>
+    </div>
+    <div class="icons-container">
+      <img src="{{ url_for('static', filename='assets/message.jpg') }}" alt="message_icon" class="icon" />
+      <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="notification_icon" class="icon" />
+    </div>
+  </div>
+</header>
+
+<div class="main-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <img src="{{ url_for('static', filename='assets/electrician.jpg') }}" alt="Profile Picture" class="profile-pic" />
+    <h2 class="username">John Doe</h2>
+    <p class="role">Electrician</p>
+    <p class="bio">⚡ Helping homes stay bright and safe</p>
+
+    <hr />
+
+    <p><strong>Location:</strong> Pretoria, South Africa</p>
+    <p><strong>Experience:</strong> 5+ years</p>
+    <p><strong>Contact:</strong> johndoe@example.com</p>
+    <p><strong>Availability:</strong> Mon–Fri, 8am–5pm</p>
+    <p><strong>Rating:</strong> ⭐ 4.7 (88 reviews)</p>
+
+    <hr />
+
+    <button class="edit-profile-btn">Edit Profile</button>
+  </aside>
+
+  <!-- Cards -->
+  <section class="content-section">
+
+    <!-- Example of a single card — duplicate as needed -->
+    <div class="card">
+      <img src="{{ url_for('static', filename='assets/blamberImage.jpg') }}" alt="Plumber" class="pro-pic" />
+      <div class="card-text">
+        <h3>Jane Smith</h3>
+        <p><strong>Certified Plumber</strong></p>
+        <p>🚿 Fixing leaks with expertise and precision plumbing services.</p>
+        <p><strong>Experience:</strong> 6+ years</p>
+        <p><strong>Location:</strong> Johannesburg, South Africa</p>
+        <p><strong>Specialties:</strong> Pipe Repair, Drain Unclogging, Bathroom Installations</p>
+        <p><strong>Projects Completed:</strong> 150+</p>
+        <p><strong>Rating:</strong> ⭐ 4.8 (95 reviews)</p>
+      </div>
+      <img src="{{ url_for('static', filename='assets/ViewProfileArrow.png') }}" alt="View Profile" class="right_image" />
+    </div>
+
+    <!-- Copy the above div and change content for more cards -->
+    
+  </section>
+</div>
+{% endblock %}
