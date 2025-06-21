@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block div %}
+<div class="main-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="username">John Doe</h2>
+    <p class="role">Electrician</p>
+    <p class="bio">⚡ Helping homes stay bright and safe</p>
+    <hr />
+    <p><strong>Location:</strong> Pretoria, South Africa</p>
+    <p><strong>Experience:</strong> 5+ years</p>
+    <p><strong>Contact:</strong> johndoe@example.com</p>
+    <p><strong>Availability:</strong> Mon–Fri, 8am–5pm</p>
+    <p><strong>Rating:</strong> ⭐ 4.7 (88 reviews)</p>
+    <hr />
+    <button class="edit-profile-btn">Edit Profile</button>
+  </aside>
+
+
+  
+  <!-- Profile container -->
+  <section class="content-section">
+  <div class="cardP" style="background-image: url('{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}');">
+    <div class="cardCircle">
+      <img src="{{ url_for('static', filename='assets/electrician.jpg') }}" alt="Profile"/>
+    </div>
+  </div>
+  </section>
+
+</div>
+{% endblock %}

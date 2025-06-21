@@ -2,21 +2,8 @@
 
 {% block title %}Home - ProNearBy{% endblock %}
 
-{% block body %}
-<header>
-  <div class="header-container">
-    <div class="search-container">
-      <img src="{{ url_for('static', filename='assets/ProNearBy_Icon.jpg') }}" alt="logo" class="icon" />
-      <input type="text" placeholder="Search for a Pro..." class="search-input" />
-      <input type="text" placeholder="Which location are you in?" class="search-input" />
-      <button class="search-button">Search</button>
-    </div>
-    <div class="icons-container">
-      <img src="{{ url_for('static', filename='assets/message.jpg') }}" alt="message_icon" class="icon" />
-      <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="notification_icon" class="icon" />
-    </div>
-  </div>
-</header>
+{% block div %}
+
 
 <div class="main-layout">
   <!-- Sidebar -->
@@ -36,7 +23,7 @@
 
     <hr />
 
-    <button class="edit-profile-btn">Edit Profile</button>
+    <button class="edit-profile-btn">View Profile</button>
   </aside>
 
   <!-- Cards -->
