@@ -1,18 +1,13 @@
-from flask import Blueprint,render_template
-views=Blueprint('views',__name__)
+from flask import Blueprint, render_template
+from .models import User
 
+views = Blueprint('views', __name__)
 
 @views.route('/')
 def Base():
-  return render_template("home.html")
+    return render_template("home.html")
 
-
-@views.route('/profile')
-def profile():
-    user = {
-        "name": "Hamza Madi",
-        "address": "Physical Address",
-        "profession": "Plumber",
-        "experience": "Expert"
-    }
+@views.route('/profile/<int:user_id>')
+def profile(user_id):
+    user = User.query.get_or_404(user_id)
     return render_template("userProfile.html", user=user)

@@ -4,15 +4,15 @@
 <div class="main-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <h2 class="username">John Doe</h2>
-    <p class="role">Electrician</p>
-    <p class="bio">⚡ Helping homes stay bright and safe</p>
+    <h2 class="username">{{ user.name }}</h2>
+    <p class="role">{{ user.role }}</p>
+    <p class="bio">{{ user.bio }}</p>
     <hr />
-    <p><strong>Location:</strong> Pretoria, South Africa</p>
-    <p><strong>Experience:</strong> 5+ years</p>
-    <p><strong>Contact:</strong> johndoe@example.com</p>
-    <p><strong>Availability:</strong> Mon–Fri, 8am–5pm</p>
-    <p><strong>Rating:</strong> ⭐ 4.7 (88 reviews)</p>
+    <p><strong>Location:</strong> {{ user.location }}</p>
+    <p><strong>Experience:</strong> {{ user.experience }}</p>
+    <p><strong>Contact:</strong> {{ user.contact }}</p>
+    <p><strong>Availability:</strong> {{ user.availability }}</p>
+    <p><strong>Rating:</strong> ⭐ {{ user.rating }} ({{ user.reviews }} reviews)</p>
     <hr />
     <button class="edit-profile-btn">Edit Profile</button>
   </aside>
@@ -23,7 +23,7 @@
   <section class="content-section">
   <div class="cardP" style="background-image: url('{{ url_for('static', filename='assets/electricianCI.jpg') }}');">
     <div class="cardCircle">
-      <img src="{{ url_for('static', filename='assets/electrician.jpg') }}" alt="Profile"/>
+    <img src="{{ url_for('static', filename=user.image) }}" alt="Profile" />
     </div>
   </div>
   </section>
