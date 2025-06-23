@@ -1,0 +1,59 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  position: relative;
+  height: 60px; /* increased height to better fit a visible logo */
+  background-color:whitesmoke;
+  padding: 10px;
+}
+
+.logo-container {
+  position: absolute;
+  top: 10px;
+  left: 20px; /* changed from right to left */
+}
+
+.logo {
+  height: 60px;  /* decreased size of the logo */
+  width: auto; 
+}
+
+
+.parent {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 75vh;
+      background-color: white;
+    }
+
+.container {
+  width: 250px;
+  background-color: whitesmoke;
+  color: black;
+  font-size: 16px;
+  padding: 20px;
+  border-radius: 10px;
+  border: 2px solid black;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+label {
+  color: black;
+  font-size: medium;
+}
+
+footer{
+    text-align: center;
+    background-color: rgb(15, 102, 202);
+}
+
+.textC{
+    color: black;
+}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block div %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="main-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="username"><span>{{ user.Name }}</span> <span>{{ user.Surname }}</span></h2>
+    <p class="role">{{ user.Service }}</p>
+    <p class="bio">{{ user.Bio }}</p>
+    <hr />
+    <p><strong>Location:</strong> {{ user.Location }}</p>
+    <p><strong>Experience:</strong> {{ user.Experience }}</p>
+    <p><strong>Contact:</strong> {{ user.CellPhone }}</p>
+    <p><strong>Email:</strong> {{ user.Email }}</p>
+    <p><strong>Availability:</strong> {{ user.availability }}</p>
+    <p><strong>Rating:</strong> ⭐ {{ user.Rating }} ({{ user.Reviews }} reviews)</p>
+    <hr />
+    <button class="edit-profile-btn">Edit Profile</button>
+  </aside>
+
+  <!-- Profile container -->
+  <section class="content-section">
+    <div class="cardP" style="background-image: url('{{ url_for('static', filename='assets/electricianCI.jpg') }}');">
+      <div class="cardCircle">
+        <img src="{{ url_for('static', filename='assets/electrician.jpg') }}" alt="Profile" />
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeModal">&times;</span>
+    <form action="{{ url_for('views.update_profile', user_id=user.ID) }}" method="POST" class="edit-form">
+      <h3>Edit Profile</h3>
+
+      <label>Bio:</label>
+      <textarea name="bio">{{ user.Bio }}</textarea>
+
+      <label>Location:</label>
+      <input type="text" name="location" value="{{ user.Location }}">
+
+      <label>Experience:</label>
+      <input type="text" name="experience" value="{{ user.Experience }}">
+
+      <label>Cell Phone:</label>
+      <input type="text" name="cellphone" value="{{ user.CellPhone }}">
+
+      <label>Email:</label>
+      <input type="email" name="email" value="{{ user.Email }}">
+
+      <label>Availability:</label>
+      <input type="text" name="availability" value="{{ user.availability }}">
+
+      <button type="submit" class="save-btn">Save</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const editBtn = document.querySelector(".edit-profile-btn");
+  const modal = document.getElementById("editModal");
+  const closeBtn = document.getElementById("closeModal");
+
+  editBtn.onclick = () => {
+    modal.style.display = "block";
+  };
+
+  closeBtn.onclick = () => {
+    modal.style.display = "none";
+  };
+
+  window.onclick = (e) => {
+    if (e.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+</script>
+{% endblock %}
