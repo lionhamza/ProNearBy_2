@@ -16,3 +16,4 @@ class User(db.Model):
     Bio =db.Column(db.String)
     Surname=db.Column(db.String)
     Image = db.Column(db.String)  # e.g. 'assets/electrician.jpg'
+    CoverImage=db.Column(db.String)

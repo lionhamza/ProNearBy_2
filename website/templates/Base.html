@@ -4,13 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}ProNearBy{% endblock %}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
+
+  <!-- CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
   <header>
     <div class="header-container">
       <div class="search-container">
-        <img src="{{ url_for('static', filename='assets/ProNearBy_Icon.jpg') }}" alt="logo" class="icon" />
+        <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="logo" class="icon" />
         <input type="text" placeholder="Search for a Pro..." class="search-input" />
         <input type="text" placeholder="Which location are you in?" class="search-input" />
         <button class="search-button">Search</button>

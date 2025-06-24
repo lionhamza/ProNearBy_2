@@ -21,8 +21,8 @@
     <hr />
     <p><strong>Location:</strong> {{ user.Location }}</p>
     <p><strong>Experience:</strong> {{ user.Experience }}</p>
-    <p><strong>Contact:</strong> {{ user.CellPhone }}</p>
-    <p><strong>Email:</strong> {{ user.Email }}</p>
+    <!---<p><strong>Contact:</strong> {{ user.CellPhone }}</p>
+    <p><strong>Email:</strong> {{ user.Email }}</p>-->
     <p><strong>Availability:</strong> {{ user.availability }}</p>
     <p><strong>Rating:</strong> ⭐ {{ user.Rating }} ({{ user.Reviews }} reviews)</p>
     <hr />
@@ -31,9 +31,10 @@
 
   <!-- Profile container -->
   <section class="content-section">
-    <div class="cardP" style="background-image: url('{{ url_for('static', filename='assets/electricianCI.jpg') }}');">
+    <div class="cardP" style="background-image: url('{{ url_for('static', filename= user.CoverImage or 'assets/electricianCI.jpg') }}');">
       <div class="cardCircle">
-        <img src="{{ url_for('static', filename='assets/electrician.jpg') }}" alt="Profile" />
+        <img src="{{ url_for('static', filename=user.Image or 'assets/electrician.jpg') }}" alt="Profile" />
+
       </div>
     </div>
   </section>
@@ -43,7 +44,8 @@
 <div id="editModal" class="modal">
   <div class="modal-content">
     <span class="close" id="closeModal">&times;</span>
-    <form action="{{ url_for('views.update_profile', user_id=user.ID) }}" method="POST" class="edit-form">
+    <form action="{{ url_for('views.update_profile', user_id=user.ID) }}" method="POST" enctype="multipart/form-data" class="edit-form">
+
       <h3>Edit Profile</h3>
 
       <label>Bio:</label>
@@ -55,14 +57,20 @@
       <label>Experience:</label>
       <input type="text" name="experience" value="{{ user.Experience }}">
 
-      <label>Cell Phone:</label>
+      <!---<label>Cell Phone:</label>
       <input type="text" name="cellphone" value="{{ user.CellPhone }}">
 
       <label>Email:</label>
-      <input type="email" name="email" value="{{ user.Email }}">
+      <input type="email" name="email" value="{{ user.Email }}">-->
 
       <label>Availability:</label>
       <input type="text" name="availability" value="{{ user.availability }}">
+
+      <label>Profile Picture:</label>
+      <input type="file" name="profile_pic">
+
+      <label>Cover Picture:</label>
+      <input type="file" name="cover_pic">
 
       <button type="submit" class="save-btn">Save</button>
     </form>
