@@ -25,8 +25,8 @@ def update_profile(user_id):
     user.Bio = request.form['bio']
     user.Location = request.form['location']
     user.Experience = request.form['experience']
-    user.CellPhone = request.form['cellphone']
-    user.Email = request.form['email']
+    #user.CellPhone = request.form['cellphone']
+    #user.Email = request.form['email']
     user.availability = request.form['availability']
 
     # Handle profile picture upload
