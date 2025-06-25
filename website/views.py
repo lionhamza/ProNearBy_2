@@ -57,20 +57,20 @@ def update_profile(user_id):
 def create_post(user_id):
     user = User.query.get_or_404(user_id)
     content = request.form['content']
+    files = request.files.getlist('post_media')
 
-    # Handle image upload
-    image_path = None
-    if 'post_image' in request.files:
-        file = request.files['post_image']
+    media_paths = []
+
+    for file in files:
         if file and file.filename != '':
             filename = secure_filename(file.filename)
             filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
             file.save(filepath)
-            image_path = f'uploads/{filename}'
+            media_paths.append(f'uploads/{filename}')  # Save relative path
 
-    new_post = Post(content=content, image=image_path, user=user)
+    new_post = Post(content=content, media=media_paths, user=user)
     db.session.add(new_post)
     db.session.commit()
 
-    flash('Post created!', 'success')
+    flash('Post created with media!', 'success')
     return redirect(url_for('views.profile', user_id=user_id))

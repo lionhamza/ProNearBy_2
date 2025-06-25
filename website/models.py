@@ -1,3 +1,4 @@
+from sqlalchemy.dialects.postgresql import JSON  # add this at the top
 from . import db
 
 class User(db.Model):
@@ -18,12 +19,13 @@ class User(db.Model):
     Image = db.Column(db.String)  # e.g. 'assets/electrician.jpg'
     CoverImage=db.Column(db.String)
 
+
 class Post(db.Model):
     __tablename__ = 'posts'
 
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(500))
-    image = db.Column(db.String, nullable=True)
+    media = db.Column(JSON, nullable=True)  # <-- changed from image to media
     timestamp = db.Column(db.DateTime, default=db.func.now())
 
     user_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'))

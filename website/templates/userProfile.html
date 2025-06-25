@@ -58,9 +58,18 @@
 
     <div class="post-body">
       <p>{{ post.content }}</p>
-      {% if post.image %}
-      <img src="{{ url_for('static', filename=post.image) }}" class="post-img" alt="Post Image">
-      {% endif %}
+      {% if post.media %}
+       {% for file in post.media %}
+       {% if file.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+        <img src="{{ url_for('static', filename=file) }}" class="post-img" alt="Image">
+        {% elif file.endswith(('.mp4', '.mov', '.avi')) %}
+         <video controls class="post-img">
+          <source src="{{ url_for('static', filename=file) }}" type="video/mp4">
+          Your browser does not support the video tag.
+         </video>
+       {% endif %}
+      {% endfor %}
+     {% endif %}
     </div>
 
     <div class="post-actions">
@@ -123,8 +132,9 @@
       <label>Say something:</label>
       <textarea name="content" placeholder="What's on your mind?" required></textarea>
 
-      <label>Upload Image (optional):</label>
-      <input type="file" name="post_image">
+      <label>Upload Media (images/videos):</label>
+      <input type="file" name="post_media" accept="image/*,video/*" multiple>
+
 
       <button type="submit" class="save-btn">Post</button>
     </form>
