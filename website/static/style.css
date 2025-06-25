@@ -50,7 +50,18 @@ header {
   font-size: 16px;
   cursor: pointer;
 }
-
+.create_post-button{
+  padding: 10px 20px;
+  background-color: #2b6cb0;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  cursor: pointer;
+}
+.create_post-button:hover{
+  background-color: #2c5282;
+}
 .search-button:hover {
   background-color: #2c5282;
 }
@@ -260,6 +271,35 @@ body {
   text-align: center;
 }
 
+.button_container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;  /* Align child elements to the left */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 20px;
+  padding-left: 20px;            /* Optional: extra space on the left */
+  border-radius: 10px;
+  margin: 0 auto 20px auto;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  width: 800px;
+  height: 50px;
+  /*border: solid rgb(20, 142, 199) 2px;*/
+  text-align: left;              /* For inline or text-only elements */
+}
+
+.apost {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+
 .cardCircle {
   position: absolute;
   top: 50%;
@@ -376,4 +416,93 @@ body {
 
 .flash-message.success {
   background-color: #1c72d4; /* green */
+}
+
+/*Posts*/
+.post-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px;
+  width: 100%;
+  max-width: 500px;
+  margin: 20px auto;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  color: #222;
+  transition: box-shadow 0.3s ease;
+}
+
+.post-card:hover {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.post-profile-pic {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+  border: 2px solid #2b6cb0;
+}
+
+.post-user-info {
+  flex-grow: 1;
+  line-height: 1.2;
+}
+
+.post-user-info strong {
+  display: block;
+  font-size: 15px;
+  color: #1a202c;
+}
+
+.post-timestamp {
+  font-size: 12px;
+  color: #888;
+}
+
+.post-options {
+  cursor: pointer;
+  font-size: 20px;
+  color: #888;
+}
+
+.post-body p {
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.post-img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 12px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.post-btn {
+  background: none;
+  border: none;
+  color: #2b6cb0;
+  font-size: 14px;
+  cursor: pointer;
+  margin-right: 15px;
+  transition: color 0.3s ease;
+}
+
+.post-btn:hover {
+  color: #1a365d;
 }

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from .models import User
+from .models import User , Post
 from . import db
 
 views = Blueprint('views', __name__)
@@ -47,4 +47,30 @@ def update_profile(user_id):
             user.CoverImage=f'uploads/{filename}'
     db.session.commit()
     flash('Profile successfully updated!', 'success')
+    return redirect(url_for('views.profile', user_id=user_id))
+
+
+
+
+#this for adding a post
+@views.route('/profile/<int:user_id>/post', methods=['POST'])
+def create_post(user_id):
+    user = User.query.get_or_404(user_id)
+    content = request.form['content']
+
+    # Handle image upload
+    image_path = None
+    if 'post_image' in request.files:
+        file = request.files['post_image']
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
+            file.save(filepath)
+            image_path = f'uploads/{filename}'
+
+    new_post = Post(content=content, image=image_path, user=user)
+    db.session.add(new_post)
+    db.session.commit()
+
+    flash('Post created!', 'success')
     return redirect(url_for('views.profile', user_id=user_id))

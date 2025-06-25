@@ -34,10 +34,46 @@
     <div class="cardP" style="background-image: url('{{ url_for('static', filename= user.CoverImage or 'assets/electricianCI.jpg') }}');">
       <div class="cardCircle">
         <img src="{{ url_for('static', filename=user.Image or 'assets/electrician.jpg') }}" alt="Profile" />
-
       </div>
     </div>
-  </section>
+    <div class="button_container">
+       <button class="create_post-button ">Create Post +</button>
+    </div>
+
+
+ 
+   <!-- Posts Container -->
+<!-- Posts -->
+<div class="apost">
+  {% for post in user.posts|sort(attribute='timestamp', reverse=True) %}
+  <div class="post-card">
+    <div class="post-header">
+      <img src="{{ url_for('static', filename=user.Image or 'assets/electrician.jpg') }}" class="post-profile-pic" alt="User Pic">
+      <div class="post-user-info">
+        <strong>{{ user.Name }} {{ user.Surname }}</strong>
+        <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
+      </div>
+      <div class="post-options">⋮</div>
+    </div>
+
+    <div class="post-body">
+      <p>{{ post.content }}</p>
+      {% if post.image %}
+      <img src="{{ url_for('static', filename=post.image) }}" class="post-img" alt="Post Image">
+      {% endif %}
+    </div>
+
+    <div class="post-actions">
+      <button class="post-btn">❤️ Like</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+
+</section>
+
+    
 </div>
 
 <!-- Edit Profile Modal -->
@@ -77,6 +113,24 @@
   </div>
 </div>
 
+<!-- Create Post Modal -->
+<div id="postModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closePostModal">&times;</span>
+    <form action="{{ url_for('views.create_post', user_id=user.ID) }}" method="POST" enctype="multipart/form-data" class="edit-form">
+      <h3>Create a Post</h3>
+
+      <label>Say something:</label>
+      <textarea name="content" placeholder="What's on your mind?" required></textarea>
+
+      <label>Upload Image (optional):</label>
+      <input type="file" name="post_image">
+
+      <button type="submit" class="save-btn">Post</button>
+    </form>
+  </div>
+</div>
+
 <script>
   const editBtn = document.querySelector(".edit-profile-btn");
   const modal = document.getElementById("editModal");
@@ -96,4 +150,25 @@
     }
   };
 </script>
+
+<script>
+  const createBtn = document.querySelector(".create_post-button");
+  const postModal = document.getElementById("postModal");
+  const closePostBtn = document.getElementById("closePostModal");
+
+  createBtn.onclick = () => {
+    postModal.style.display = "block";
+  };
+
+  closePostBtn.onclick = () => {
+    postModal.style.display = "none";
+  };
+
+  window.onclick = (e) => {
+    if (e.target == postModal) {
+      postModal.style.display = "none";
+    }
+  };
+</script>
+
 {% endblock %}
