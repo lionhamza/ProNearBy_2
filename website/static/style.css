@@ -522,3 +522,24 @@ body {
   border-radius: 8px;
 }
 
+.flash-messages {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  border-radius: 5px;
+  }
+
+.flash-message {
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.flash-message.success {
+  background-color: #206ed3;
+  color: #fdfffe;
+}
+
+.flash-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}

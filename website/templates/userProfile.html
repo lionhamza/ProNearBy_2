@@ -4,11 +4,12 @@
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    <div class="flash-messages">
-      {% for category, message in messages %}
-        <div class="flash-message {{ category }}">{{ message }}</div>
+    <div class="flash-messages" id="flash-container">
+     {% for category, message in messages %}
+      <div class="flash-message {{ category }}">{{ message }}</div>
       {% endfor %}
     </div>
+
   {% endif %}
 {% endwith %}
 
@@ -70,7 +71,7 @@
        {% endif %}
       {% endfor %}
      {% endif %}
-    </div>
+</div>
 
     <div class="post-actions">
       <button class="post-btn">❤️ Like</button>
@@ -180,5 +181,18 @@
     }
   };
 </script>
+
+<script>
+  // Automatically fade out flash messages after 1 second
+  setTimeout(() => {
+    const container = document.getElementById("flash-container");
+    if (container) {
+      container.style.transition = "opacity 0.5s ease";
+      container.style.opacity = 0;
+      setTimeout(() => container.remove(), 500);  // fully remove from DOM
+    }
+  }, 1000);
+</script>
+
 
 {% endblock %}
