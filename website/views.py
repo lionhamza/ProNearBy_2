@@ -1,17 +1,28 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from .models import User , Post
 from . import db
+from flask import session
 
 views = Blueprint('views', __name__)
 
 @views.route('/')
 def Base():
-    return render_template("home.html")
+    if 'user_id' not in session:
+        # Fix: use correct endpoint name
+        return redirect(url_for('auth.login_get'))
+
+    user = User.query.get(session['user_id'])
+    return render_template("home.html", user=user)
 
 @views.route('/profile/<int:user_id>')
 def profile(user_id):
     user = User.query.get_or_404(user_id)
     return render_template("userProfile.html", user=user)
+
+@views.route('/login')
+def login():
+    return render_template("login.html")
+
 
 import os
 from werkzeug.utils import secure_filename

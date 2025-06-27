@@ -18,6 +18,7 @@ class User(db.Model):
     Surname=db.Column(db.String)
     Image = db.Column(db.String)  # e.g. 'assets/electrician.jpg'
     CoverImage=db.Column(db.String)
+    Password=db.Column(db.String)
 
 
 class Post(db.Model):

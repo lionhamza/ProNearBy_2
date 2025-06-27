@@ -1,14 +1,92 @@
-{% extends 'login.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign Up</title>
 
-{% block title %}
-<div class="container">
-            <label for="username">Email:</label>
-            <input type="text" id="username" name="username">
-            
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password">
+  <link rel="stylesheet" href="{{ url_for('static', filename='loginfinal.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
+</head>
+<body>
+  <main class="form-container col col-xs-12 col-sm-10 col-lg-6">
+    <section id="signup-panel" class="card ux-card">
+      <header id="form-header" class="idp-form-header">
+        <figure aria-label="ProNearBy Logo" class="brand-logo">
+          <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" style="max-width: 120px;" />
+        </figure>
+        <h1 class="h3">Create an Account</h1>
+      </header>
 
-            
+      <form id="signup-form" method="POST" action="{{ url_for('auth.signup_post') }}" autocomplete="off" novalidate>
+
+        <div class="input-group">
+          <label for="name">Name *</label>
+          <input type="text" id="name" name="name" required />
         </div>
 
-{% endblock %}
+        <div class="input-group">
+          <label for="surname">Surname *</label>
+          <input type="text" id="surname" name="surname" required />
+        </div>
+
+        <div class="input-group">
+          <label for="email">Email *</label>
+          <input type="text" id="email" name="email" required />
+        </div>
+
+        <div class="input-group">
+          <label for="contact">Contact Number *</label>
+          <input type="text" id="contact" name="contact" required />
+        </div>
+
+        <div class="input-group password-group">
+          <label for="password">Password *</label>
+          <input type="password" id="password" name="password" required />
+          <button type="button" id="toggle-password" aria-label="Show password">Show</button>
+        </div>
+
+        <div class="input-group password-group">
+          <label for="confirm_password">Confirm Password *</label>
+          <input type="password" id="confirm_password" name="confirm_password" required />
+          <button type="button" id="toggle-confirm" aria-label="Show confirm password">Show</button>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn-primary">Sign Up</button>
+      </form>
+
+      <p class="recovery-links">
+        Already have an account?
+        <a href="{{ url_for('auth.login_get') }}">Sign in</a>
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const togglePasswordBtn = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('password');
+    togglePasswordBtn.addEventListener('click', () => {
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        togglePasswordBtn.textContent = 'Hide';
+      } else {
+        passwordInput.type = 'password';
+        togglePasswordBtn.textContent = 'Show';
+      }
+    });
+
+    const toggleConfirmBtn = document.getElementById('toggle-confirm');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    toggleConfirmBtn.addEventListener('click', () => {
+      if (confirmPasswordInput.type === 'password') {
+        confirmPasswordInput.type = 'text';
+        toggleConfirmBtn.textContent = 'Hide';
+      } else {
+        confirmPasswordInput.type = 'password';
+        toggleConfirmBtn.textContent = 'Show';
+      }
+    });
+  </script>
+</body>
+</html>

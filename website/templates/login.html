@@ -1,35 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ProNearBy</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign In</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='loginfinal.css') }}" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
 </head>
-<body>
-    <header>
-       <div class="logo-container">
-         <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="CompanyLogo" class="logo" />
-       </div>
-    </header>
+<body>                                            
+  <main class="form-container col col-xs-12 col-sm-10 col-lg-6">
+    <section id="login-panel" class="card ux-card">
+      <header id="form-header" class="idp-form-header">
+        <figure aria-label="ProNearBy Logo" class="brand-logo">
+          <figcaption class="sr-only"></figcaption>
+          <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" style="max-width: 120px;"/>
+        </figure>
+        <h1 class="h3">Sign in</h1>
+      </header>
+      <div id="create-account-link" class="create-account">
+         <p>New to ProNearBy?</p>
+         <a href="{{ url_for('auth.signup_get') }}" class="button-link">Create an Account</a>
+      </div>
 
-    <div class="parent">
-        {% block div %}
-        <div class="container">
-            <label for="username">Email:</label>
-            <input type="text" id="username" name="username" />
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" />
+      <form id="login-form" method="POST" action="{{ url_for('auth.login_post') }}" autocomplete="off" novalidate>
+
+        <div class="input-group">
+          <label for="username">Email <span aria-hidden="true">*</span></label>
+          <input type="text" id="username" name="username" aria-required="true" required />
         </div>
-        {% endblock %}
-    </div>
 
-    <footer>
-        <div class="textC">
-          <p>© 2025 ProNearBy. All rights reserved.</p>
-          <p><a href="/privacy">Privacy Policy</a> | <a href="/terms">Terms of Service</a></p>
+        <div class="input-group password-group">
+          <label for="password">Password <span aria-hidden="true">*</span></label>
+          <input type="password" id="password" name="password" aria-required="true" required autocomplete="current-password" />
+          <button type="button" id="toggle-password" aria-label="Show password">Show</button>
         </div>
-    </footer>
+
+        <div class="input-group remember-me">
+          <input type="checkbox" id="remember-me" name="rememberMe" checked />
+          <label for="remember-me">Keep me signed in on this device</label>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn-primary">Sign In</button>
+      </form>
+
+
+
+      <p class="recovery-links">
+        Need to find
+        <a href="login.html" id="forgot_username" aria-label="Find your username">your username</a>
+        or
+        <a href="login.html" id="forgot_password" aria-label="Find your password">your password</a>?
+      </p>
+    </section>
+  </main>
+
+  <script>
+    // Toggle password visibility script
+    const togglePasswordBtn = document.getElementById('toggle-password');
+    const passwordInput = document.getElementById('password');
+
+    togglePasswordBtn.addEventListener('click', () => {
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        togglePasswordBtn.textContent = 'Hide';
+        togglePasswordBtn.setAttribute('aria-label', 'Hide password');
+      } else {
+        passwordInput.type = 'password';
+        togglePasswordBtn.textContent = 'Show';
+        togglePasswordBtn.setAttribute('aria-label', 'Show password');
+      }
+    });
+  </script>
 </body>
 </html>
