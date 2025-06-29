@@ -4,7 +4,8 @@ from . import db
 class User(db.Model):
     __tablename__ = 'User_Info'  # <-- match this to your real table name
 
-    ID = db.Column(db.Integer, primary_key=True)
+    ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
     Name = db.Column(db.String)
     Email=db.Column(db.String)
     Location = db.Column(db.String)

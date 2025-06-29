@@ -58,7 +58,7 @@ def signup_post():
     contact = request.form['contact']
     password = request.form['password']
     confirm_password = request.form['confirm_password']
-
+    print("function called")
     if password != confirm_password:
         flash("Passwords do not match", "error")
         return redirect(url_for('auth.signup_get'))
