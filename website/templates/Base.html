@@ -1,29 +1,45 @@
-<!DOCTYPE html>
+<!-- base.html -->
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}ProNearBy{% endblock %}</title>
-
-  <!-- Favicon -->
-  <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='feed.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
-
 <body>
   <header>
     <div class="header-container">
-      <div class="search-container">
-        <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="logo" class="icon" />
-        <input type="text" placeholder="Search for a Pro..." class="search-input" />
-        <input type="text" placeholder="Which location are you in?" class="search-input" />
-        <button class="search-button">Search</button>
+      <div class="header-search-container">
+        <a href="{{ url_for('views.Base') }}" class="logo-link">
+          <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="logo" class="header-icon" />
+        </a>
+
+        <!-- Moved and adapted search form -->
+        <form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
+          <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" class="header-search-input" name="search" placeholder="Search for a Pro..." value="{{ request.args.get('search', '') }}" />
+          </div>
+          <div class="search-input-wrapper">
+            <i class="fas fa-map-marker-alt"></i>
+            <input type="text" class="header-search-input" name="location" placeholder="Which location are you in?" value="{{ request.args.get('location', '') }}" />
+          </div>
+          <button type="submit" class="header-search-button">Search</button>
+        </form>
+
+      </div>
+      <div class="nav-links">
+        <a href="{{ url_for('views.Base') }}" class="nav-link">Home</a>
+        <a href="{{ url_for('views.mock_feed') }}" class="nav-link">
+          <i class="fas fa-stream"></i> Professional Feed
+        </a>
       </div>
       <div class="icons-container">
-        <img src="{{ url_for('static', filename='assets/message.jpg') }}" alt="message_icon" class="icon" />
-        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="notification_icon" class="icon" />
+        <img src="{{ url_for('static', filename='assets/message.jpg') }}" alt="message_icon" class="header-icon" />
+        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="notification_icon" class="header-icon" />
       </div>
     </div>
   </header>

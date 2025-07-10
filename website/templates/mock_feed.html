@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block div %}
+<div class="feed-container">
+  <!-- Search section -->
+  <div class="search-section">
+    <form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
+      <div class="search-input-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" class="search-input" name="search" placeholder="Search for professionals or services..." value="{{ search }}">
+      </div>
+      <div class="search-input-wrapper">
+        <i class="fas fa-map-marker-alt"></i>
+        <input type="text" class="search-input" name="location" placeholder="Filter by location" value="{{ location }}">
+      </div>
+      <button type="submit" class="search-button">Search</button>
+    </form>
+    
+    {% if search or location %}
+    <div class="results-info">
+      <div class="results-text">
+        Showing results {% if search %}for "{{ search }}"{% endif %}
+        {% if search and location %}and{% endif %}
+        {% if location %}in "{{ location }}"{% endif %}
+      </div>
+      <a href="{{ url_for('views.mock_feed') }}" class="clear-search">Clear search</a>
+    </div>
+    {% endif %}
+  </div>
+  
+  <!-- No results message -->
+  {% if professionals|length == 0 %}
+  <div class="no-results">
+    <i class="fas fa-search"></i>
+    <h3>No professionals found</h3>
+    <p>Try adjusting your search criteria</p>
+    <a href="{{ url_for('views.mock_feed') }}">View all professionals</a>
+  </div>
+  {% endif %}
+  
+  <!-- Professional cards -->
+  {% for pro in professionals %}
+  <div class="pro-card">
+    <div class="pro-header">
+      {% if pro.image_url %}
+        <img src="{{ pro.image_url }}" alt="{{ pro.Name }}" class="pro-avatar">
+      {% else %}
+        <!-- Default image based on profession -->
+        {% set default_image = "https://img.freepik.com/free-photo/professional-construction-worker-with-helmet_23-2149136294.jpg" %}
+        {% if 'electrician' in pro.Service.lower() %}
+            {% set default_image = "https://img.freepik.com/free-photo/electrician-working-electric-panel_23-2147919518.jpg" %}
+        {% elif 'plumber' in pro.Service.lower() %}
+            {% set default_image = "https://img.freepik.com/free-photo/plumber-fixing-sink-pipe_23-2149134874.jpg" %}
+        {% elif 'painter' in pro.Service.lower() %}
+            {% set default_image = "https://img.freepik.com/free-photo/painter-man-work_1157-26148.jpg" %}
+        {% elif 'carpenter' in pro.Service.lower() %}
+            {% set default_image = "https://img.freepik.com/free-photo/carpenter-cutting-mdf-board-inside-home-workshop_23-2149451063.jpg" %}
+        {% endif %}
+        <img src="{{ default_image }}" alt="{{ pro.Service }}" class="pro-avatar">
+      {% endif %}
+      
+      <div class="pro-title">
+        <h3 class="pro-name">{{ pro.Name }} {{ pro.Surname }}</h3>
+        <p class="pro-role">{{ pro.Service }}</p>
+        <div class="pro-rating">
+          <i class="fas fa-star"></i> {{ pro.Rating|round(1) }}
+          <span>({{ pro.Reviews }} reviews)</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="pro-body">
+      {% if pro.Bio %}
+      <p class="pro-bio">{{ pro.Bio }}</p>
+      {% endif %}
+      
+      <div class="pro-details">
+        <div class="detail-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>{{ pro.Location }}</span>
+        </div>
+        <div class="detail-item">
+          <i class="fas fa-briefcase"></i>
+          <span>Experience: {{ pro.Experience }}</span>
+        </div>
+        <div class="detail-item">
+          <i class="fas fa-clock"></i>
+          <span>Available: {{ pro.availability }}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="pro-actions">
+      <a href="{{ url_for('views.profile', user_id=pro.ID) }}" class="profile-btn">View Profile</a>
+      <button class="connect-btn">Connect</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -3,8 +3,6 @@
 {% block title %}Home - ProNearBy{% endblock %}
 
 {% block div %}
-
-
 <div class="main-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
@@ -13,40 +11,63 @@
     <p class="role">Electrician</p>
     <p class="bio">⚡ Helping homes stay bright and safe</p>
 
-    <hr />
+    <hr class="sidebar-divider" />
 
-    <p><strong>Location:</strong> Pretoria, South Africa</p>
+   
     <p><strong>Experience:</strong> 5+ years</p>
-    <p><strong>Contact:</strong> johndoe@example.com</p>
+    
     <p><strong>Availability:</strong> Mon–Fri, 8am–5pm</p>
     <p><strong>Rating:</strong> ⭐ 4.7 (88 reviews)</p>
 
-    <hr />
+    <hr class="sidebar-divider" />
 
-    <button class="edit-profile-btn">View Profile</button>
+    <a href="{{ url_for('views.profile', user_id=user.ID) }}" class="view-profile-btn">View Profile</a>
+
+    <a href="{{ url_for('views.mock_feed') }}" class="browse-pros-btn">
+      <i class="fas fa-stream"></i> Browse Professionals
+    </a>
   </aside>
 
   <!-- Cards -->
   <section class="content-section">
-
-    <!-- Example of a single card — duplicate as needed -->
-    <div class="card">
-      <img src="{{ url_for('static', filename='assets/blamberImage.jpg') }}" alt="Plumber" class="pro-pic" />
-      <div class="card-text">
-        <h3>Jane Smith</h3>
-        <p><strong>Certified Plumber</strong></p>
-        <p>🚿 Fixing leaks with expertise and precision plumbing services.</p>
-        <p><strong>Experience:</strong> 6+ years</p>
-        <p><strong>Location:</strong> Johannesburg, South Africa</p>
-        <p><strong>Specialties:</strong> Pipe Repair, Drain Unclogging, Bathroom Installations</p>
-        <p><strong>Projects Completed:</strong> 150+</p>
-        <p><strong>Rating:</strong> ⭐ 4.8 (95 reviews)</p>
+    <!-- Example of a single card -->
+    <div class="apost">
+  {% for post in posts %}
+  {% set post_user = post.user %}
+  <div class="post-card">
+    <div class="post-header">
+      <img src="{{ url_for('static', filename=user.Image or 'assets/electrician.jpg') }}" class="post-profile-pic" alt="User Pic">
+      <div class="post-user-info">
+        <strong>{{ user.Name }} {{ user.Surname }}</strong>
+        <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
       </div>
-      <img src="{{ url_for('static', filename='assets/ViewProfileArrow.png') }}" alt="View Profile" class="right_image" />
+      <div class="post-options">⋮</div>
     </div>
 
+    <div class="post-body">
+      <p>{{ post.content }}</p>
+      {% if post.media %}
+       {% for file in post.media %}
+       {% if file.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+        <img src="{{ url_for('static', filename=file) }}" class="post-img" alt="Image">
+        {% elif file.endswith(('.mp4', '.mov', '.avi')) %}
+         <video controls class="post-img">
+          <source src="{{ url_for('static', filename=file) }}" type="video/mp4">
+          Your browser does not support the video tag.
+         </video>
+       {% endif %}
+      {% endfor %}
+     {% endif %}
+</div>
+
+    <div class="post-actions">
+      <button class="post-btn">❤️ Like</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
     <!-- Copy the above div and change content for more cards -->
-    
   </section>
 </div>
 {% endblock %}

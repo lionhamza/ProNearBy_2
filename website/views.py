@@ -5,14 +5,23 @@ from flask import session
 
 views = Blueprint('views', __name__)
 
+import random
+from sqlalchemy.orm import joinedload
+
 @views.route('/')
 def Base():
     if 'user_id' not in session:
-        # Fix: use correct endpoint name
         return redirect(url_for('auth.login_get'))
 
     user = User.query.get(session['user_id'])
-    return render_template("home.html", user=user)
+
+    # Load all posts and eager-load the user who made each post
+    posts = Post.query.options(joinedload(Post.user)).all()
+    random.shuffle(posts)
+
+    return render_template("home.html", user=user, posts=posts)
+
+
 
 @views.route('/profile/<int:user_id>')
 def profile(user_id):
@@ -85,3 +94,80 @@ def create_post(user_id):
 
     flash('Post created with media!', 'success')
     return redirect(url_for('views.profile', user_id=user_id))
+
+
+@views.route('/feed', methods=['GET'])
+def feed():
+    search_query = request.args.get('search', '')
+    location_query = request.args.get('location', '')
+    
+    query = User.query
+    
+    if search_query:
+        query = query.filter(
+            db.or_(
+                User.Service.ilike(f'%{search_query}%'),
+                User.Name.ilike(f'%{search_query}%'),
+                User.Surname.ilike(f'%{search_query}%')
+            )
+        )
+    
+    if location_query:
+        query = query.filter(User.Location.ilike(f'%{location_query}%'))
+    
+    professionals = query.all()
+    return render_template("feed.html", professionals=professionals, search=search_query, location=location_query)
+
+
+@views.route('/mock-feed', methods=['GET'])
+def mock_feed():
+    from flask import request
+    
+    # Create mock professionals data
+    class MockPro:
+        def __init__(self, id, name, surname, service, location, experience, 
+                     availability, rating, reviews, bio=None, image=None):
+            self.ID = id
+            self.Name = name
+            self.Surname = surname
+            self.Service = service
+            self.Location = location
+            self.Experience = experience
+            self.availability = availability
+            self.Rating = rating
+            self.Reviews = reviews
+            self.Bio = bio
+            self.Image = image
+
+    professionals = [
+        MockPro(1, "John", "Doe", "Electrician", "Pretoria, South Africa", 
+                "5+ years", "Mon-Fri, 8am-5pm", 4.7, 88, 
+                "Helping homes stay bright and safe", "assets/electrician.jpg"),
+        MockPro(2, "Jane", "Smith", "Plumber", "Johannesburg, South Africa", 
+                "6+ years", "Mon-Sat, 7am-6pm", 4.8, 95, 
+                "Fixing leaks with expertise and precision", None),
+        MockPro(3, "Michael", "Johnson", "Carpenter", "Cape Town, South Africa", 
+                "10+ years", "Weekdays only", 4.9, 120, 
+                "Quality woodwork and home repairs", None),
+        MockPro(4, "Sarah", "Williams", "Painter", "Durban, South Africa", 
+                "4+ years", "All week, 9am-7pm", 4.6, 72, 
+                "Adding color to your life with professional painting services", None)
+    ]
+    
+    search_query = request.args.get('search', '')
+    location_query = request.args.get('location', '')
+    
+    # Filter professionals based on search query if provided
+    if search_query:
+        professionals = [p for p in professionals if 
+                         search_query.lower() in p.Name.lower() or 
+                         search_query.lower() in p.Surname.lower() or 
+                         search_query.lower() in p.Service.lower()]
+    
+    # Filter by location if provided
+    if location_query:
+        professionals = [p for p in professionals if 
+                         location_query.lower() in p.Location.lower()]
+    
+    return render_template("feed.html", professionals=professionals, 
+                          search=search_query, location=location_query)
