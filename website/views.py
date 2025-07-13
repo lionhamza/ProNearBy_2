@@ -263,7 +263,7 @@ def messages():
     current_user_id = session['user_id']
     selected_user_id = request.args.get('user_id', type=int)
 
-    # Send message
+    # Handle message sending
     if request.method == 'POST':
         content = request.form['message']
         if selected_user_id and content.strip():
@@ -289,10 +289,60 @@ def messages():
             )
         ).order_by(Message.timestamp).all()
 
-    # Fetch all other users to chat with
-    other_users = User.query.filter(User.ID != current_user_id).all()
+    # ✅ Only show users who have exchanged messages (accepted requests)
+    from sqlalchemy import distinct
+    messaged_user_ids = db.session.query(distinct(Message.sender_id)).filter(Message.receiver_id == current_user_id).union(
+        db.session.query(distinct(Message.receiver_id)).filter(Message.sender_id == current_user_id)
+    ).all()
+    messaged_user_ids = [uid[0] for uid in messaged_user_ids]
+    other_users = User.query.filter(User.ID.in_(messaged_user_ids)).all()
 
     return render_template('messages.html', 
                            users=other_users, 
                            selected_user=selected_user,
                            messages=messages)
+
+
+@views.route('/request/<int:request_id>/accept', methods=['POST'])
+def accept_request(request_id):
+    request_obj = ServiceRequest.query.get_or_404(request_id)
+
+    # Only the receiver can accept
+    if request_obj.receiver_id != session['user_id']:
+        flash("Unauthorized action", "error")
+        return redirect(url_for('views.Base'))
+
+    # Send default message with request details
+    default_msg = f"""
+📍 Location: {request_obj.location}
+📅 Date: {request_obj.preferred_date.strftime('%Y-%m-%d') if request_obj.preferred_date else 'N/A'}
+⏰ Time: {request_obj.preferred_time.strftime('%H:%M') if request_obj.preferred_time else 'N/A'}
+📝 Description: {request_obj.description}
+"""
+
+    msg = Message(
+        sender_id=request_obj.receiver_id,
+        receiver_id=request_obj.sender_id,
+        content=default_msg.strip()
+    )
+    db.session.add(msg)
+
+    # Delete the request (optional: or mark it as 'accepted' if you want to track)
+    db.session.delete(request_obj)
+    db.session.commit()
+    flash("Service request accepted. Details sent to user!", "success")
+    return redirect(url_for('views.Base'))
+
+
+@views.route('/request/<int:request_id>/decline', methods=['POST'])
+def decline_request(request_id):
+    request_obj = ServiceRequest.query.get_or_404(request_id)
+
+    if request_obj.receiver_id != session['user_id']:
+        flash("Unauthorized action", "error")
+        return redirect(url_for('views.Base'))
+
+    db.session.delete(request_obj)
+    db.session.commit()
+    flash("Service request declined and removed.", "info")
+    return redirect(url_for('views.Base'))

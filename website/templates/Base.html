@@ -62,8 +62,13 @@
               {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
             </small>
             <div class="notification-actions">
-              <button class="accept-btn">Accept</button>
-              <button class="decline-btn">Decline</button>
+             <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
+  <button type="submit" class="accept-btn">Accept</button>
+</form>
+<form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
+  <button type="submit" class="decline-btn">Decline</button>
+</form>
+
             </div>
           </div>
         {% endfor %}
