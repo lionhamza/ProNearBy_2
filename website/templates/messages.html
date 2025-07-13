@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+
+{% block div %}
+<div class="chat-container">
+  <div class="user-list">
+    <h3>Chats</h3>
+    {% for user in users %}
+      <a href="{{ url_for('views.messages', user_id=user.ID) }}" class="chat-user {% if selected_user and user.ID == selected_user.ID %}active{% endif %}">
+        {{ user.Name }} {{ user.Surname }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <div class="chat-box">
+    {% if selected_user %}
+      <h3>Chat with {{ selected_user.Name }}</h3>
+      <div class="message-history">
+        {% for msg in messages %}
+          <div class="{% if msg.sender_id == session['user_id'] %}sent{% else %}received{% endif %}">
+            <p>{{ msg.content }}</p>
+            <span>{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      <form method="POST" class="message-form">
+        <input type="text" name="message" placeholder="Type your message..." required />
+        <button type="submit">Send</button>
+      </form>
+    {% else %}
+      <p>Select a user to start chatting.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

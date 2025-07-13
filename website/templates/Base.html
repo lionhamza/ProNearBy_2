@@ -7,25 +7,29 @@
   <title>{% block title %}ProNearBy{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='feed.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
 </head>
 <body>
   <header>
     <div class="header-container">
       <div class="header-search-container">
-        <a href="{{ url_for('views.Base') }}" class="logo-link">
-          <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="logo" class="header-icon" />
-        </a>
+  
+
+  <a href="{{ url_for('views.Base') }}" class="logo-link">
+    <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="logo" class="message-icon" />
+  </a>
 
         <!-- Moved and adapted search form -->
         <form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
           <div class="search-input-wrapper">
             <i class="fas fa-search"></i>
-            <input type="text" class="header-search-input" name="search" placeholder="Search for a Pro..." value="{{ request.args.get('search', '') }}" />
+            <input type="text" class="header-search-input" name="search" placeholder="    Search for a Pro..." value="{{ request.args.get('search', '') }}" />
           </div>
           <div class="search-input-wrapper">
             <i class="fas fa-map-marker-alt"></i>
-            <input type="text" class="header-search-input" name="location" placeholder="Which location are you in?" value="{{ request.args.get('location', '') }}" />
+            <input type="text" class="header-search-input" name="location" placeholder="    Which location..." value="{{ request.args.get('location', '') }}" />
           </div>
           <button type="submit" class="header-search-button">Search</button>
         </form>
@@ -37,13 +41,82 @@
           <i class="fas fa-stream"></i> Professional Feed
         </a>
       </div>
-      <div class="icons-container">
-        <img src="{{ url_for('static', filename='assets/message.jpg') }}" alt="message_icon" class="header-icon" />
-        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="notification_icon" class="header-icon" />
-      </div>
-    </div>
-  </header>
+     <div class="icons-container">
+    <a href="{{ url_for('views.messages') }}">
+       <img src="{{ url_for('static', filename='assets/message.png') }}" alt="message_icon" class="message-icon" />
+    </a>
 
+  <div class="notification-wrapper">
+    <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="notification_icon" class="header-icon" id="notificationBell" />
+
+    <!-- Notification Dropdown -->
+    <div class="notification-dropdown" id="notificationDropdown">
+      <h4>New Requests</h4>
+      {% if service_requests %}
+        {% for request in service_requests %}
+          <div class="notification-item">
+            <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
+            <small>
+              {{ request.service_type }} |
+              {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
+              {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
+            </small>
+            <div class="notification-actions">
+              <button class="accept-btn">Accept</button>
+              <button class="decline-btn">Decline</button>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="no-notifications">No new requests</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- INSERT LOGOUT BUTTON HERE -->
+  <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Log out">
+    <i class="fas fa-sign-out-alt"></i>
+  </a>
+</div>
+
+
+  </header>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-messages" id="flash-container">
+     {% for category, message in messages %}
+      <div class="flash-message {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+
+  {% endif %}
+{% endwith %}
   {% block div %}{% endblock %}
 </body>
+
+<script>
+  const bell = document.getElementById('notificationBell');
+  const dropdown = document.getElementById('notificationDropdown');
+
+  bell.addEventListener('click', () => {
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+  });
+
+  window.addEventListener('click', function(e) {
+    if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+      dropdown.style.display = 'none';
+    }
+  });
+</script>
+<script>
+  // Automatically fade out flash messages after 1 second
+  setTimeout(() => {
+    const container = document.getElementById("flash-container");
+    if (container) {
+      container.style.transition = "opacity 0.5s ease";
+      container.style.opacity = 0;
+      setTimeout(() => container.remove(), 500);  // fully remove from DOM
+    }
+  }, 1500);
+</script>
 </html>

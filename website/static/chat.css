@@ -1,0 +1,45 @@
+.chat-container {
+  display: flex;
+  padding: 20px;
+  margin-top: 80px; /* Match your fixed header height */
+}
+
+.user-list {
+  width: 200px;
+  border-right: 1px solid #ccc;
+}
+.chat-user {
+  display: block;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-decoration: none;
+  color: black;
+}
+.chat-user.active {
+  background-color: #f0f0f0;
+}
+.chat-box {
+  flex: 1;
+  padding: 0 20px;
+}
+.message-history {
+  height: 400px;
+  overflow-y: auto;
+  background: #fafafa;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.sent {
+  text-align: right;
+  color: green;
+}
+.received {
+  text-align: left;
+  color: blue;
+}
+.message-form {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}

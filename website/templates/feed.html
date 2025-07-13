@@ -29,17 +29,18 @@
   {% for pro in professionals %}
   <div class="pro-card">
     <div class="pro-header">
-      {% if pro.image_url %}
-        <img src="{{ pro.image_url }}" alt="{{ pro.Name }}" class="pro-avatar">
+      {% if pro.Image %}
+      <img src="{{ url_for('static', filename=pro.Image) }}" alt="{{ pro.Name }}" class="pro-avatar">
+
       {% else %}
         {% set default_image = "https://img.freepik.com/free-photo/professional-construction-worker-with-helmet_23-2149136294.jpg" %}
-        {% if 'electrician' in pro.Service.lower() %}
+        {% if pro.Service and 'electrician' in pro.Service.lower() %}
             {% set default_image = "https://img.freepik.com/free-photo/electrician-working-electric-panel_23-2147919518.jpg" %}
-        {% elif 'plumber' in pro.Service.lower() %}
+        {% elif pro.Service and 'plumber' in pro.Service.lower() %}
             {% set default_image = "https://img.freepik.com/free-photo/plumber-fixing-sink-pipe_23-2149134874.jpg" %}
-        {% elif 'painter' in pro.Service.lower() %}
+        {% elif pro.Service and 'painter' in pro.Service.lower() %}
             {% set default_image = "https://img.freepik.com/free-photo/painter-man-work_1157-26148.jpg" %}
-        {% elif 'carpenter' in pro.Service.lower() %}
+        {% elif pro.Service and  'carpenter' in pro.Service.lower() %}
             {% set default_image = "https://img.freepik.com/free-photo/carpenter-cutting-mdf-board-inside-home-workshop_23-2149451063.jpg" %}
         {% endif %}
         <img src="{{ default_image }}" alt="{{ pro.Service }}" class="pro-avatar">
@@ -78,9 +79,75 @@
 
     <div class="pro-actions">
       <a href="{{ url_for('views.profile', user_id=pro.ID) }}" class="profile-btn">View Profile</a>
-      <button class="connect-btn">Request Service</button>
+      <button class="connect-btn" data-pro-id="{{ pro.ID }}" data-pro-name="{{ pro.Name }} {{ pro.Surname }}">Request Service</button>
     </div>
   </div>
   {% endfor %}
 </div>
+<!-- Global Request Service Modal -->
+<div id="globalServiceRequestModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="globalCloseServiceModal">&times;</span>
+    <form action="{{ url_for('views.request_service') }}" method="POST" enctype="multipart/form-data" class="edit-form">
+      <h3>Request a Service</h3>
+
+      <input type="hidden" name="receiver_id" id="modal-receiver-id">
+
+      <label>Service Type:</label>
+      <select name="service_type" required>
+        <option value="">-- Select a Service --</option>
+        <option value="Plumbing">Plumbing</option>
+        <option value="Cleaning">Cleaning</option>
+        <option value="Electrician">Electrician</option>
+        <option value="Painting">Painting</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label>Service (title):</label>
+      <input type="text" name="service" placeholder="Short title of the request" required>
+
+      <label>Location:</label>
+      <input type="text" name="location" required>
+
+      <label>Description:</label>
+      <textarea name="description" placeholder="Briefly describe your request" required></textarea>
+
+      <label>Upload Image (optional):</label>
+      <input type="file" name="image">
+
+      <label>Preferred Date:</label>
+      <input type="date" name="preferred_date">
+
+      <label>Preferred Time:</label>
+      <input type="time" name="preferred_time">
+
+      <button type="submit" class="save-btn">Send Request</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Global service modal logic
+  const connectButtons = document.querySelectorAll(".connect-btn");
+  const globalModal = document.getElementById("globalServiceRequestModal");
+  const closeGlobalBtn = document.getElementById("globalCloseServiceModal");
+  const receiverInput = document.getElementById("modal-receiver-id");
+
+  connectButtons.forEach(button => {
+    button.addEventListener("click", () => {
+      const proId = button.getAttribute("data-pro-id");
+      receiverInput.value = proId;
+      globalModal.style.display = "block";
+    });
+  });
+
+  closeGlobalBtn.onclick = () => globalModal.style.display = "none";
+
+  window.onclick = (e) => {
+    if (e.target == globalModal) {
+      globalModal.style.display = "none";
+    }
+  };
+</script>
+
 {% endblock %}

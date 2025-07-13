@@ -31,15 +31,6 @@ def login_post():
  
 
 
-@auth.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    flash("Logged out successfully!", "success")
-    return redirect(url_for('auth.login_get'))
-
-
-#from flask import Blueprint, render_template, request, redirect, url_for, flash
-#from .models import User
 
 
 # Show sign-up page
@@ -75,3 +66,12 @@ def signup_post():
 
     flash("Account created! You can now sign in.", "success")
     return redirect(url_for('auth.login_get'))
+
+# In auth.py
+from flask import Blueprint, redirect, url_for, session
+
+
+@auth.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('auth.login_get'))  # Redirect to login page

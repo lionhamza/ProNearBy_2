@@ -6,18 +6,18 @@
 <div class="main-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <img src="{{ url_for('static', filename='assets/electrician.jpg') }}" alt="Profile Picture" class="profile-pic" />
-    <h2 class="username">John Doe</h2>
-    <p class="role">Electrician</p>
-    <p class="bio">⚡ Helping homes stay bright and safe</p>
-
-    <hr class="sidebar-divider" />
-
+    <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}" alt="Profile Picture" class="profile-pic" />
+    <h2 class="username"><span>{{ user.Name }}</span> <span>{{ user.Surname }}</span></h2>
+    <p class="role">{{ user.Service }}</p>
+    <p class="bio">{{ user.Bio }}</p>
+    <hr />
+    <p><strong>Location:</strong> {{ user.Location }}</p>
+    <p><strong>Experience:</strong> {{ user.Experience }}</p>
    
-    <p><strong>Experience:</strong> 5+ years</p>
+
+    <p><strong>Availability:</strong> {{ user.availability }}</p>
+    <p><strong>Rating:</strong> ⭐ {{ user.Rating }} ({{ user.Reviews }} reviews)</p>
     
-    <p><strong>Availability:</strong> Mon–Fri, 8am–5pm</p>
-    <p><strong>Rating:</strong> ⭐ 4.7 (88 reviews)</p>
 
     <hr class="sidebar-divider" />
 
@@ -36,9 +36,9 @@
   {% set post_user = post.user %}
   <div class="post-card">
     <div class="post-header">
-      <img src="{{ url_for('static', filename=user.Image or 'assets/electrician.jpg') }}" class="post-profile-pic" alt="User Pic">
+      <img src="{{ url_for('static', filename=post_user.Image or 'assets/defualtPP.png') }}" class="post-profile-pic" alt="User Pic">
       <div class="post-user-info">
-        <strong>{{ user.Name }} {{ user.Surname }}</strong>
+        <strong>{{ post_user.Name }} {{ post_user.Surname }}</strong>
         <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
       </div>
       <div class="post-options">⋮</div>
@@ -70,4 +70,18 @@
     <!-- Copy the above div and change content for more cards -->
   </section>
 </div>
+
+<script>
+  // Automatically fade out flash messages after 1 second
+  setTimeout(() => {
+    const container = document.getElementById("flash-container");
+    if (container) {
+      container.style.transition = "opacity 0.5s ease";
+      container.style.opacity = 0;
+      setTimeout(() => container.remove(), 500);  // fully remove from DOM
+    }
+  }, 1000);
+</script>
+
+
 {% endblock %}

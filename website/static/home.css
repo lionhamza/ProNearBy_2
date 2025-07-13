@@ -55,6 +55,13 @@ header {
   cursor: pointer;
 }
 
+.message-icon {
+  width: 40px;
+  height: 32px;
+  object-fit: contain;
+  cursor: pointer;
+}
+
 .header-search-input {
   padding: 8px 12px;
   border: 1px solid #ddd;
@@ -870,4 +877,79 @@ body {
 .flash-message.error {
   background-color: #f8d7da;
   color: #721c24;
+}
+
+.notification-wrapper {
+  position: relative;
+}
+
+.notification-dropdown {
+  display: none;
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 320px;
+  background: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  border-radius: 8px;
+  padding: 12px;
+  z-index: 1000;
+}
+
+.notification-dropdown h4 {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.notification-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.notification-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.accept-btn, .decline-btn {
+  padding: 6px 12px;
+  border: none;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.accept-btn {
+  background-color: #2b6cb0;
+  color: white;
+}
+
+.decline-btn {
+  background-color: #e53e3e;
+  color: white;
+}
+
+.no-notifications {
+  color: #666;
+  text-align: center;
+  padding: 10px;
+}
+
+
+.logout-btn {
+  margin-right: 5px;
+  color: #2b6cb0;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.logout-btn:hover {
+  color: #e53e3e;
 }
