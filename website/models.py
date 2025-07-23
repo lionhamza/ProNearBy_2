@@ -1,35 +1,33 @@
-from sqlalchemy.dialects.postgresql import JSON  # add this at the top
-from . import db
+﻿from . import db
 from datetime import datetime
+import json
 
 class User(db.Model):
-    __tablename__ = 'User_Info'  # <-- match this to your real table name
+    __tablename__ = 'User_Info'
 
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
-
-    Name = db.Column(db.String)
-    Email=db.Column(db.String)
-    Location = db.Column(db.String)
-    Service = db.Column(db.String)
-    Experience = db.Column(db.String) 
-    CellPhone = db.Column(db.String)
-    availability = db.Column(db.String)
+    Name = db.Column(db.String(100))
+    Email = db.Column(db.String(100))
+    Location = db.Column(db.String(200))
+    Service = db.Column(db.String(100))
+    Experience = db.Column(db.String(200))
+    CellPhone = db.Column(db.String(20))
+    availability = db.Column(db.String(100))
     Rating = db.Column(db.Float)
     Reviews = db.Column(db.Integer)
-    Bio =db.Column(db.String)
-    Surname=db.Column(db.String)
-    Image = db.Column(db.String)  # e.g. 'assets/electrician.jpg'
-    CoverImage=db.Column(db.String)
-    Password=db.Column(db.String)
-
+    Bio = db.Column(db.Text)
+    Surname = db.Column(db.String(100))
+    Image = db.Column(db.String(200))
+    CoverImage = db.Column(db.String(200))
+    Password = db.Column(db.String(200))
 
 class Post(db.Model):
     __tablename__ = 'posts'
 
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(500))
-    media = db.Column(JSON, nullable=True)  # <-- changed from image to media
-    timestamp = db.Column(db.DateTime, default=db.func.now())
+    media = db.Column(db.Text, nullable=True)  # Store JSON as text for SQLite
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     user_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'))
     user = db.relationship('User', backref=db.backref('posts', lazy=True))
@@ -46,19 +44,14 @@ class ServiceRequest(db.Model):
     image = db.Column(db.Text)
     preferred_date = db.Column(db.Date)
     preferred_time = db.Column(db.Time)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-
-
-
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Message(db.Model):
     __tablename__ = 'message'
 
     id = db.Column(db.Integer, primary_key=True)
-
     sender_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'), nullable=False)
-
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
