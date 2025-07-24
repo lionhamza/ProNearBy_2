@@ -42,23 +42,11 @@
   {% for pro in professionals %}
   <div class="pro-card">
     <div class="pro-header">
-      {% if pro.image_url %}
-        <img src="{{ pro.image_url }}" alt="{{ pro.Name }}" class="pro-avatar">
-      {% else %}
-        <!-- Default image based on profession -->
-        {% set default_image = "https://img.freepik.com/free-photo/professional-construction-worker-with-helmet_23-2149136294.jpg" %}
-        {% if 'electrician' in pro.Service.lower() %}
-            {% set default_image = "https://img.freepik.com/free-photo/electrician-working-electric-panel_23-2147919518.jpg" %}
-        {% elif 'plumber' in pro.Service.lower() %}
-            {% set default_image = "https://img.freepik.com/free-photo/plumber-fixing-sink-pipe_23-2149134874.jpg" %}
-        {% elif 'painter' in pro.Service.lower() %}
-            {% set default_image = "https://img.freepik.com/free-photo/painter-man-work_1157-26148.jpg" %}
-        {% elif 'carpenter' in pro.Service.lower() %}
-            {% set default_image = "https://img.freepik.com/free-photo/carpenter-cutting-mdf-board-inside-home-workshop_23-2149451063.jpg" %}
-        {% endif %}
-        <img src="{{ default_image }}" alt="{{ pro.Service }}" class="pro-avatar">
-      {% endif %}
       
+    <img src="{{ url_for('static', filename='uploads/' + pro.Image) if pro.Image else url_for('static', filename='assets/defaultPP.png') }}"
+     alt="{{ pro.Name }}" class="pro-avatar">
+
+     alt="{{ pro.Name }}" class="pro-avatar">
       <div class="pro-title">
         <h3 class="pro-name">{{ pro.Name }} {{ pro.Surname }}</h3>
         <p class="pro-role">{{ pro.Service }}</p>

@@ -1,4 +1,3 @@
-<!-- base.html -->
 <!DOCTYPE html> 
 <html lang="en">
 <head>
@@ -13,79 +12,133 @@
 </head>
 <body>
   <header>
-    <div class="header-container">
-      <div class="header-search-container">
-  
+  <div class="header-container">
 
-  <a href="{{ url_for('views.Base') }}" class="logo-link">
-    <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="logo" class="message-icon" />
-  </a>
-
-        <!-- Moved and adapted search form -->
-        <form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
-          <div class="search-input-wrapper">
-            <i class="fas fa-search"></i>
-            <input type="text" class="header-search-input" name="search" placeholder="    Search for a Pro..." value="{{ request.args.get('search', '') }}" />
-          </div>
-          <div class="search-input-wrapper">
-            <i class="fas fa-map-marker-alt"></i>
-            <input type="text" class="header-search-input" name="location" placeholder="    Which location..." value="{{ request.args.get('location', '') }}" />
-          </div>
-          <button type="submit" class="header-search-button">Search</button>
-        </form>
-
-      </div>
-      <div class="nav-links">
-        <a href="{{ url_for('views.Base') }}" class="nav-link">Home</a>
-        <a href="{{ url_for('views.mock_feed') }}" class="nav-link">
-          <i class="fas fa-stream"></i> Professional Feed
-        </a>
-      </div>
-     <div class="icons-container">
-    <a href="{{ url_for('views.messages') }}">
-       <img src="{{ url_for('static', filename='assets/message.png') }}" alt="message_icon" class="message-icon" />
+    <!-- Logo on far left -->
+    <a href="{{ url_for('views.Base') }}" class="logo-link">
+      <img src="{{ url_for('static', filename='assets/favicon.ico') }}" alt="ProNearBy Logo" class="logo-icon" />
     </a>
 
-  <div class="notification-wrapper">
-    <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="notification_icon" class="header-icon" id="notificationBell" />
+    <!-- Search form in center -->
+    <form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
+  <!-- Always visible -->
+  <input
+    type="text"
+    class="header-search-input"
+    name="search"
+    placeholder="Search for a Pro..."
+    value="{{ request.args.get('search', '') }}"
+    onclick="showMobileSearch()"
+  />
 
-    <!-- Notification Dropdown -->
-    <div class="notification-dropdown" id="notificationDropdown">
-      <h4>New Requests</h4>
-      {% if service_requests %}
-        {% for request in service_requests %}
-          <div class="notification-item">
-            <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
-            <small>
-              {{ request.service_type }} |
-              {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
-              {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
-            </small>
-            <div class="notification-actions">
-             <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
-  <button type="submit" class="accept-btn">Accept</button>
-</form>
-<form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
-  <button type="submit" class="decline-btn">Decline</button>
-</form>
-
-            </div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <p class="no-notifications">No new requests</p>
-      {% endif %}
-    </div>
+  <!-- Hidden on small screens -->
+  <div class="location-search-wrapper" id="locationSearch">
+    <input
+      type="text"
+      class="header-search-input location-input"
+      name="location"
+      placeholder="Which location..."
+      value="{{ request.args.get('location', '') }}"
+    />
+    <button type="submit" class="header-search-button">Search</button>
   </div>
+</form>
 
-  <!-- INSERT LOGOUT BUTTON HERE -->
-  <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Log out">
-    <i class="fas fa-sign-out-alt"></i>
-  </a>
+
+    <!-- Nav links -->
+    <div class="nav-links">
+      <a href="{{ url_for('views.Base') }}" class="nav-link">Home</a>
+      <a href="{{ url_for('views.mock_feed') }}" class="nav-link">
+          <i class="fas fa-stream"></i> Professional Feed
+        </a>
+    </div>
+
+    <!-- Icons and notification -->
+    <div class="icons-container">
+
+      <a href="{{ url_for('views.messages') }}">
+        <img src="{{ url_for('static', filename='assets/message.png') }}" alt="Messages" class="header-icon" />
+      </a>
+
+      <div class="notification-wrapper">
+        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="Notifications" class="header-icon" id="notificationBell" />
+        <div class="notification-dropdown" id="notificationDropdown">
+          <h4>New Requests</h4>
+          {% if service_requests %}
+            {% for request in service_requests %}
+              <div class="notification-item">
+                <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
+                <small>
+                  {{ request.service_type }} |
+                  {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
+                  {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
+                </small>
+                <div class="notification-actions">
+                  <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
+                    <button type="submit" class="accept-btn">Accept</button>
+                  </form>
+                  <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
+                    <button type="submit" class="decline-btn">Decline</button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="no-notifications">No new requests</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+      <a href="{{ url_for('auth.logout') }}" class="icon-link logout-icon">
+     <i class="fas fa-sign-out-alt"></i>
+     </a>
+
+
+      <!-- Mobile hamburger -->
+      <div class="mobile-menu-icon" onclick="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+      </div>
+
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobileMenu">
+  <a href="{{ url_for('views.Base') }}">Home</a>
+  <a href="{{ url_for('views.mock_feed') }}">Professional Feed</a>
+  <a href="{{ url_for('views.messages') }}">Messages</a>
+  <a href="#" onclick="toggleMobileNotificationDropdown()">Notifications</a>
+  <a href="{{ url_for('auth.logout') }}">Logout</a>
+</div>
+
+<!-- Mobile Notification Dropdown -->
+<div class="mobile-notification-dropdown" id="mobileNotificationDropdown" style="display: none;">
+  <h4>New Requests</h4>
+  {% if service_requests %}
+    {% for request in service_requests %}
+      <div class="notification-item">
+        <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
+        <small>
+          {{ request.service_type }} |
+          {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
+          {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
+        </small>
+        <div class="notification-actions">
+          <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
+            <button type="submit" class="accept-btn">Accept</button>
+          </form>
+          <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
+            <button type="submit" class="decline-btn">Decline</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="no-notifications">No new requests</p>
+  {% endif %}
 </div>
 
 
-  </header>
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
     <div class="flash-messages" id="flash-container">
@@ -97,6 +150,9 @@
   {% endif %}
 {% endwith %}
   {% block div %}{% endblock %}
+  <!-- END OF MAIN CONTENT -->
+
+
 </body>
 
 <script>
@@ -123,5 +179,35 @@
       setTimeout(() => container.remove(), 500);  // fully remove from DOM
     }
   }, 1500);
+</script>
+<script>
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    menu.classList.toggle('show');
+  }
+
+  // Close when clicking outside
+  window.addEventListener('click', function (e) {
+    const menu = document.getElementById('mobileMenu');
+    const icon = document.querySelector('.mobile-menu-icon');
+    if (!menu.contains(e.target) && !icon.contains(e.target)) {
+      menu.classList.remove('show');
+    }
+  });
+</script>
+
+<script>
+ 
+
+  function toggleMobileNotificationDropdown() {
+    const dropdown = document.getElementById('mobileNotificationDropdown');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+  }
+</script>
+<script>
+  function showMobileSearch() {
+    const wrapper = document.getElementById("locationSearch");
+    wrapper.classList.toggle("show");
+  }
 </script>
 </html>

@@ -17,14 +17,16 @@ def Base():
     user_id = session['user_id']
     user = User.query.get(user_id)
 
-    # Only fetch requests sent to this professional
     service_requests = ServiceRequest.query.filter_by(receiver_id=user_id).order_by(ServiceRequest.created_at.desc()).all()
 
-    # ✅ Fetch posts (excluding own posts if needed)
-    posts = Post.query.filter(Post.user_id != user_id).options(joinedload(Post.user)).order_by(Post.timestamp.desc()).all()
+    # Fetch posts (excluding own)
+    posts = Post.query.filter(Post.user_id != user_id).options(joinedload(Post.user)).all()
 
+    # 🔀 Shuffle the posts randomly
+    random.shuffle(posts)
 
     return render_template("home.html", user=user, posts=posts, service_requests=service_requests)
+
 
 
 @views.route('/profile/<int:user_id>')
