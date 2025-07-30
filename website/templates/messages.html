@@ -3,7 +3,8 @@
 
 {% block div %}
 <div class="chat-container">
-  <div class="user-list">
+  <!-- User List -->
+  <div id="userList" class="user-list">
     <h3>Chats</h3>
     {% for user in users %}
       <a href="{{ url_for('views.messages', user_id=user.ID) }}" class="chat-user {% if selected_user and user.ID == selected_user.ID %}active{% endif %}">
@@ -12,8 +13,10 @@
     {% endfor %}
   </div>
 
-  <div class="chat-box">
+  <!-- Chat Box -->
+  <div id="chatBox" class="chat-box {% if selected_user %}active{% endif %}">
     {% if selected_user %}
+      <a href="#" class="back-link" onclick="goBackToList()">← Back</a>
       <h3>Chat with {{ selected_user.Name }}</h3>
       <div class="message-history">
         {% for msg in messages %}
@@ -32,4 +35,33 @@
     {% endif %}
   </div>
 </div>
+
+
+<!-- JavaScript to control mobile view toggle -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const isMobile = window.innerWidth <= 768;
+    const userList = document.getElementById("userList");
+    const chatBox = document.getElementById("chatBox");
+    const selectedUser = {{ 'true' if selected_user else 'false' }};
+
+    if (isMobile) {
+      if (selectedUser) {
+        userList.style.display = "none";
+        chatBox.classList.add("active");
+      } else {
+        chatBox.classList.remove("active");
+        chatBox.style.display = "none";
+      }
+    }
+  });
+
+  function goBackToList() {
+    document.getElementById("chatBox").classList.remove("active");
+    document.getElementById("chatBox").style.display = "none";
+    document.getElementById("userList").style.display = "block";
+  }
+</script>
+
+
 {% endblock %}

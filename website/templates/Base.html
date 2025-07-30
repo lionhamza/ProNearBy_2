@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
+ 
+
 </head>
 <body>
   <header>
@@ -108,6 +110,10 @@
   <a href="{{ url_for('views.mock_feed') }}">Professional Feed</a>
   <a href="{{ url_for('views.messages') }}">Messages</a>
   <a href="#" onclick="toggleMobileNotificationDropdown()">Notifications</a>
+  {% if user %}
+  <a href="{{ url_for('views.profile', user_id=user.ID) }}">View Profile</a>
+{% endif %}
+
   <a href="{{ url_for('auth.logout') }}">Logout</a>
 </div>
 
@@ -152,6 +158,66 @@
   {% block div %}{% endblock %}
   <!-- END OF MAIN CONTENT -->
 
+<script>
+  function showMobileSearch() {
+    const wrapper = document.getElementById("locationSearch");
+    wrapper.classList.toggle("show");
+  }
+
+  // Close location search when clicking outside
+  window.addEventListener("click", function (e) {
+    const searchInput = document.querySelector(".header-search-input");
+    const locationWrapper = document.getElementById("locationSearch");
+
+    // If search is open, and click is outside both input and wrapper, close it
+    if (
+      locationWrapper.classList.contains("show") &&
+      !searchInput.contains(e.target) &&
+      !locationWrapper.contains(e.target)
+    ) {
+      locationWrapper.classList.remove("show");
+    }
+  });
+
+  // Prevent clicks inside search form from triggering outside close
+  document.querySelector(".search-form").addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const mobileDropdown = document.getElementById('mobileNotificationDropdown');
+    const mobileToggleLink = document.querySelector('a[onclick="toggleMobileNotificationDropdown()"]');
+
+    // 1. Toggle dropdown when "Notifications" link is clicked
+    mobileToggleLink.addEventListener('click', function (e) {
+      e.preventDefault(); // stop the <a> navigation
+      e.stopPropagation(); // prevent bubbling
+      mobileDropdown.style.display = mobileDropdown.style.display === 'block' ? 'none' : 'block';
+    });
+
+    // 2. Close when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!mobileDropdown.contains(e.target) && !mobileToggleLink.contains(e.target)) {
+        mobileDropdown.style.display = 'none';
+      }
+    });
+
+    // 3. Close when clicking a notification item
+    // 3. Close when clicking a notification item
+mobileDropdown.addEventListener('click', function (e) {
+  if (e.target.classList.contains('notification-item') || e.target.closest('.notification-item')) {
+    mobileDropdown.style.display = 'none';
+
+    // Also close the mobile menu
+    const mobileMenu = document.getElementById('mobileMenu');
+    mobileMenu.classList.remove('show');
+  }
+});
+
+
+  });
+</script>
 
 </body>
 
@@ -197,17 +263,10 @@
 </script>
 
 <script>
- 
-
-  function toggleMobileNotificationDropdown() {
-    const dropdown = document.getElementById('mobileNotificationDropdown');
-    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-  }
-</script>
-<script>
   function showMobileSearch() {
     const wrapper = document.getElementById("locationSearch");
     wrapper.classList.toggle("show");
   }
 </script>
+
 </html>

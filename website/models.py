@@ -1,6 +1,6 @@
-﻿from . import db
-from datetime import datetime
-import json
+﻿from datetime import datetime
+from sqlalchemy.dialects.postgresql import JSON
+from . import db  # ✅ now safe, since db is defined in __init__.py
 
 class User(db.Model):
     __tablename__ = 'User_Info'
@@ -26,7 +26,7 @@ class Post(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String(500))
-    media = db.Column(db.Text, nullable=True)  # Store JSON as text for SQLite
+    media = db.Column(JSON, nullable=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     user_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'))
@@ -55,6 +55,5 @@ class Message(db.Model):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')

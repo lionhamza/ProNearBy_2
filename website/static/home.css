@@ -564,10 +564,10 @@ body {
 }
 
 .content-section {
-  margin-left: 200px;
+  margin-left: 270px;
   flex: 1;
   overflow-y: auto;
-  padding: 20px 60px 30px 30px; 
+  padding: 5px 60px 30px 30px; 
   background-color: #fafafa;
   min-width: 0;
   height: auto; /* 👈 Let content decide height */
@@ -1135,12 +1135,19 @@ body {
 
 .mobile-notification-dropdown {
   display: none;
+  position: fixed; /* ✅ or 'absolute' if you want it under the icon */
+  top: 80px;        /* adjust to match header height */
+  left: 10px;
+  right: 10px;
   background: white;
-  margin: 10px;
   padding: 12px;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  z-index: 999;
+  z-index: 3000;
+}
+
+.mobile-notification-dropdown.show {
+  display: block;
 }
 
 
@@ -1222,11 +1229,19 @@ body {
   }
 }
 
+@media(max-width:768px){
+  .main-layout {
+  margin: 50px auto 0;
+}
+
+}
+
 
 
 @media(max-width:768px){
   .content-section{
-     height: 100%; /* Or any fixed height like 500px */
+     height: 100%; 
+     width:100vw;/* Or any fixed height like 500px */
   overflow-y: auto;
   overflow-x: hidden;
     
@@ -1246,11 +1261,112 @@ body {
     display: flex;
   }
 }
-
+.mobile-profile-info {
+  display: none;
+}
 @media (max-width: 480px) {
   .post-card {
     padding: 14px;
     margin: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   }
+
+}
+
+@media (max-width: 768px) {
+  .mobile-profile-info {
+    display: block;
+    background-color: #ffffff;
+    padding: 16px;
+    margin: 10px 10px 0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    font-size: 0.9rem;
+    color: #333;
+  }
+  .notification-dropdown {
+    display: none;
+    position: absolute;
+    
+    right: 0;
+    width: 320px;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    padding: 12px;
+    z-index: 1000;
+    margin: 50px;
+}
+
+  .mobile-profile-info h2.username {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1a202c;
+  }
+
+  .mobile-profile-info .role {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .mobile-profile-info .bio {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #444;
+    margin-bottom: 10px;
+  }
+
+  .mobile-profile-info p {
+    font-size: 0.85rem;
+    margin: 6px 0;
+    line-height: 1.4;
+  }
+
+  .mobile-profile-info p strong {
+    font-weight: 600;
+    color: #2b6cb0;
+  }
+
+  .mobile-profile-info .edit-profile-btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 16px;
+    background-color: #2b6cb0;
+    color: #fff;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 6px rgba(43, 108, 176, 0.3);
+  }
+
+  .mobile-profile-info .edit-profile-btn:hover {
+    background-color: #2c5282;
+    transform: translateY(-1px);
+  }
+  
+}
+
+
+.mobile-profile-info {
+  position: relative;
+}
+.hp {
+  margin: 20px 0; /* 20px top and bottom */
+}
+
+.edit-icon-wrapper {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.edit-icon {
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
 }
