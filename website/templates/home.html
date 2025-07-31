@@ -61,8 +61,24 @@
 </div>
 
     <div class="post-actions">
-      <button class="post-btn">❤️ Like</button>
-    </div>
+  <form action="{{ url_for('views.like_post', post_id=post.id) }}" method="POST">
+
+    {% set liked = post.likes.filter_by(user_id=session.get('user_id')).first() %}
+<!-- Assume post.id is available and unique -->
+<button class="like-button" data-post-id="{{ post.id }}">
+  <img
+  src="{{ url_for('static', filename='assets/LikeP.png') if post.id in liked_post_ids else url_for('static', filename='assets/like.png') }}"
+  class="like-icon"
+  id="like-icon-{{ post.id }}"
+  alt="Like"
+/>
+
+</button>
+<span id="like-count-{{ post.id }}">{{ post.like_count }}</span>
+
+  </form>
+</div>
+
   </div>
   {% endfor %}
 </div>

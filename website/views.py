@@ -1,13 +1,16 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from .models import User , Post , ServiceRequest,Message
+from .models import User , Post , ServiceRequest,Message, Like
 from . import db
 from flask import session
 from datetime import datetime
+from flask import jsonify
 
 views = Blueprint('views', __name__)
 
 import random
 from sqlalchemy.orm import joinedload
+
+from .models import Like  # make sure Like is imported
 
 @views.route('/')
 def Base():
@@ -25,15 +28,43 @@ def Base():
     # 🔀 Shuffle the posts randomly
     random.shuffle(posts)
 
-    return render_template("home.html", user=user, posts=posts, service_requests=service_requests)
+    # ✅ Get list of post IDs that the user has liked
+    liked_post_ids = [like.post_id for like in Like.query.filter_by(user_id=user_id).all()]
+
+    return render_template(
+        "home.html",
+        user=user,
+        posts=posts,
+        service_requests=service_requests,
+        liked_post_ids=liked_post_ids  # ✅ pass this to the template
+    )
 
 
+
+
+from .models import Like  # if not already imported
 
 @views.route('/profile/<int:user_id>')
 def profile(user_id):
-    user = User.query.get_or_404(user_id)
-    current_user_id = session.get('user_id')
-    return render_template("userProfile.html", user=user, current_user_id=current_user_id)
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login_get'))
+
+    current_user_id = session['user_id']
+    user = User.query.get(user_id)
+
+    # Get posts by this user
+    posts = Post.query.filter_by(user_id=user_id).order_by(Post.timestamp.desc()).all()
+
+    # Get liked post IDs by the current user
+    liked_post_ids = [like.post_id for like in Like.query.filter_by(user_id=current_user_id).all()]
+
+    return render_template(
+        "userProfile.html", 
+        user=user, 
+        posts=posts, 
+        current_user_id=current_user_id,
+        liked_post_ids=liked_post_ids
+    )
 
 
 @views.route('/login')
@@ -348,3 +379,31 @@ def decline_request(request_id):
     db.session.commit()
     flash("Service request declined and removed.", "info")
     return redirect(url_for('views.Base'))
+
+
+
+
+@views.route("/like/<int:post_id>", methods=["POST"])
+def like_post(post_id):
+    user_id = session.get("user_id")
+    post = Post.query.get_or_404(post_id)
+    
+    existing_like = Like.query.filter_by(user_id=user_id, post_id=post_id).first()
+    
+    if existing_like:
+        db.session.delete(existing_like)
+        liked = False
+    else:
+        new_like = Like(user_id=user_id, post_id=post_id)
+        db.session.add(new_like)
+        liked = True
+
+    db.session.commit()
+
+    like_count = Like.query.filter_by(post_id=post_id).count()
+
+    return jsonify({
+        "success": True,
+        "liked": liked,
+        "like_count": like_count
+    })

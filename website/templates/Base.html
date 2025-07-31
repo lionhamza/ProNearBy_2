@@ -268,5 +268,30 @@ mobileDropdown.addEventListener('click', function (e) {
     wrapper.classList.toggle("show");
   }
 </script>
+<script>
+document.querySelectorAll('.like-button').forEach(button => {
+  button.addEventListener('click', async (e) => {
+    e.preventDefault();  // prevent form from submitting and reloading the page
+
+    const postId = button.getAttribute('data-post-id');
+    const icon = document.getElementById(`like-icon-${postId}`);
+    const likeCount = document.getElementById(`like-count-${postId}`);
+
+    const response = await fetch(`/like/${postId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      icon.src = result.liked ? '/static/assets/likeP.png' : '/static/assets/like.png';
+      likeCount.textContent = result.like_count;
+    }
+  });
+});
+
+</script>
+
+
 
 </html>

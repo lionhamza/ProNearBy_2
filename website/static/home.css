@@ -922,6 +922,21 @@ body {
 .post-btn:hover {
   color: #1a365d;
 }
+.like-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.like-icon {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 
 
 .media-grid {

@@ -31,7 +31,10 @@ class Post(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'))
     user = db.relationship('User', backref=db.backref('posts', lazy=True))
-
+    @property
+    def like_count(self):
+        return self.likes.count()
+    
 class ServiceRequest(db.Model):
     __tablename__ = 'service_requests'
     id = db.Column(db.Integer, primary_key=True)
@@ -57,3 +60,12 @@ class Message(db.Model):
 
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+
+class Like(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User')
+    post = db.relationship('Post', backref=db.backref('likes', lazy='dynamic'))
