@@ -1,0 +1,135 @@
+{% extends "pro_base.html" %}
+{% block title %}Certified Professional - ProNearBy{% endblock %}
+{% block div %}
+<main class="form-container">
+  <section id="signup-panel" class="card ux-card">
+    <header id="form-header" class="idp-form-header">
+      <figure class="brand-logo">
+        <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" />
+      </figure>
+      <h1 class="h3">🎓 Certified Pro Registration</h1>
+      <p style="font-size: 0.85rem; color: #555;">Join as a formally trained service provider.</p>
+    </header>
+
+    <form method="POST" action="{{ url_for('auth.register_certified') }}">
+      <!-- Basic Fields -->
+      <div class="input-group">
+        <label for="name">First Name *</label>
+        <input type="text" id="name" name="name" required />
+      </div>
+
+      <div class="input-group">
+        <label for="surname">Surname *</label>
+        <input type="text" id="surname" name="surname" required />
+      </div>
+
+      <div class="input-group">
+        <label for="email">Email *</label>
+        <input type="text" id="email" name="email" required />
+      </div>
+
+      <div class="input-group">
+        <label for="contact">Contact Number *</label>
+        <input type="text" id="contact" name="contact" required />
+      </div>
+
+      <div class="input-group password-group">
+        <label for="password">Password *</label>
+        <input type="password" id="password" name="password" required />
+        <button type="button" class="toggle-password-btn" id="toggle-pro-password">Show</button>
+      </div>
+      <div class="input-group password-group">
+        <label for="confirm_password">Confirm Password *</label>
+        <input type="password" id="confirm_password" name="confirm_password" required />
+        <button type="button" class="toggle-password-btn" id="toggle-pro-confirm">Show</button>
+      </div>
+      <!-- Pro Details -->
+<!-- after password-group div -->
+
+<div class="pro-details-group full-width">
+  <h2 style="font-size: 1rem; margin-top: 1rem; color: #333; text-align: center;">
+    🎓 Professional Details
+  </h2>
+
+  <div class="input-group full-width">
+    <label for="id_doc">🪪 Upload Government ID *</label>
+    <input type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required />
+  </div>
+
+  <div class="input-group full-width">
+    <label for="cert_doc">📄 Upload Certification or Business Reg. Document *</label>
+    <input type="file" id="cert_doc" name="cert_doc" accept=".pdf,.jpg,.jpeg,.png" required />
+  </div>
+
+  <div class="input-group full-width">
+    <label for="portfolio_files">📁 Upload Portfolio Images</label>
+    <input type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple />
+    <small style="color: #666; font-size: 0.75rem;">
+      You may upload up to 3 images showcasing your work.
+    </small>
+  </div>
+
+  <div class="input-group full-width">
+    <label for="intro_video">🎥 Upload Video Introduction</label>
+    <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm" />
+    <small style="color: #666; font-size: 0.75rem;">
+      Upload a short video (MP4, MOV, or WEBM) introducing yourself and your services. Max size: 50MB.
+    </small>
+  </div>
+</div>
+
+
+
+      <!-- New Fields -->
+      <div class="input-group">
+        <label for="service">🛠️ Service Offered *</label>
+        <input type="text" id="service" name="service" placeholder="e.g., Plumbing, Hairdressing" required />
+      </div>
+
+      <div class="input-group">
+        <label for="experience">📅 Experience *</label>
+        <input type="text" id="experience" name="experience" placeholder="e.g., 5 years, 50+ clients" required />
+      </div>
+
+      <div class="input-group">
+        <label for="availability">🕒 Availability *</label>
+        <input type="text" id="availability" name="availability" placeholder="e.g., Mon-Fri, 9AM–5PM" required />
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary">Register as Certified Pro</button>
+    </form>
+
+    <p class="recovery-links">
+      Prefer to register as a regular user?
+      <a href="{{ url_for('auth.signup_get') }}">Go back to user signup</a>
+    </p>
+  </section>
+</main>
+
+<script>
+  const toggleProPasswordBtn = document.getElementById('toggle-pro-password');
+  const proPasswordInput = document.getElementById('pro_password');
+  toggleProPasswordBtn.addEventListener('click', () => {
+    if (proPasswordInput.type === 'password') {
+      proPasswordInput.type = 'text';
+      toggleProPasswordBtn.textContent = 'Hide';
+    } else {
+      proPasswordInput.type = 'password';
+      toggleProPasswordBtn.textContent = 'Show';
+    }
+  });
+
+  const toggleProConfirmBtn = document.getElementById('toggle-pro-confirm');
+  const proConfirmPasswordInput = document.getElementById('pro_confirm_password');
+  toggleProConfirmBtn.addEventListener('click', () => {
+    if (proConfirmPasswordInput.type === 'password') {
+      proConfirmPasswordInput.type = 'text';
+      toggleProConfirmBtn.textContent = 'Hide';
+    } else {
+      proConfirmPasswordInput.type = 'password';
+      toggleProConfirmBtn.textContent = 'Show';
+    }
+  });
+</script>
+
+{% endblock %}

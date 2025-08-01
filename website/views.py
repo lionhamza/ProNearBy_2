@@ -210,7 +210,7 @@ def mock_feed():
             rating=u.Rating or 0.0,
             reviews=u.Reviews or 0,
             bio=u.Bio,
-            image=f'uploads/{u.Image}' if u.Image else None
+            image=u.Image if u.Image else None
         ) for u in users
     ]
 
@@ -407,3 +407,5 @@ def like_post(post_id):
         "liked": liked,
         "like_count": like_count
     })
+
+

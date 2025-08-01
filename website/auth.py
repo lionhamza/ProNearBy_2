@@ -4,6 +4,12 @@ from . import db
 import secrets
 import requests
 from urllib.parse import urlencode
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
+import os
+from datetime import datetime
+from . import db
+from .models import ProRegistrationRequest
 
 auth = Blueprint('auth', __name__)
 
@@ -147,7 +153,155 @@ def signup_post():
     flash("Account created! You can now sign in.", "success")
     return redirect(url_for('auth.login_get'))
 
+
+@auth.route('/register/pro_type')
+def choose_pro_type():
+    return render_template('choose_pro_type.html')
+
 @auth.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('auth.login_get'))
+
+
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png', 'mp4', 'mov', 'webm'}
+def save_file(file):
+    if file and '.' in file.filename and \
+       file.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS:
+        filename = secure_filename(file.filename)
+        path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(path)
+        return path
+    return None
+@auth.route('/register/certified', methods=['GET', 'POST'])
+def register_certified():
+    if request.method == 'POST':
+        # Basic fields
+        name = request.form.get('name')
+        surname = request.form.get('surname')
+        email = request.form.get('email')
+        contact = request.form.get('contact')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        service = request.form.get('service')
+        experience = request.form.get('experience')
+        availability = request.form.get('availability')
+
+        # Check passwords match
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return redirect(request.url)
+
+        # Upload files
+        def save_file(file):
+            if file and '.' in file.filename and \
+               file.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS:
+                filename = secure_filename(file.filename)
+                path = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(path)
+                return path
+            return None
+
+        id_doc_path = save_file(request.files.get('id_doc'))
+        cert_doc_path = save_file(request.files.get('cert_doc'))
+        intro_video_path = save_file(request.files.get('intro_video'))
+
+        # Save multiple portfolio files
+        portfolio_files = request.files.getlist('portfolio_files')
+        portfolio_paths = []
+        for file in portfolio_files[:3]:  # limit to 3 files
+            path = save_file(file)
+            if path:
+                portfolio_paths.append(path)
+
+        # Store in ProRegistrationRequest table
+        new_request = ProRegistrationRequest(
+            name=name,
+            surname=surname,
+            email=email,
+            contact=contact,
+            password=generate_password_hash(password),
+            service=service,
+            experience=experience,
+            availability=availability,
+            id_doc=id_doc_path,
+            cert_doc=cert_doc_path,
+            intro_video=intro_video_path,
+            portfolio_files=portfolio_paths,
+            is_certified=True,
+            status='pending',
+            submitted_at=datetime.utcnow()
+        )
+
+        try:
+          db.session.add(new_request)
+          db.session.commit()
+        except Exception as e:
+          db.session.rollback()
+          print(f"Error saving certified pro: {e}")
+          flash("Something went wrong. Please try again.", "error")
+          return redirect(request.url)
+
+
+        flash("Your registration request has been submitted for review.", "success")
+        return redirect(url_for('auth.login_get'))
+
+    return render_template('register_certicified.html')
+
+
+@auth.route('/register/experienced', methods=['GET', 'POST'])
+def register_experienced():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        surname = request.form.get('surname')
+        email = request.form.get('email')
+        contact = request.form.get('contact')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        service = request.form.get('service')
+        experience = request.form.get('experience')
+        availability = request.form.get('availability')
+
+        # Password check
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return redirect(request.url)
+
+        # Upload portfolio files (optional)
+        portfolio_files = request.files.getlist('portfolio_files')
+        portfolio_paths = []
+        for file in portfolio_files[:3]:  # limit to 3
+            path = save_file(file)
+            if path:
+                portfolio_paths.append(path)
+
+        # Create new request (experienced = not certified)
+        new_request = ProRegistrationRequest(
+            name=name,
+            surname=surname,
+            email=email,
+            contact=contact,
+            password=generate_password_hash(password),
+            service=service,
+            experience=experience,
+            availability=availability,
+            portfolio_files=portfolio_paths,
+            is_certified=False,
+            status='pending',
+            submitted_at=datetime.utcnow()
+        )
+
+        try:
+            db.session.add(new_request)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error saving experienced pro: {e}")
+            flash("Something went wrong. Please try again.", "error")
+            return redirect(request.url)
+
+        flash("Your registration request has been submitted for review.", "success")
+        return redirect(url_for('auth.login_get'))
+
+    return render_template('register_experienced.html')

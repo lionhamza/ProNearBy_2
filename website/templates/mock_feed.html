@@ -40,13 +40,15 @@
   
   <!-- Professional cards -->
   {% for pro in professionals %}
-  <div class="pro-card">
+ <div class="pro-card">
     <div class="pro-header">
-      
-    <img src="{{ url_for('static', filename='uploads/' + pro.Image) if pro.Image else url_for('static', filename='assets/defaultPP.png') }}"
-     alt="{{ pro.Name }}" class="pro-avatar">
+      <img 
+        src="{{ url_for('static', filename=pro.Image) if pro.Image else url_for('static', filename='assets/defaultPP.png') }}"
+        alt="{{ pro.Name }}"
+        class="pro-avatar"
+        onerror="this.onerror=null; this.src='{{ url_for('static', filename='assets/defaultPP.png') }}';"
+      >
 
-     alt="{{ pro.Name }}" class="pro-avatar">
       <div class="pro-title">
         <h3 class="pro-name">{{ pro.Name }} {{ pro.Surname }}</h3>
         <p class="pro-role">{{ pro.Service }}</p>

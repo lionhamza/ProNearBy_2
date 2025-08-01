@@ -1385,3 +1385,17 @@ body {
   height: 28px;
   cursor: pointer;
 }
+
+.post-user-name {
+  display: block;
+  font-size: 15px;
+  color: #1a202c;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.post-user-name:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+

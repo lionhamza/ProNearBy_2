@@ -1,0 +1,20 @@
+{% extends "pro_base.html" %}
+{% block title %}Choose Pro Type{% endblock %}
+{% block div %}
+<main class="form-container">
+  <h1 class="h3">Become a Service Provider</h1>
+  <p style="color: #666;">Choose your registration type</p>
+
+  <div class="input-group">
+    <a href="{{ url_for('auth.register_certified') }}" class="pro-btn certified">
+      🎓 I'm a Certified Professional
+    </a>
+  </div>
+
+  <div class="input-group">
+    <a href="{{ url_for('auth.register_experienced') }}" class="pro-btn experienced">
+      🛠️ I'm Informally Experienced
+    </a>
+  </div>
+</main>
+{% endblock %}

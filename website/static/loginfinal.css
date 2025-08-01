@@ -5,96 +5,172 @@ body, html {
   background-color: #f5f5f5;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  padding: 5px;
 }
 
 main.form-container {
   background: #fff;
-  padding: 1rem 1.5rem; /* Less padding */
-  border-radius: 8px;
+  padding: 2rem;
+  border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-  max-width: 360px;
+  max-width: 800px;
   width: 100%;
   box-sizing: border-box;
-  text-align: center;
+}
+
+#signup-panel {
+  width: 100%;
 }
 
 #form-header {
-  margin-bottom: 0.8rem;
-}
-
-#form-header h1 {
-  font-size: 1.3rem;
-  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
 
 .brand-logo img {
   max-width: 80px;
+  margin-bottom: 0.5rem;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .input-group {
-  margin-bottom: 0.6rem;
-  text-align: left;
+  flex: 1 1 48%;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group.full-width {
+  flex: 1 1 100%;
 }
 
 label {
-  display: block;
-  margin-bottom: 0.15rem;
   font-weight: 500;
   font-size: 0.85rem;
-  line-height: 1;
+  margin-bottom: 0.3rem;
 }
 
 input[type="text"],
-input[type="password"] {
-  width: 100%;
-  padding: 0.35rem 0.5rem; /* Smaller height */
+input[type="password"],
+input[type="file"] {
+  padding: 0.45rem 0.6rem;
   font-size: 0.9rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box;
 }
 
 .password-group {
   position: relative;
-  text-align: left;
-  margin-bottom: 0.6rem;
 }
 
-.password-group input[type="password"] {
+.password-group input {
   padding-right: 50px;
 }
 
-#toggle-password {
+#toggle-password,
+#toggle-pro-password,
+#toggle-pro-confirm {
   position: absolute;
+  right: 0.5rem;
   top: 50%;
-  right: 0;
   transform: translateY(-50%);
-  height: 100%;
-  padding: 0 0.5rem;
-  font-size: 0.8rem;
-  cursor: pointer;
   background: none;
   border: none;
   color: #2a63b8;
-  user-select: none;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
+
 
 #submitBtn {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.7rem;
   font-size: 1rem;
-  border: none;
   background-color: #007bff;
   color: white;
+  border: none;
   border-radius: 5px;
-  cursor: pointer;
   font-weight: 600;
-  margin-top: 0.7rem;
+  margin-top: 1rem;
+  cursor: pointer;
 }
 
 .recovery-links {
-  margin-top: 0.8rem;
+  margin-top: 1rem;
+  text-align: center;
   font-size: 0.85rem;
-  color: #555;
+}
+
+@media (max-width: 600px) {
+  form {
+    flex-direction: column;
+  }
+
+  .input-group {
+    flex: 1 1 100%;
+  }
+}
+
+/* Ensure portfolio group stacks vertically and centers */
+.portfolio-reputation-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Make the inputs inside portfolio group full width but limit max width */
+.portfolio-reputation-group .input-group.full-width {
+  max-width: 600px;
+  width: 100%;
+}
+
+.pro-details-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pro-details-group .input-group.full-width {
+  max-width: 600px;
+  width: 100%;
+}
+
+.pro-btn {
+  display: block;
+  text-align: center;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.pro-btn.certified {
+  background-color: #0056b3;
+  color: #fff;
+}
+
+.pro-btn.experienced {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.pro-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+.pro-btn:active {
+  transform: translateY(0);
+  opacity: 0.85;
 }

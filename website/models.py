@@ -69,3 +69,29 @@ class Like(db.Model):
 
     user = db.relationship('User')
     post = db.relationship('Post', backref=db.backref('likes', lazy='dynamic'))
+
+
+class ProRegistrationRequest(db.Model):
+    __tablename__ = 'pro_registration_requests'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    surname = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    contact = db.Column(db.String(20), nullable=False)
+    password = db.Column(db.String(200), nullable=False)  # store hashed
+    service = db.Column(db.String(100), nullable=False)
+    experience = db.Column(db.String(200), nullable=False)
+    availability = db.Column(db.String(100), nullable=False)
+    bio = db.Column(db.Text)
+    location = db.Column(db.String(200))
+
+    # Uploads
+    id_doc = db.Column(db.String(300))  # file path to government ID
+    cert_doc = db.Column(db.String(300))  # for certified pros (optional)
+    portfolio_files = db.Column(JSON)  # list of image paths
+    intro_video = db.Column(db.String(300))  # path to video file
+
+    is_certified = db.Column(db.Boolean, default=False)
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'approved', 'rejected'
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)

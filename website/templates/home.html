@@ -38,9 +38,13 @@
     <div class="post-header">
       <img src="{{ url_for('static', filename=post_user.Image or 'assets/defualtPP.png') }}" class="post-profile-pic" alt="User Pic">
       <div class="post-user-info">
-        <strong>{{ post_user.Name }} {{ post_user.Surname }}</strong>
-        <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
-      </div>
+  <a href="{{ url_for('views.profile', user_id=post_user.ID) }}" class="post-user-name">
+  {{ post_user.Name }} {{ post_user.Surname }}
+</a>
+
+  <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
+</div>
+
       <div class="post-options">⋮</div>
     </div>
 
