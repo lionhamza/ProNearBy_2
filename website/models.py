@@ -20,6 +20,9 @@ class User(db.Model):
     Image = db.Column(db.String(200))
     CoverImage = db.Column(db.String(200))
     Password = db.Column(db.String(200))
+    
+    user_type = db.Column(db.String(50), default='regular')  # new field
+
 
 class Post(db.Model):
     __tablename__ = 'posts'
@@ -49,6 +52,9 @@ class ServiceRequest(db.Model):
     preferred_time = db.Column(db.Time)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    status = db.Column(db.String(20), nullable=False, default='pending')  # New column
+
+
 class Message(db.Model):
     __tablename__ = 'message'
 
@@ -77,8 +83,9 @@ class ProRegistrationRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     surname = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), nullable=False)
-    contact = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(100), nullable=False, unique=True)
+    contact = db.Column(db.String(20), nullable=False, unique=True)
+
     password = db.Column(db.String(200), nullable=False)  # store hashed
     service = db.Column(db.String(100), nullable=False)
     experience = db.Column(db.String(200), nullable=False)
@@ -95,3 +102,21 @@ class ProRegistrationRequest(db.Model):
     is_certified = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), default='pending')  # 'pending', 'approved', 'rejected'
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Admin(db.Model):
+    __tablename__ = 'admins'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)  # store hashed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class UserComplaint(db.Model):
+    __tablename__ = 'user_complaints'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'))
+    message = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User')

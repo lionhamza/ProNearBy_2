@@ -6,6 +6,25 @@
 <div class="main-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
+    
+  {% if user.user_type == 'regular' %}
+    <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}" alt="Profile Picture" class="profile-pic" />
+    <h2 class="username"><span>{{ user.Name }}</span> <span>{{ user.Surname }}</span></h2>
+
+    {% if user.Email %}
+      <p><strong>Email:</strong> {{ user.Email }}</p>
+    {% endif %}
+    {% if user.CellPhone %}
+      <p><strong>Contact:</strong> {{ user.CellPhone }}</p>
+       <!-- Become a Pro button -->
+        <hr/>
+      <button class="view-profile-btn">Edit Contact Info</button>
+      <a href="{{ url_for('auth.choose_pro_type') }}" class="browse-pros-btn">
+      <i class="fas fa-stream"></i> Become a Pro
+    </a>
+    {% endif %}
+
+  {% else %}
     <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}" alt="Profile Picture" class="profile-pic" />
     <h2 class="username"><span>{{ user.Name }}</span> <span>{{ user.Surname }}</span></h2>
     <p class="role">{{ user.Service }}</p>
@@ -13,20 +32,13 @@
     <hr />
     <p><strong>Location:</strong> {{ user.Location }}</p>
     <p><strong>Experience:</strong> {{ user.Experience }}</p>
-   
-
     <p><strong>Availability:</strong> {{ user.availability }}</p>
     <p><strong>Rating:</strong> ⭐ {{ user.Rating }} ({{ user.Reviews }} reviews)</p>
-    
-
     <hr class="sidebar-divider" />
-
     <a href="{{ url_for('views.profile', user_id=user.ID) }}" class="view-profile-btn">View Profile</a>
+  {% endif %}
+</aside>
 
-    <a href="{{ url_for('views.mock_feed') }}" class="browse-pros-btn">
-      <i class="fas fa-stream"></i> Browse Professionals
-    </a>
-  </aside>
 
   <!-- Cards -->
   <section class="content-section">
@@ -50,18 +62,38 @@
 
     <div class="post-body">
       <p>{{ post.content }}</p>
-      {% if post.media %}
-       {% for file in post.media %}
-       {% if file.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
-        <img src="{{ url_for('static', filename=file) }}" class="post-img" alt="Image">
-        {% elif file.endswith(('.mp4', '.mov', '.avi')) %}
-         <video controls class="post-img">
-          <source src="{{ url_for('static', filename=file) }}" type="video/mp4">
-          Your browser does not support the video tag.
-         </video>
-       {% endif %}
-      {% endfor %}
-     {% endif %}
+       {% if post.media %}
+<div class="media-grid {% if post.media|length == 1 %}single-media{% elif post.media|length == 3 %}three-media{% endif %}">
+
+    {% set max_visible = 4 %}
+    {% set extra_count = post.media|length - max_visible %}
+    {% for file in post.media %}
+        {% if loop.index0 < max_visible %}
+            {% if file.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+                <div class="media-wrapper">
+                    <img src="{{ url_for('static', filename=file) }}"
+                         class="media-item"
+                         alt="Image"
+                         onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
+                    {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
+                        <div class="overlay">+{{ extra_count }}</div>
+                    {% endif %}
+                </div>
+            {% elif file.endswith(('.mp4', '.mov', '.avi', '.webm')) %}
+                <div class="media-wrapper">
+                    <video controls class="media-item"
+                           onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
+                        <source src="{{ url_for('static', filename=file) }}">
+                    </video>
+                    {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
+                        <div class="overlay">+{{ extra_count }}</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
 </div>
 
     <div class="post-actions">
@@ -89,6 +121,38 @@
 
     <!-- Copy the above div and change content for more cards -->
   </section>
+  
+  {% if user.ID == session.get('user_id') and user.user_type == 'regular' %}
+<!-- Edit Contact Info Modal -->
+<div id="editContactModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeContactModal">&times;</span>
+    <form action="{{ url_for('views.update_contact', user_id=user.ID) }}" method="POST" class="edit-form" enctype="multipart/form-data">
+  <h3>Edit Contact Info</h3>
+
+  <label for="email">Email:</label>
+  <input type="email" name="email" id="email" value="{{ user.Email }}" required>
+
+  <label for="cellphone">Cell Phone:</label>
+  <input type="text" name="cellphone" id="cellphone" value="{{ user.CellPhone }}" required>
+
+  <label for="profile_pic">Profile Picture:</label>
+  <input type="file" name="profile_pic" id="profile_pic" accept="image/*">
+
+  <button type="submit" class="save-btn">Save</button>
+</form>
+
+  </div>
+</div>
+{% endif %}
+
+<div id="lightbox" class="lightbox">
+      <button class="nav-btn left" onclick="prevMedia()">&#10094;</button>
+      <img id="lightbox-img" src="" alt="Full View">
+      <video id="lightbox-video" controls style="display:none;"></video>
+      <button class="nav-btn right" onclick="nextMedia()">&#10095;</button>
+      <span class="close" onclick="closeLightbox()">&times;</span>
+  </div>
 </div>
 
 <script>
@@ -101,6 +165,31 @@
       setTimeout(() => container.remove(), 500);  // fully remove from DOM
     }
   }, 1000);
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const modal = document.getElementById("editContactModal");
+    const closeBtn = document.getElementById("closeContactModal");
+    const openBtn = document.querySelector(".view-profile-btn"); // "Edit Contact Info" button
+
+    if (openBtn) {
+      openBtn.onclick = () => {
+        modal.style.display = "block";
+      };
+    }
+
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        modal.style.display = "none";
+      };
+    }
+
+    window.onclick = (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+      }
+    };
+  });
 </script>
 
 {% endblock %}

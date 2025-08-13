@@ -111,10 +111,14 @@
   <a href="{{ url_for('views.mock_feed') }}">Professional Feed</a>
   <a href="{{ url_for('views.messages') }}">Messages</a>
   <a href="#" onclick="toggleMobileNotificationDropdown()">Notifications</a>
+  
   {% if user %}
-  <a href="{{ url_for('views.profile', user_id=user.ID) }}">View Profile</a>
-{% endif %}
-
+    {% if user.user_type == 'regular' %}
+        <a href="{{ url_for('views.regular_profile', user_id=user.ID) }}">My Profile</a>
+    {% else %}
+        <a href="{{ url_for('views.profile', user_id=user.ID) }}">My Profile</a>
+    {% endif %}
+  {% endif %}
   <a href="{{ url_for('auth.logout') }}">Logout</a>
 </div>
 
@@ -219,6 +223,142 @@ mobileDropdown.addEventListener('click', function (e) {
 
   });
 </script>
+<!-- Lightbox -->
+
+
+<style>
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  font-size: 2rem;
+  padding: 0 10px;
+  cursor: pointer;
+  z-index: 10000;
+}
+
+.nav-btn.left { left: 10px; }
+.nav-btn.right { right: 10px; }
+
+.lightbox {
+  display: none; /* hide initially */
+  position: fixed;
+  z-index: 9999;
+  left: 0; 
+  top: 0;
+  width: 100%; 
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.lightbox img, .lightbox video {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+}/* Base grid (keep once) */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+/* Single item fills width */
+.media-grid.single-media {
+  grid-template-columns: 1fr;
+}
+.media-grid.single-media .media-wrapper img,
+.media-grid.single-media .media-wrapper video {
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+/* Exactly 3 items: make a mosaic without the empty slot */
+.media-grid.three-media {
+  /* force 2 columns so we can make one tile tall */
+  grid-template-columns: 2fr 1fr;   /* big left, small right */
+  grid-auto-rows: 140px;            /* FIXED row height so span works */
+  grid-auto-flow: dense;            /* pack items tightly, no gaps */
+}
+
+/* make the FIRST card tall (fills the “missing 4th” space) */
+.media-grid.three-media .media-wrapper:nth-child(1) {
+  grid-row: span 2;
+}
+
+/* ensure media fills its grid area */
+.media-grid.three-media .media-wrapper {
+  overflow: hidden;                 /* nice crop */
+  border-radius: 8px;
+}
+.media-grid.three-media .media-wrapper img,
+.media-grid.three-media .media-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;                /* cover the tile cleanly */
+}
+
+
+
+</style>
+
+<script>
+
+let currentMedia = [];
+let currentIndex = 0;
+
+function openLightbox(mediaArray, index) {
+    currentMedia = mediaArray;
+    currentIndex = index;
+    showLightbox();
+}
+
+function showLightbox() {
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightbox-img');
+    const lbVideo = document.getElementById('lightbox-video');
+
+    const file = currentMedia[currentIndex];
+    const ext = file.split('.').pop().toLowerCase();
+
+    lb.style.display = 'flex';
+
+    if(['mp4','mov','avi','webm'].includes(ext)){
+        lbImg.style.display = 'none';
+        lbVideo.style.display = 'block';
+        lbVideo.src = `/static/${file}`;
+        lbVideo.play();
+    } else {
+        lbVideo.style.display = 'none';
+        lbVideo.pause();
+        lbImg.style.display = 'block';
+        lbImg.src = `/static/${file}`;
+    }
+}
+
+function closeLightbox() {
+    const lbVideo = document.getElementById('lightbox-video');
+    lbVideo.pause();
+    document.getElementById('lightbox').style.display = 'none';
+}
+
+function nextMedia() {
+    currentIndex = (currentIndex + 1) % currentMedia.length;
+    showLightbox();
+}
+
+function prevMedia() {
+    currentIndex = (currentIndex - 1 + currentMedia.length) % currentMedia.length;
+    showLightbox();
+}
+</script>
 
 </body>
 
@@ -292,7 +432,4 @@ document.querySelectorAll('.like-button').forEach(button => {
 });
 
 </script>
-
-
-
 </html>

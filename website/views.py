@@ -5,6 +5,7 @@ from flask import session
 from datetime import datetime
 from flask import jsonify
 
+admin = Blueprint('admin', __name__, url_prefix='/admin')
 views = Blueprint('views', __name__)
 
 import random
@@ -50,21 +51,33 @@ def profile(user_id):
         return redirect(url_for('auth.login_get'))
 
     current_user_id = session['user_id']
-    user = User.query.get(user_id)
+    profile_owner = User.query.get(user_id)  # rename from user → profile_owner
 
-    # Get posts by this user
     posts = Post.query.filter_by(user_id=user_id).order_by(Post.timestamp.desc()).all()
-
-    # Get liked post IDs by the current user
     liked_post_ids = [like.post_id for like in Like.query.filter_by(user_id=current_user_id).all()]
 
     return render_template(
         "userProfile.html", 
-        user=user, 
+        profile_owner=profile_owner,  # pass as profile_owner
         posts=posts, 
         current_user_id=current_user_id,
         liked_post_ids=liked_post_ids
     )
+
+@views.route('/my_profile')
+def my_profile():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login_get'))
+
+    user = User.query.get(session['user_id'])
+
+    if not user:
+        return redirect(url_for('auth.login_get'))
+
+    if user.user_type == 'regular':
+        return redirect(url_for('views.regular_user', user_id=user.ID))
+    else:
+        return redirect(url_for('views.profile', user_id=user.ID))
 
 
 @views.route('/login')
@@ -116,7 +129,7 @@ def update_profile(user_id):
 def create_post(user_id):
     user = User.query.get_or_404(user_id)
     content = request.form['content']
-    files = request.files.getlist('post_media')
+    files = request.files.getlist('post_media')  # matches input name
 
     media_paths = []
 
@@ -125,7 +138,7 @@ def create_post(user_id):
             filename = secure_filename(file.filename)
             filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
             file.save(filepath)
-            media_paths.append(f'uploads/{filename}')  # Save relative path
+            media_paths.append(f'uploads/{filename}')  # Save relative path for template
 
     new_post = Post(content=content, media=media_paths, user=user)
     db.session.add(new_post)
@@ -133,6 +146,7 @@ def create_post(user_id):
 
     flash('Post created with media!', 'success')
     return redirect(url_for('views.profile', user_id=user_id))
+
 
 
 @views.route('/feed', methods=['GET'])
@@ -158,7 +172,6 @@ def feed():
     return render_template("feed.html", professionals=professionals, search=search_query, location=location_query)
 
 
-
 @views.route('/mock-feed', methods=['GET'])
 def mock_feed():
     class MockPro:
@@ -174,12 +187,14 @@ def mock_feed():
             self.Rating = rating
             self.Reviews = reviews
             self.Bio = bio
-            self.Image = image  # NOTE: it's now 'uploads/filename.jpg'
+            self.Image = image
 
     search_query = request.args.get('search', '')
     location_query = request.args.get('location', '')
 
-    query = User.query
+    # ✅ Only show certified and experienced professionals
+    query = User.query.filter(User.user_type.in_(["certifiedPro", "experiencedPro"]))
+
     if search_query:
         query = query.filter(
             db.or_(
@@ -192,7 +207,7 @@ def mock_feed():
     if location_query:
         query = query.filter(User.Location.ilike(f'%{location_query}%'))
 
-    # ✅ Exclude the currently logged-in user from results
+    # Exclude the logged-in user
     if 'user_id' in session:
         query = query.filter(User.ID != session['user_id'])
 
@@ -216,6 +231,7 @@ def mock_feed():
 
     return render_template("feed.html", professionals=professionals, 
                            search=search_query, location=location_query)
+
 
 
 @views.route('/request_service', methods=['POST'])
@@ -340,7 +356,6 @@ def messages():
 def accept_request(request_id):
     request_obj = ServiceRequest.query.get_or_404(request_id)
 
-    # Only the receiver can accept
     if request_obj.receiver_id != session['user_id']:
         flash("Unauthorized action", "error")
         return redirect(url_for('views.Base'))
@@ -360,9 +375,10 @@ def accept_request(request_id):
     )
     db.session.add(msg)
 
-    # Delete the request (optional: or mark it as 'accepted' if you want to track)
-    db.session.delete(request_obj)
+    # Update status to accepted instead of deleting
+    request_obj.status = 'accepted'
     db.session.commit()
+
     flash("Service request accepted. Details sent to user!", "success")
     return redirect(url_for('views.Base'))
 
@@ -375,9 +391,11 @@ def decline_request(request_id):
         flash("Unauthorized action", "error")
         return redirect(url_for('views.Base'))
 
-    db.session.delete(request_obj)
+    # Update status to declined instead of deleting
+    request_obj.status = 'declined'
     db.session.commit()
-    flash("Service request declined and removed.", "info")
+
+    flash("Service request declined.", "info")
     return redirect(url_for('views.Base'))
 
 
@@ -408,4 +426,49 @@ def like_post(post_id):
         "like_count": like_count
     })
 
+import os
+import uuid
+from flask import request, redirect, url_for, flash
+from werkzeug.utils import secure_filename
 
+
+UPLOAD_FOLDER = 'static/uploads'  # make sure this folder exists
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@views.route('/update_contact/<int:user_id>', methods=['POST'])
+def update_contact(user_id):
+    user = User.query.get_or_404(user_id)
+
+    email = request.form.get('email')
+    cellphone = request.form.get('cellphone')
+    
+
+    # Update fields
+    user.Email = email
+    user.CellPhone = cellphone
+
+    # Handle profile picture upload
+    if 'profile_pic' in request.files:
+        file = request.files['profile_pic']
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
+            file.save(filepath)
+            user.Image = f'uploads/{filename}' 
+
+    db.session.commit()
+    flash("Contact info updated successfully.")
+    return redirect(url_for('views.Base'))  # redirect to your profile page
+
+@views.route('/regular_profile/<int:user_id>')
+def regular_profile(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template('regular_user.html', user=user)
+
+@views.route('/edit_contact_info/<int:user_id>')
+def edit_contact_info(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template('edit_contact_info.html', user=user)

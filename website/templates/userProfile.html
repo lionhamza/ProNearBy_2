@@ -1,320 +1,292 @@
 {% extends "base.html" %}
 
 {% block div %}
-
-
-
 <div class="main-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <h2 class="username"><span>{{ user.Name }}</span> <span>{{ user.Surname }}</span></h2>
-    <p class="role">{{ user.Service }}</p>
-    <p class="bio">{{ user.Bio }}</p>
+    <img src="{{ url_for('static', filename=profile_owner.Image or 'assets/defualtPP.png') }}" alt="Profile Picture" class="profile-pic" />
+    <h2 class="username"><span>{{ profile_owner.Name }}</span> <span>{{ profile_owner.Surname }}</span></h2>
+    <p class="role">{{ profile_owner.Service }}</p>
+    <p class="bio">{{ profile_owner.Bio }}</p>
     <hr />
-    <p><strong>Location:</strong> {{ user.Location }}</p>
-    <p><strong>Experience:</strong> {{ user.Experience }}</p>
-    <!---<p><strong>Contact:</strong> {{ user.CellPhone }}</p>
-    <p><strong>Email:</strong> {{ user.Email }}</p>-->
-    <p><strong>Availability:</strong> {{ user.availability }}</p>
-    <p><strong>Rating:</strong> ⭐ {{ user.Rating }} ({{ user.Reviews }} reviews)</p>
+    <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
+    <p><strong>Experience:</strong> {{ profile_owner.Experience }}</p>
+    <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
+    <p><strong>Rating:</strong> ⭐ {{ profile_owner.Rating }} ({{ profile_owner.Reviews }} reviews)</p>
     <hr />
-    {% if user.ID == current_user_id %}
-      <button class="edit-profile-btn">Edit Profile</button>
+    {% if profile_owner.ID == current_user_id %}
+      <button class="edit-profile-btn" id="openEditModal">Edit Profile</button>
+
     {% else %}
-      <button type="button" class="edit-profile-btn">Request Service</button>
-
+      <button type="button" class="edit-profile-btn openServiceRequestModal">Request Service</button>
     {% endif %}
-
   </aside>
 
   <!-- Profile container -->
   <section class="content-section">
-    <div class="cardP" style="background-image: url('{{ url_for('static', filename= user.CoverImage or 'assets/DefaultCP.png') }}');">
+    <div class="cardP" style="background-image: url('{{ url_for('static', filename= profile_owner.CoverImage or 'assets/DefaultCP.png') }}');">
       <div class="cardCircle">
-        <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}" alt="Profile" />
+        <img src="{{ url_for('static', filename=profile_owner.Image or 'assets/defualtPP.png') }}" alt="Profile" />
       </div>
     </div>
     <div class="mobile-profile-info">
-    {% if user.ID == current_user_id %}
+      {% if profile_owner.ID == current_user_id %}
   <div class="edit-icon-wrapper">
-    <img src="{{ url_for('static', filename='assets/edit-profile.png') }}" alt="Edit Profile" class="edit-icon" id="openEditModal">
-
-  </div>
-{% endif %}
-  
-  <h2 class="username">{{ user.Name }} {{ user.Surname }}</h2>
-  <p class="role">{{ user.Service }}</p>
-  <p class="bio">{{ user.Bio }}</p>
-  <hr />
-  <p><strong>Location:</strong> {{ user.Location }}</p>
-  <p><strong>Experience:</strong> {{ user.Experience }}</p>
-  <p><strong>Availability:</strong> {{ user.availability }}</p>
-  <p><strong>Rating:</strong> ⭐ {{ user.Rating }} ({{ user.Reviews }} reviews)</p>
-
-  {% if user.ID != current_user_id %}
-    <button type="button" class="edit-profile-btn">Request Service</button>
-  {% endif %}
-</div>
-
-
-   {% if user.ID == current_user_id %}
-  <div style="margin-top: 20px;"></div>
-  <div class="button_container">
-    <button class="create_post-button">Create Post +</button>
+    <img src="{{ url_for('static', filename='assets/edit-profile.png') }}" 
+         alt="Edit Profile" 
+         class="edit-icon openEditModal">
   </div>
 {% endif %}
 
 
+      <h2 class="username">{{ profile_owner.Name }} {{ profile_owner.Surname }}</h2>
+      <p class="role">{{ profile_owner.Service }}</p>
+      <p class="bio">{{ profile_owner.Bio }}</p>
+      <hr />
+      <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
+      <p><strong>Experience:</strong> {{ profile_owner.Experience }}</p>
+      <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
+      <p><strong>Rating:</strong> ⭐ {{ profile_owner.Rating }} ({{ profile_owner.Reviews }} reviews)</p>
 
-
- 
-   <!-- Posts Container -->
-<!-- Posts -->
-<div class="apost">
-  {% for post in user.posts|sort(attribute='timestamp', reverse=True) %}
-  <div class="post-card">
-    <div class="post-header">
-      <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}" class="post-profile-pic" alt="User Pic">
-      <div class="post-user-info">
-        <strong>{{ user.Name }} {{ user.Surname }}</strong>
-        <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
-      </div>
-      <div class="post-options">⋮</div>
+      {% if profile_owner.ID != current_user_id %}
+        <button type="button" class="edit-profile-btn openServiceRequestModal">Request Service</button>
+      {% endif %}
     </div>
 
-    <div class="post-body">
-      <p>{{ post.content }}</p>
+    {% if profile_owner.ID == current_user_id %}
+      <div style="margin-top: 20px;"></div>
+      <div class="button_container">
+        <button class="create_post-button">Create Post +</button>
+      </div>
+    {% endif %}
+
+    <!-- Posts -->
+    <div class="apost">
+      {% for post in profile_owner.posts|sort(attribute='timestamp', reverse=True) %}
+        <div class="post-card">
+          <div class="post-header">
+            <img src="{{ url_for('static', filename=profile_owner.Image or 'assets/defualtPP.png') }}" class="post-profile-pic" alt="User Pic">
+            <div class="post-user-info">
+              <strong>{{ profile_owner.Name }} {{ profile_owner.Surname }}</strong>
+              <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
+            </div>
+            <div class="post-options">⋮</div>
+          </div>
+
+          <div class="post-body">
+            <p>{{ post.content }}</p>
       {% if post.media %}
-       {% for file in post.media %}
-       {% if file.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
-        <img src="{{ url_for('static', filename=file) }}" class="post-img" alt="Image">
-        {% elif file.endswith(('.mp4', '.mov', '.avi')) %}
-         <video controls class="post-img">
-          <source src="{{ url_for('static', filename=file) }}" type="video/mp4">
-          Your browser does not support the video tag.
-         </video>
-       {% endif %}
-      {% endfor %}
-     {% endif %}
+<div class="media-grid {% if post.media|length == 1 %}single-media{% elif post.media|length == 3 %}three-media{% endif %}">
+
+    {% set max_visible = 4 %}
+    {% set extra_count = post.media|length - max_visible %}
+    {% for file in post.media %}
+        {% if loop.index0 < max_visible %}
+            {% if file.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+                <div class="media-wrapper">
+                    <img src="{{ url_for('static', filename=file) }}"
+                         class="media-item"
+                         alt="Image"
+                         onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
+                    {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
+                        <div class="overlay">+{{ extra_count }}</div>
+                    {% endif %}
+                </div>
+            {% elif file.endswith(('.mp4', '.mov', '.avi', '.webm')) %}
+                <div class="media-wrapper">
+                    <video controls class="media-item"
+                           onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
+                        <source src="{{ url_for('static', filename=file) }}">
+                    </video>
+                    {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
+                        <div class="overlay">+{{ extra_count }}</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
 </div>
-
-     <div class="post-actions">
-  <form action="{{ url_for('views.like_post', post_id=post.id) }}" method="POST">
-    {% set liked = post.likes.filter_by(user_id=session.get('user_id')).first() %}
-<button class="like-button" data-post-id="{{ post.id }}">
-  <img
-  src="{{ url_for('static', filename='assets/likeP.png') if post.id in liked_post_ids else url_for('static', filename='assets/like.png') }}"
-  class="like-icon"
-  id="like-icon-{{ post.id }}"
-  alt="Like"
-/>
-
-</button>
-
-<span id="like-count-{{ post.id }}">{{ post.like_count }}</span>
-  </form>
-</div>
-  </div>
-  {% endfor %}
-</div>
-
-
-</section>
-
-    
-</div>
-
-<!-- Edit Profile Modal -->
-
-<!-- Create Post Modal -->
-
-
-{% if user.ID == current_user_id %}
-  <!-- Only include if logged-in user is viewing their own profile -->
-
-  <!-- Edit Profile Modal -->
-  <div id="editModal" class="modal">
-        <div class="modal-content">
-    <span class="close" id="closeModal">&times;</span>
-    <form action="{{ url_for('views.update_profile', user_id=user.ID) }}" method="POST" enctype="multipart/form-data" class="edit-form">
-
-      <h3>Edit Profile</h3>
-
-      <label>Bio:</label>
-      <textarea name="bio">{{ user.Bio }}</textarea>
-
-      <label>Location:</label>
-      <input type="text" name="location" value="{{ user.Location }}">
-
-      <label>Experience:</label>
-      <input type="text" name="experience" value="{{ user.Experience }}">
-
-      <!---<label>Cell Phone:</label>
-      <input type="text" name="cellphone" value="{{ user.CellPhone }}">
-
-      <label>Email:</label>
-      <input type="email" name="email" value="{{ user.Email }}">-->
-
-      <label>Availability:</label>
-      <input type="text" name="availability" value="{{ user.availability }}">
-
-      <label>Profile Picture:</label>
-      <input type="file" name="profile_pic">
-
-      <label>Cover Picture:</label>
-      <input type="file" name="cover_pic">
-
-      <button type="submit" class="save-btn">Save</button>
-    </form>
-  </div>
-  </div>
-
-  <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const modal = document.getElementById("editModal");
-    const closeBtn = document.getElementById("closeModal");
-
-    // Edit profile button(s)
-    const editBtns = document.querySelectorAll(".edit-profile-btn");
-    editBtns.forEach(btn => {
-      btn.onclick = () => {
-        if (btn.innerText.includes("Edit Profile")) {
-          modal.style.display = "block";
-        }
-      };
-    });
-
-    // Edit icon on the profile image
-    const icon = document.getElementById("openEditModal");
-    if (icon) {
-      icon.onclick = () => {
-        modal.style.display = "block";
-      };
-    }
-
-    // Close modal button
-    closeBtn.onclick = () => {
-      modal.style.display = "none";
-    };
-
-    // Clicking outside closes modal
-    window.onclick = (e) => {
-      if (e.target === modal) {
-        modal.style.display = "none";
-      }
-    };
-  });
-</script>
-
-
 {% endif %}
 
 
 
-{% if user.ID == current_user_id %}
-<div id="postModal" class="modal">
-  <div class="modal-content">
-    <span class="close" id="closePostModal">&times;</span>
-    <form action="{{ url_for('views.create_post', user_id=user.ID) }}" method="POST" enctype="multipart/form-data" class="edit-form">
-      <h3>Create a Post</h3>
 
-      <label>Say something:</label>
-      <textarea name="content" placeholder="What's on your mind?" required></textarea>
+          </div>
 
-      <label>Upload Media (images/videos):</label>
-      <input type="file" name="post_media" accept="image/*,video/*" multiple>
-
-
-      <button type="submit" class="save-btn">Post</button>
-    </form>
+          <div class="post-actions">
+            <form action="{{ url_for('views.like_post', post_id=post.id) }}" method="POST">
+              <button class="like-button" data-post-id="{{ post.id }}">
+                <img
+                  src="{{ url_for('static', filename='assets/likeP.png') if post.id in liked_post_ids else url_for('static', filename='assets/like.png') }}"
+                  class="like-icon"
+                  id="like-icon-{{ post.id }}"
+                  alt="Like"
+                />
+              </button>
+              <span id="like-count-{{ post.id }}">{{ post.like_count }}</span>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  <!-- Lightbox -->
+  
+  
+  <div id="lightbox" class="lightbox">
+      <button class="nav-btn left" onclick="prevMedia()">&#10094;</button>
+      <img id="lightbox-img" src="" alt="Full View">
+      <video id="lightbox-video" controls style="display:none;"></video>
+      <button class="nav-btn right" onclick="nextMedia()">&#10095;</button>
+      <span class="close" onclick="closeLightbox()">&times;</span>
   </div>
 </div>
-  <script>
-  const createBtn = document.querySelector(".create_post-button");
+
+<!-- The modals below still use profile_owner -->
+{% if profile_owner.ID == current_user_id %}
+  <!-- Edit Profile Modal -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <form action="{{ url_for('views.update_profile', user_id=profile_owner.ID) }}" method="POST" enctype="multipart/form-data" class="edit-form">
+        <h3>Edit Profile</h3>
+        <label>Bio:</label>
+        <textarea name="bio">{{ profile_owner.Bio }}</textarea>
+        <label>Location:</label>
+        <input type="text" name="location" value="{{ profile_owner.Location }}">
+        <label>Experience:</label>
+        <input type="text" name="experience" value="{{ profile_owner.Experience }}">
+        <label>Availability:</label>
+        <input type="text" name="availability" value="{{ profile_owner.availability }}">
+        <label>Profile Picture:</label>
+        <input type="file" name="profile_pic">
+        <label>Cover Picture:</label>
+        <input type="file" name="cover_pic">
+        <button type="submit" class="save-btn">Save</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+{% if profile_owner.ID == current_user_id %}
+  <!-- Create Post Modal -->
+  <div id="postModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closePostModal">&times;</span>
+      <form action="{{ url_for('views.create_post', user_id=profile_owner.ID) }}" method="POST" enctype="multipart/form-data" class="edit-form">
+        <h3>Create a Post</h3>
+        <textarea name="content" placeholder="What's on your mind?" required></textarea>
+        <input type="file" name="post_media" accept="image/*,video/*" multiple>
+        <button type="submit" class="save-btn">Post</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+{% if profile_owner.ID != current_user_id %}
+  <!-- Service Request Modal -->
+  <div id="serviceRequestModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeServiceModal">&times;</span>
+      <form action="{{ url_for('views.request_service') }}" method="POST" enctype="multipart/form-data" class="edit-form">
+        <input type="hidden" name="receiver_id" value="{{ profile_owner.ID }}">
+        <label>Service Type:</label>
+        <select name="service_type" required>
+          <option value="">-- Select a Service --</option>
+          <option value="Plumbing">Plumbing</option>
+          <option value="Cleaning">Cleaning</option>
+          <option value="Electrician">Electrician</option>
+          <option value="Painting">Painting</option>
+          <option value="Other">Other</option>
+        </select>
+        <label>Service (title):</label>
+        <input type="text" name="service" required>
+        <label>Location:</label>
+        <input type="text" name="location" required>
+        <label>Description:</label>
+        <textarea name="description" required></textarea>
+        <label>Upload Image (optional):</label>
+        <input type="file" name="image">
+        <label>Preferred Date:</label>
+        <input type="date" name="preferred_date">
+        <label>Preferred Time:</label>
+        <input type="time" name="preferred_time">
+        <button type="submit" class="save-btn">Send Request</button>
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+<script>
+  // === EDIT PROFILE MODAL ===
+  const editBtn = document.getElementById("openEditModal");
+  const editModal = document.getElementById("editModal");
+  const closeEditBtn = document.getElementById("closeModal");
+
+  if (editBtn && editModal) {
+    editBtn.onclick = () => {
+      editModal.style.display = "block";
+    };
+  }
+  document.querySelectorAll(".openEditModal").forEach(btn => {
+    btn.addEventListener("click", () => {
+      editModal.style.display = "block";
+    });
+  });
+
+  if (closeEditBtn) {
+    closeEditBtn.onclick = () => {
+      editModal.style.display = "none";
+    };
+  }
+
+  // === CREATE POST MODAL ===
+  const createPostBtn = document.querySelector(".create_post-button");
   const postModal = document.getElementById("postModal");
   const closePostBtn = document.getElementById("closePostModal");
 
-  createBtn.onclick = () => {
-    postModal.style.display = "block";
-  };
+  if (createPostBtn && postModal) {
+    createPostBtn.onclick = () => {
+      postModal.style.display = "block";
+    };
+  }
+  if (closePostBtn) {
+    closePostBtn.onclick = () => {
+      postModal.style.display = "none";
+    };
+  }
 
-  closePostBtn.onclick = () => {
-    postModal.style.display = "none";
-  };
+  // === SERVICE REQUEST MODAL ===
+  const serviceRequestBtns = document.querySelectorAll(".openServiceRequestModal");
+const serviceRequestModal = document.getElementById("serviceRequestModal");
+const closeServiceBtn = document.getElementById("closeServiceModal");
 
-  window.onclick = (e) => {
-    if (e.target == postModal) {
+serviceRequestBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    serviceRequestModal.style.display = "block";
+  });
+});
+
+if (closeServiceBtn) {
+  closeServiceBtn.onclick = () => {
+    serviceRequestModal.style.display = "none";
+  };
+}
+
+
+  // === CLOSE MODALS WHEN CLICKING OUTSIDE ===
+  window.onclick = (event) => {
+    if (event.target === editModal) {
+      editModal.style.display = "none";
+    }
+    if (event.target === postModal) {
       postModal.style.display = "none";
     }
-  };
-</script>
-{% endif %}
-
-
-{% if user.ID != current_user_id %}
-<div id="serviceRequestModal" class="modal">
-  <div class="modal-content">
-    <span class="close" id="closeServiceModal">&times;</span>
-    <form action="{{ url_for('views.request_service') }}" method="POST" enctype="multipart/form-data" class="edit-form">
-      <h3>Request a Service</h3>
-
-      <input type="hidden" name="receiver_id" value="{{ user.ID }}">
-
-      <label>Service Type:</label>
-      <select name="service_type" required>
-        <option value="">-- Select a Service --</option>
-        <option value="Plumbing">Plumbing</option>
-        <option value="Cleaning">Cleaning</option>
-        <option value="Electrician">Electrician</option>
-        <option value="Painting">Painting</option>
-        <option value="Other">Other</option>
-      </select>
-
-      <label>Service (title):</label>
-      <input type="text" name="service" placeholder="Short title of the request" required>
-
-      <label>Location:</label>
-      <input type="text" name="location" required>
-
-      <label>Description:</label>
-      <textarea name="description" placeholder="Briefly describe your request" required></textarea>
-
-      <label>Upload Image (optional):</label>
-      <input type="file" name="image">
-
-      <label>Preferred Date:</label>
-      <input type="date" name="preferred_date">
-
-      <label>Preferred Time:</label>
-      <input type="time" name="preferred_time">
-
-      <button type="submit" class="save-btn">Send Request</button>
-    </form>
-  </div>
-</div>
-
-<script>
-  const serviceBtns = document.querySelectorAll(".edit-profile-btn"); // select all buttons
-  const serviceModal = document.getElementById("serviceRequestModal");
-  const closeServiceBtn = document.getElementById("closeServiceModal");
-
-  serviceBtns.forEach(btn => {
-    btn.onclick = () => {
-      serviceModal.style.display = "block";
-    };
-  });
-
-  closeServiceBtn.onclick = () => {
-    serviceModal.style.display = "none";
-  };
-
-  window.onclick = (e) => {
-    if (e.target === serviceModal) {
-      serviceModal.style.display = "none";
+    if (event.target === serviceRequestModal) {
+      serviceRequestModal.style.display = "none";
     }
   };
 </script>
 
 
-{% endif %}
 {% endblock %}

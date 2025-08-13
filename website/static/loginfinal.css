@@ -174,3 +174,24 @@ input[type="file"] {
   transform: translateY(0);
   opacity: 0.85;
 }
+
+input[type="email"],
+input[type="tel"],
+input[type="text"],
+input[type="password"] {
+  appearance: none;        /* Remove browser default styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  border: 1px solid #ccc;  /* Match your text input border */
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input:focus {
+  outline: none;
+  border-color: #007BFF; /* Match your theme */
+  box-shadow: 0 0 4px rgba(0,123,255,0.4);
+}

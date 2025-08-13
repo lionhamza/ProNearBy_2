@@ -1,0 +1,33 @@
+{% extends 'admin/admin_base.html' %}
+{% block title %}Applications - Admin{% endblock %}
+{% block content %}
+  <h1>Pending Applications</h1>
+  {% if applications %}
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Service</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for app in applications %}
+        <tr>
+          <td>{{ app.name }} {{ app.surname }}</td>
+          <td>{{ app.email }}</td>
+          <td>{{ app.service }}</td>
+          <td>{{ app.status }}</td>
+          <td>
+            <a href="{{ url_for('admin.view_application', application_id=app.id) }}" class="button btn-approve">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No applications yet.</p>
+  {% endif %}
+{% endblock %}

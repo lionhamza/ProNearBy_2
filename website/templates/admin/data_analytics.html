@@ -1,0 +1,67 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<h1>📊 Admin Analytics</h1>
+
+<div style="display: flex; flex-wrap: wrap; gap: 30px;">
+
+  <div class="card" style="flex:1; min-width: 250px; text-align:center;">
+    <h3>Total Users</h3>
+    <p id="totalUsers" style="font-size: 2rem; font-weight: bold;">Loading...</p>
+  </div>
+
+  <div class="card" style="flex:1; min-width: 250px;">
+    <h3>User Types</h3>
+    <canvas id="usersPie"></canvas>
+  </div>
+
+  <div class="card" style="flex:1; min-width: 300px;">
+    <h3>Service Requests Status</h3>
+    <canvas id="requestsBar"></canvas>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  fetch('/admin/analytics/data/total-users')
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('totalUsers').textContent = data.total_users;
+    });
+
+  fetch('/admin/analytics/data/user-breakdown')
+    .then(res => res.json())
+    .then(data => {
+      new Chart(document.getElementById('usersPie'), {
+        type: 'pie',
+        data: {
+          labels: ['Certified Pros', 'Experienced Pros', 'Regular Users'],
+          datasets: [{
+            data: [data.certified, data.experienced, data.regular],
+            backgroundColor: ['#007bff', '#17a2b8', '#ffc107']
+          }]
+        }
+      });
+    });
+
+  fetch('/admin/analytics/data/service-requests')
+    .then(res => res.json())
+    .then(data => {
+      new Chart(document.getElementById('requestsBar'), {
+        type: 'bar',
+        data: {
+          labels: ['Total', 'Accepted', 'Declined'],
+          datasets: [{
+            label: 'Requests',
+            data: [data.total_requests, data.accepted, data.declined],
+            backgroundColor: ['#17a2b8', '#28a745', '#dc3545']
+          }]
+        },
+        options: {
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    });
+</script>
+{% endblock %}

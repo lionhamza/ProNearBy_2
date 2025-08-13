@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - ProNearBy{% endblock %}
+
+{% block div %}
+<main class="regular-user-page">
+  <section class="user-profile-card">
+    <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}"
+         alt="Profile Picture"
+         class="user-profile-pic" />
+
+    <h2 class="user-name">{{ user.Name }} {{ user.Surname }}</h2>
+
+    <div class="user-details">
+      {% if user.Email %}
+        <p><strong>Email:</strong> {{ user.Email }}</p>
+      {% endif %}
+      {% if user.CellPhone %}
+        <p><strong>Phone:</strong> {{ user.CellPhone }}</p>
+      {% endif %}
+    </div>
+
+    <div class="user-actions">
+      <a href="{{ url_for('views.edit_contact_info', user_id=user.ID) }}" class="action-btn primary">
+        <i class="fas fa-edit"></i> Edit Info
+      </a>
+
+      <a href="{{ url_for('auth.choose_pro_type') }}" class="action-btn outline">
+        <i class="fas fa-briefcase"></i> Become a Pro
+      </a>
+    </div>
+  </section>
+</main>
+{% endblock %}

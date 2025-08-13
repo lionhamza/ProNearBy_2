@@ -1,0 +1,55 @@
+{% extends 'admin/admin_base.html' %}
+{% block title %}Review Application{% endblock %}
+{% block content %}
+<h1>Review Application</h1>
+
+<p><strong>Name:</strong> {{ application.name }} {{ application.surname }}</p>
+<p><strong>Email:</strong> {{ application.email }}</p>
+<p><strong>Contact:</strong> {{ application.contact }}</p>
+<p><strong>Service:</strong> {{ application.service }}</p>
+<p><strong>Experience:</strong> {{ application.experience }}</p>
+<p><strong>Availability:</strong> {{ application.availability }}</p>
+<p><strong>Location:</strong> {{ application.location }}</p>
+
+{% if application.id_doc %}
+  <p><strong>ID Document:</strong> <a href="{{ url_for('static', filename=application.id_doc) }}" target="_blank">View</a></p>
+{% else %}
+  <p><strong>ID Document:</strong> Not uploaded</p>
+{% endif %}
+
+{% if application.cert_doc %}
+ <p><strong>Certification:</strong> <a href="{{ url_for('static', filename=application.cert_doc) }}" target="_blank">View</a></p>
+
+
+{% else %}
+  <p><strong>Certification:</strong> Not uploaded</p>
+{% endif %}
+
+{% if application.intro_video %}
+  <p><strong>Intro Video:</strong> <a href="{{ url_for('static', filename=application.intro_video) }}" target="_blank">Watch</a></p>
+{% else %}
+  <p><strong>Intro Video:</strong> Not uploaded</p>
+{% endif %}
+
+{% if application.portfolio_files %}
+<h3>Portfolio</h3>
+<div>
+  {% for image_path in application.portfolio_files %}
+  <img src="{{ url_for('static', filename=image_path) }}" class="portfolio-img">
+{% endfor %}
+
+</div>
+{% endif %}
+
+{% if application.status|trim|lower == 'pending' %}
+  <form method="post" action="{{ url_for('admin.process_application', application_id=application.id) }}">
+    <button name="action" value="approve">Approve</button>
+    <button name="action" value="reject">Reject</button>
+  </form>
+{% else %}
+  <p><strong>Status:</strong> {{ application.status }}</p>
+{% endif %}
+
+
+
+{% endblock %}

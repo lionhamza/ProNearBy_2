@@ -1,0 +1,287 @@
+{% extends "pro_base.html" %}
+{% block title %}Certified Professional - ProNearBy{% endblock %}
+{% block div %}
+<main class="form-container">
+  <section id="signup-panel" class="card ux-card">
+    <header id="form-header" class="idp-form-header">
+      <figure class="brand-logo">
+        <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" />
+      </figure>
+      <h1 class="h3">🎓 Certified Pro Registration</h1>
+      <p style="font-size: 0.85rem; color: #555;">Join as a formally trained service provider.</p>
+    </header>
+
+    <form id="registrationForm" method="POST" enctype="multipart/form-data" action="{{ url_for('auth.register_certified') }}">
+      <!-- Basic Fields -->
+      <div class="input-group">
+        <label for="name">First Name *</label>
+        <input
+          type="text" id="name" name="name" pattern="[A-Za-z]{2,50}"
+          title="Only letters, 2-50 characters" required
+          value="{{ request.form.get('name', '') }}"
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="surname">Surname *</label>
+        <input
+          type="text" id="surname" name="surname" pattern="[A-Za-z]{2,50}"
+          title="Only letters, 2-50 characters" required
+          value="{{ request.form.get('surname', '') }}"
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="email">Email *</label>
+        <input
+          type="email" id="email" name="email" required
+          value="{{ request.form.get('email', '') }}"
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="contact">Contact Number *</label>
+        <input
+          type="tel" id="contact" name="contact"
+          pattern="^(\+27|0)[0-9]{9}$"
+          title="Example: +27831234567 or 0831234567" required
+          value="{{ request.form.get('contact', '') }}"
+        />
+      </div>
+
+      <div class="input-group password-group">
+        <label for="password">Password *</label>
+        <input
+          type="password" id="password" name="password"
+          pattern="^(?=.*[A-Z])(?=.*\d).{8,}$"
+          title="At least 8 characters, one uppercase letter, and one number"
+          required
+        />
+        <button type="button" class="toggle-password-btn" id="toggle-pro-password">Show</button>
+      </div>
+
+      <div class="input-group password-group">
+        <label for="confirm_password">Confirm Password *</label>
+        <input
+          type="password" id="confirm_password" name="confirm_password" required
+        />
+        <button type="button" class="toggle-password-btn" id="toggle-pro-confirm">Show</button>
+      </div>
+
+      <small id="passwordError" style="color: red; display: none;">Passwords do not match.</small>
+
+      <!-- Pro Details -->
+      <div class="pro-details-group full-width">
+        <h2 style="font-size: 1rem; margin-top: 1rem; color: #333; text-align: center;">
+          🎓 Professional Details
+        </h2>
+
+        <div class="input-group full-width">
+          <label for="id_doc">🪪 Upload Government ID *</label>
+          <input
+            type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required
+          />
+          <small id="idDocError" style="color: red; display: none;"></small>
+        </div>
+
+        <div class="input-group full-width">
+          <label for="cert_doc">📄 Upload Certification or Business Reg. Document *</label>
+          <input
+            type="file" id="cert_doc" name="cert_doc" accept=".pdf,.jpg,.jpeg,.png" required
+          />
+          <small id="certDocError" style="color: red; display: none;"></small>
+        </div>
+
+        <div class="input-group full-width">
+          <label for="portfolio_files">📁 Upload Portfolio Images</label>
+          <input
+            type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple
+          />
+          <small style="color: #666; font-size: 0.75rem;">
+            You may upload up to 3 images showcasing your work.
+          </small>
+          <small id="portfolioError" style="color: red; display: none;"></small>
+        </div>
+
+        <div class="input-group full-width">
+          <label for="intro_video">🎥 Upload Video Introduction</label>
+          <input
+            type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm"
+          />
+          <small style="color: #666; font-size: 0.75rem;">
+            Upload a short video (MP4, MOV, or WEBM) introducing yourself and your services. Max size: 50MB.
+          </small>
+          <small id="videoError" style="color: red; display: none;"></small>
+        </div>
+      </div>
+
+      <!-- New Fields -->
+      <div class="input-group">
+        <label for="service">🛠️ Service Offered *</label>
+        <input
+          type="text" id="service" name="service"
+          placeholder="e.g., Plumbing, Hairdressing" required
+          value="{{ request.form.get('service', '') }}"
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="experience">📅 Experience *</label>
+        <input
+          type="text" id="experience" name="experience"
+          placeholder="e.g., 5 years, 50+ clients" required
+          value="{{ request.form.get('experience', '') }}"
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="availability">🕒 Availability *</label>
+        <input
+          type="text" id="availability" name="availability"
+          placeholder="e.g., Mon-Fri, 9AM–5PM" required
+          value="{{ request.form.get('availability', '') }}"
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="location">📍 Location *</label>
+        <input
+          type="text" id="location" name="location"
+          placeholder="e.g., Durban, Westidale 11" required
+          value="{{ request.form.get('location', '') }}"
+        />
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary">Register as Certified Pro</button>
+    </form>
+
+    <p class="recovery-links">
+      Prefer to register as a regular user?
+      <a href="{{ url_for('auth.signup_get') }}">Go back to user signup</a>
+    </p>
+  </section>
+</main>
+
+<script>
+// Toggle password visibility
+const toggleProPasswordBtn = document.getElementById('toggle-pro-password');
+const proPasswordInput = document.getElementById('password');
+toggleProPasswordBtn.addEventListener('click', () => {
+  if (proPasswordInput.type === 'password') {
+    proPasswordInput.type = 'text';
+    toggleProPasswordBtn.textContent = 'Hide';
+  } else {
+    proPasswordInput.type = 'password';
+    toggleProPasswordBtn.textContent = 'Show';
+  }
+});
+
+const toggleProConfirmBtn = document.getElementById('toggle-pro-confirm');
+const proConfirmPasswordInput = document.getElementById('confirm_password');
+toggleProConfirmBtn.addEventListener('click', () => {
+  if (proConfirmPasswordInput.type === 'password') {
+    proConfirmPasswordInput.type = 'text';
+    toggleProConfirmBtn.textContent = 'Hide';
+  } else {
+    proConfirmPasswordInput.type = 'password';
+    toggleProConfirmBtn.textContent = 'Show';
+  }
+});
+
+// Password match validation
+const password = document.getElementById('password');
+const confirmPassword = document.getElementById('confirm_password');
+const passwordError = document.getElementById('passwordError');
+
+function checkPasswords() {
+  if (password.value && confirmPassword.value && password.value !== confirmPassword.value) {
+    passwordError.style.display = 'inline';
+    return false;
+  } else {
+    passwordError.style.display = 'none';
+    return true;
+  }
+}
+
+password.addEventListener('input', checkPasswords);
+confirmPassword.addEventListener('input', checkPasswords);
+
+// File validation on client-side
+const idDocInput = document.getElementById('id_doc');
+const certDocInput = document.getElementById('cert_doc');
+const portfolioInput = document.getElementById('portfolio_files');
+const videoInput = document.getElementById('intro_video');
+
+const idDocError = document.getElementById('idDocError');
+const certDocError = document.getElementById('certDocError');
+const portfolioError = document.getElementById('portfolioError');
+const videoError = document.getElementById('videoError');
+
+const maxFileSizes = {
+  idDoc: 5,      // MB
+  certDoc: 5,    // MB
+  portfolio: 5,  // MB per image
+  video: 50      // MB
+};
+
+function validateFile(input, allowedExtensions, maxSizeMB, errorElement, maxCount=1) {
+  errorElement.style.display = 'none';
+  const files = input.files;
+
+  if (files.length > maxCount) {
+    errorElement.textContent = `You can upload up to ${maxCount} file(s).`;
+    errorElement.style.display = 'block';
+    input.value = ''; // Clear files
+    return false;
+  }
+
+  for (let file of files) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes('.' + ext)) {
+      errorElement.textContent = `Invalid file type for ${file.name}. Allowed: ${allowedExtensions.join(', ')}`;
+      errorElement.style.display = 'block';
+      input.value = '';
+      return false;
+    }
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      errorElement.textContent = `${file.name} exceeds ${maxSizeMB}MB limit.`;
+      errorElement.style.display = 'block';
+      input.value = '';
+      return false;
+    }
+  }
+  return true;
+}
+
+idDocInput.addEventListener('change', () => {
+  validateFile(idDocInput, ['.pdf', '.jpg', '.jpeg', '.png'], maxFileSizes.idDoc, idDocError);
+});
+
+certDocInput.addEventListener('change', () => {
+  validateFile(certDocInput, ['.pdf', '.jpg', '.jpeg', '.png'], maxFileSizes.certDoc, certDocError);
+});
+
+portfolioInput.addEventListener('change', () => {
+  validateFile(portfolioInput, ['.jpg', '.jpeg', '.png'], maxFileSizes.portfolio, portfolioError, 3);
+});
+
+videoInput.addEventListener('change', () => {
+  validateFile(videoInput, ['.mp4', '.mov', '.webm'], maxFileSizes.video, videoError);
+});
+
+// On submit, block submission if errors
+const form = document.getElementById('registrationForm');
+form.addEventListener('submit', (e) => {
+  let valid = true;
+  if (!checkPasswords()) valid = false;
+  if (!validateFile(idDocInput, ['.pdf', '.jpg', '.jpeg', '.png'], maxFileSizes.idDoc, idDocError)) valid = false;
+  if (!validateFile(certDocInput, ['.pdf', '.jpg', '.jpeg', '.png'], maxFileSizes.certDoc, certDocError)) valid = false;
+  if (!validateFile(portfolioInput, ['.jpg', '.jpeg', '.png'], maxFileSizes.portfolio, portfolioError, 3)) valid = false;
+  if (!validateFile(videoInput, ['.mp4', '.mov', '.webm'], maxFileSizes.video, videoError)) valid = false;
+
+  if (!valid) {
+    e.preventDefault();
+  }
+});
+</script>
+{% endblock %}

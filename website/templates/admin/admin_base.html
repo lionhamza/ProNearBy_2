@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Admin Panel - ProNearBy{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
+  <style>
+
+    
+    
+    
+    
+    header img {
+      height: 40px;
+    }
+   
+      .card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 8px rgba(93, 85, 202, 0.05);
+      }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f6f8;
+    color: #333;
+  }
+
+  header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e3e6ea;
+    padding: 15px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  .admin-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    background-color: #4a6ee0;
+    color: #fff;
+    padding: 25px 20px;
+  }
+
+  .sidebar h2 {
+    margin: 0 0 20px;
+    font-size: 1.3rem;
+    font-weight: bold;
+  }
+
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .sidebar ul li {
+    margin: 15px 0;
+  }
+
+  .sidebar ul li a {
+    display: block;
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: #f0f3ff;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s ease;
+  }
+
+  .sidebar ul li a:hover {
+    background: rgba(255,255,255,0.15);
+  }
+
+  .main-content {
+    padding: 30px;
+  }
+
+  h1 {
+    margin-bottom: 20px;
+    font-size: 1.6rem;
+  }
+
+  /* Table styling */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  th, td {
+    padding: 14px 16px;
+    text-align: left;
+  }
+
+  th {
+    background: #f5f7fa;
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) {
+    background-color: #fafafa;
+  }
+
+  tr:hover {
+    background-color: #f0f3ff;
+  }
+
+  /* Buttons */
+  button, a.button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-approve {
+    background-color: #28a745;
+    color: white;
+  }
+
+  .btn-approve:hover {
+    background-color: #218838;
+  }
+
+  .btn-reject {
+    background-color: #dc3545;
+    color: white;
+  }
+
+  .btn-reject:hover {
+    background-color: #b02a37;
+  }
+
+  /* Portfolio images */
+  .portfolio-img {
+    max-height: 180px;
+    margin: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+</style>
+
+
+</head>
+<body>
+
+  <!-- ✅ HEADER WITH LOGO -->
+  <header>
+    <div style="display: flex; align-items: center;">
+      <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo">
+      
+    </div>
+  </header>
+
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <h2>Admin Dashboard</h2>
+      <ul>
+        <li><a href="{{ url_for('admin.view_applications') }}">📄 Applications</a></li>
+        <li><a href="{{ url_for('admin.view_complaints') }}">📢 User Complaints</a></li>
+        <li><a href="{{ url_for('admin.analytics') }}">📊 Analytics</a></li>
+        <li><a href="{{ url_for('admin.signup_admin') }}">➕ Add Admin</a></li>
+        <li><a href="{{ url_for('auth.logout') }}">🚪 Logout</a></li>
+      </ul>
+    </aside>
+
+    <section class="main-content">
+      {% block content %}{% endblock %}
+    </section>
+  </div>
+
+</body>
+</html>
+

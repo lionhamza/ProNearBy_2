@@ -9,8 +9,31 @@
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
 </head>
 <body>
+
   <main class="form-container">
     {% block div %}{% endblock %}
   </main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-message {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<style>
+.flash-container { margin: 10px auto; width: 90%; max-width: 600px; }
+.flash-message {
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+.flash-message.success { background: #d4edda; color: #155724; }
+.flash-message.error { background: #f8d7da; color: #721c24; }
+</style>
+
 </body>
 </html>

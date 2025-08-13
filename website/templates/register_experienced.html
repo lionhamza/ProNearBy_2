@@ -11,83 +11,86 @@
       <p style="font-size: 0.85rem; color: #555;">Join as a skilled, self-taught service provider.</p>
     </header>
 
-    <form method="POST" action="{{ url_for('auth.register_experienced') }}">
-  <!-- Basic Info -->
-  <div class="input-group">
-    <label for="name">First Name *</label>
-    <input type="text" id="name" name="name" required />
-  </div>
+    <form id="experiencedForm" method="POST" enctype="multipart/form-data" action="{{ url_for('auth.register_experienced') }}">
+      <!-- Basic Info -->
+      <div class="input-group">
+        <label for="name">First Name *</label>
+        <input type="text" id="name" name="name" pattern="[A-Za-z]{2,50}" placeholder="Enter your first name" required />
+      </div>
 
-  <div class="input-group">
-    <label for="surname">Surname *</label>
-    <input type="text" id="surname" name="surname" required />
-  </div>
+      <div class="input-group">
+        <label for="surname">Surname *</label>
+        <input type="text" id="surname" name="surname" pattern="[A-Za-z]{2,50}" placeholder="Enter your last name" required />
+      </div>
 
-  <div class="input-group">
-    <label for="email">Email *</label>
-    <input type="text" id="email" name="email" required />
-  </div>
+      <div class="input-group">
+        <label for="email">Email *</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email address" required />
+      </div>
 
-  <div class="input-group">
-    <label for="contact">Contact Number *</label>
-    <input type="text" id="contact" name="contact" required />
-  </div>
+      <div class="input-group">
+        <label for="contact">Contact Number *</label>
+        <input type="tel" id="contact" name="contact" pattern="^(\+27|0)[0-9]{9}$" placeholder="e.g. 0821234567 or +27821234567" required />
+      </div>
 
-  <div class="input-group password-group">
-    <label for="password">Password *</label>
-    <input type="password" id="password" name="password" required />
-    <button type="button" id="toggle-password" aria-label="Show password">Show</button>
-  </div>
-  <div class="input-group password-group">
-    <label for="password">Confirm Password *</label>
-    <input type="password" id="password" name="password" required />
-    <button type="button" id="toggle-password" aria-label="Show password">Show</button>
-  </div>
-  <!-- Group Portfolio & Reputation fields in a container -->
-  <div class="portfolio-reputation-group full-width">
-    <h2 style="font-size: 1rem; margin-top: 1rem; color: #333; text-align: center;">🛠️ Portfolio & Reputation</h2>
+      <div class="input-group password-group">
+        <label for="password">Password *</label>
+        <input type="password" id="password" name="password" pattern="^(?=.*[A-Z])(?=.*\d).{8,}$" placeholder="At least 8 chars, 1 uppercase & 1 number" required />
+        <button type="button" class="toggle-password-btn" id="toggle-password">Show</button>
+      </div>
 
-    <div class="input-group full-width">
-      <label for="id_doc">🪪 Upload Government ID *</label>
-      <input type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required />
-    </div>
+      <div class="input-group password-group">
+        <label for="confirm_password">Confirm Password *</label>
+        <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter your password" required />
+        <button type="button" class="toggle-password-btn" id="toggle-confirm-password">Show</button>
+      </div>
+      <small id="passwordError" style="color: red; display: none;">Passwords do not match.</small>
+      
+      <!-- Portfolio & Reputation -->
+      <h2 style="font-size: 1rem; margin-top: 1rem; text-align: center;">📂 Portfolio & Reputation</h2>
+      <div class="input-group full-width">
+        <label for="id_doc">🪪 Upload Government ID *</label>
+        <input type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required />
+        <small id="idDocError" style="color: red; display: none;"></small>
+      </div>
 
-    <div class="input-group full-width">
-      <label for="portfolio_files">📁 Upload Portfolio Images</label>
-      <input type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple />
-      <small style="color: #666; font-size: 0.75rem;">
-        You may upload up to 3 images showcasing your work.
-      </small>
-    </div>
+      <div class="input-group full-width">
+        <label for="portfolio_files">📁 Upload Portfolio Images</label>
+        <input type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple />
+        <small style="color: #666; font-size: 0.75rem;">Up to 3 images.</small>
+        <small id="portfolioError" style="color: red; display: none;"></small>
+      </div>
 
-    <div class="input-group full-width">
-      <label for="intro_video">🎥 Upload Video Introduction</label>
-      <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm" />
-      <small style="color: #666; font-size: 0.75rem;">
-        Upload a short video (MP4, MOV, or WEBM) introducing yourself and your services. Max size: 50MB.
-      </small>
-    </div>
-  </div>
+      <div class="input-group full-width">
+        <label for="intro_video">🎥 Upload Video Introduction</label>
+        <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm" />
+        <small style="color: #666; font-size: 0.75rem;">Max size: 50MB.</small>
+        <small id="videoError" style="color: red; display: none;"></small>
+      </div>
 
-  <!-- Other fields -->
-  <div class="input-group">
-    <label for="service">🧰 Service Offered *</label>
-    <input type="text" id="service" name="service" placeholder="e.g., Electrician, Gardener" required />
-  </div>
+      <!-- Service Info -->
+      <div class="input-group">
+        <label for="service">🧰 Service Offered *</label>
+        <input type="text" id="service" name="service" placeholder="e.g. Plumbing, Carpentry" required />
+      </div>
 
-  <div class="input-group">
-    <label for="experience">📅 Years of Experience *</label>
-    <input type="text" id="experience" name="experience" placeholder="e.g., 3 years, 100+ clients" required />
-  </div>
+      <div class="input-group">
+        <label for="experience">📅 Years of Experience *</label>
+        <input type="text" id="experience" name="experience" placeholder="e.g. 5 years" required />
+      </div>
 
-  <div class="input-group">
-    <label for="availability">🕒 Availability *</label>
-    <input type="text" id="availability" name="availability" placeholder="e.g., Mon–Sat, 8AM–6PM" required />
-  </div>
+      <div class="input-group">
+        <label for="availability">🕒 Availability *</label>
+        <input type="text" id="availability" name="availability" placeholder="e.g. Weekdays 8am-5pm" required />
+      </div>
 
-  <button type="submit" id="submitBtn" class="btn btn-primary">Register as Experienced Pro</button>
-</form>
+      <div class="input-group">
+        <label for="location">📍 Location *</label>
+        <input type="text" id="location" name="location" placeholder="Enter your service location" required />
+      </div>
 
+      <button type="submit" id="submitBtn" class="btn btn-primary">Register as Certified Pro</button>
+    </form>
 
     <p class="recovery-links">
       Prefer to register as a regular user?
@@ -97,16 +100,77 @@
 </main>
 
 <script>
-  const togglePasswordBtn = document.getElementById('toggle-password');
-  const passwordInput = document.getElementById('password');
-  togglePasswordBtn.addEventListener('click', () => {
-    if (passwordInput.type === 'password') {
-      passwordInput.type = 'text';
-      togglePasswordBtn.textContent = 'Hide';
-    } else {
-      passwordInput.type = 'password';
-      togglePasswordBtn.textContent = 'Show';
+  // Password toggle
+  function togglePasswordVisibility(inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    btn.addEventListener('click', () => {
+      input.type = input.type === 'password' ? 'text' : 'password';
+      btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
+    });
+  }
+  togglePasswordVisibility('password', 'toggle-password');
+  togglePasswordVisibility('confirm_password', 'toggle-confirm-password');
+
+  // Password match check
+  const password = document.getElementById('password');
+  const confirmPassword = document.getElementById('confirm_password');
+  const passwordError = document.getElementById('passwordError');
+  function checkPasswords() {
+    const mismatch = (password.value && confirmPassword.value && password.value !== confirmPassword.value);
+    passwordError.style.display = mismatch ? 'inline' : 'none';
+    return !mismatch;
+  }
+  password.addEventListener('input', checkPasswords);
+  confirmPassword.addEventListener('input', checkPasswords);
+
+  // File validation
+  function validateFile(input, allowed, maxMB, errorElem, maxCount=1) {
+    errorElem.style.display = 'none';
+    const files = input.files;
+    if (files.length > maxCount) {
+      errorElem.textContent = `Max ${maxCount} file(s) allowed.`;
+      errorElem.style.display = 'block';
+      input.value = '';
+      return false;
     }
+    for (let f of files) {
+      const ext = '.' + f.name.split('.').pop().toLowerCase();
+      if (!allowed.includes(ext)) {
+        errorElem.textContent = `Invalid file type for ${f.name}`;
+        errorElem.style.display = 'block';
+        input.value = '';
+        return false;
+      }
+      if (f.size > maxMB * 1024 * 1024) {
+        errorElem.textContent = `${f.name} exceeds ${maxMB}MB.`;
+        errorElem.style.display = 'block';
+        input.value = '';
+        return false;
+      }
+    }
+    return true;
+  }
+
+  const idDoc = document.getElementById('id_doc');
+  const portfolio = document.getElementById('portfolio_files');
+  const video = document.getElementById('intro_video');
+  const idDocError = document.getElementById('idDocError');
+  const portfolioError = document.getElementById('portfolioError');
+  const videoError = document.getElementById('videoError');
+
+  idDoc.addEventListener('change', () => validateFile(idDoc, ['.pdf','.jpg','.jpeg','.png'], 5, idDocError));
+  portfolio.addEventListener('change', () => validateFile(portfolio, ['.jpg','.jpeg','.png'], 5, portfolioError, 3));
+  video.addEventListener('change', () => validateFile(video, ['.mp4','.mov','.webm'], 50, videoError));
+
+  // Final check on submit
+  document.getElementById('experiencedForm').addEventListener('submit', (e) => {
+    let valid = true;
+    if (!validateFile(idDoc, ['.pdf','.jpg','.jpeg','.png'], 5, idDocError)) valid = false;
+    if (!validateFile(portfolio, ['.jpg','.jpeg','.png'], 5, portfolioError, 3)) valid = false;
+    if (!validateFile(video, ['.mp4','.mov','.webm'], 50, videoError)) valid = false;
+    if (!checkPasswords()) valid = false;
+    if (!valid) e.preventDefault();
   });
 </script>
 {% endblock %}
