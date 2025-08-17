@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Account</title>
+  <style>
+    /* General page styles */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    /* Card container */
+    .card {
+      background: #fff;
+      padding: 40px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    /* Heading */
+    h1 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    /* Description */
+    p {
+      margin-bottom: 30px;
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    /* Input groups */
+    .input-group {
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: #007BFF;
+      outline: none;
+    }
+
+    /* Button */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #007BFF;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .card {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Verify Your Account</h1>
+    <p>Enter the code sent to your email and phone.</p>
+
+    <form action="{{ url_for('auth.verify_email') }}" method="POST">
+      <div class="input-group">
+        <label for="code">Email Verification Code</label>
+        <input type="text" id="code" name="code" required>
+      </div>
+      <button type="submit" class="btn">Verify Email</button>
+    </form>
+  </div>
+</body>
+</html>

@@ -4,7 +4,7 @@
 <div class="main-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <img src="{{ url_for('static', filename=profile_owner.Image or 'assets/defualtPP.png') }}" alt="Profile Picture" class="profile-pic" />
+    
     <h2 class="username"><span>{{ profile_owner.Name }}</span> <span>{{ profile_owner.Surname }}</span></h2>
     <p class="role">{{ profile_owner.Service }}</p>
     <p class="bio">{{ profile_owner.Bio }}</p>
@@ -53,84 +53,96 @@
       {% endif %}
     </div>
 
-    {% if profile_owner.ID == current_user_id %}
-      <div style="margin-top: 20px;"></div>
-      <div class="button_container">
-        <button class="create_post-button">Create Post +</button>
-      </div>
-    {% endif %}
+<div style="margin-top: 20px;"></div>
 
-    <!-- Posts -->
-    <div class="apost">
-      {% for post in profile_owner.posts|sort(attribute='timestamp', reverse=True) %}
-        <div class="post-card">
-          <div class="post-header">
-            <img src="{{ url_for('static', filename=profile_owner.Image or 'assets/defualtPP.png') }}" class="post-profile-pic" alt="User Pic">
-            <div class="post-user-info">
-              <strong>{{ profile_owner.Name }} {{ profile_owner.Surname }}</strong>
-              <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
-            </div>
-            <div class="post-options">⋮</div>
-          </div>
-
-          <div class="post-body">
-            <p>{{ post.content }}</p>
-      {% if post.media %}
-<div class="media-grid {% if post.media|length == 1 %}single-media{% elif post.media|length == 3 %}three-media{% endif %}">
-
-    {% set max_visible = 4 %}
-    {% set extra_count = post.media|length - max_visible %}
-    {% for file in post.media %}
-        {% if loop.index0 < max_visible %}
-            {% if file.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
-                <div class="media-wrapper">
-                    <img src="{{ url_for('static', filename=file) }}"
-                         class="media-item"
-                         alt="Image"
-                         onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
-                    {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
-                        <div class="overlay">+{{ extra_count }}</div>
-                    {% endif %}
-                </div>
-            {% elif file.endswith(('.mp4', '.mov', '.avi', '.webm')) %}
-                <div class="media-wrapper">
-                    <video controls class="media-item"
-                           onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
-                        <source src="{{ url_for('static', filename=file) }}">
-                    </video>
-                    {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
-                        <div class="overlay">+{{ extra_count }}</div>
-                    {% endif %}
-                </div>
-            {% endif %}
-        {% endif %}
-    {% endfor %}
-</div>
+{% if profile_owner.ID == current_user_id %}
+  <div class="button_container">
+    <button class="profile-button create_post-button">Create Post +</button>
+  </div>
+{% else %}
+  <div class="button_container">
+    <button class="profile-button posts-button">
+      Posts
+      <svg class="arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M1.646 5.646a.5.5 0 0 1 .708 0L8 11.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+      </svg>
+    </button>
+  </div>
 {% endif %}
 
 
-
-
+    <!-- Posts -->
+<div class="apost">
+  {% if profile_owner.posts %}
+    {% for post in profile_owner.posts|sort(attribute='timestamp', reverse=True) %}
+      <div class="post-card">
+        <div class="post-header">
+          <img src="{{ url_for('static', filename=profile_owner.Image or 'assets/defualtPP.png') }}" class="post-profile-pic" alt="User Pic">
+          <div class="post-user-info">
+            <strong>{{ profile_owner.Name }} {{ profile_owner.Surname }}</strong>
+            <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
           </div>
-
-          <div class="post-actions">
-            <form action="{{ url_for('views.like_post', post_id=post.id) }}" method="POST">
-              <button class="like-button" data-post-id="{{ post.id }}">
-                <img
-                  src="{{ url_for('static', filename='assets/likeP.png') if post.id in liked_post_ids else url_for('static', filename='assets/like.png') }}"
-                  class="like-icon"
-                  id="like-icon-{{ post.id }}"
-                  alt="Like"
-                />
-              </button>
-              <span id="like-count-{{ post.id }}">{{ post.like_count }}</span>
-            </form>
-          </div>
+          <div class="post-options">⋮</div>
         </div>
-      {% endfor %}
+
+        <div class="post-body">
+          <p>{{ post.content }}</p>
+          {% if post.media %}
+            <div class="media-grid {% if post.media|length == 1 %}single-media{% elif post.media|length == 3 %}three-media{% endif %}">
+              {% set max_visible = 4 %}
+              {% set extra_count = post.media|length - max_visible %}
+              {% for file in post.media %}
+                {% if loop.index0 < max_visible %}
+                  {% if file.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+                    <div class="media-wrapper">
+                      <img src="{{ url_for('static', filename=file) }}"
+                           class="media-item"
+                           alt="Image"
+                           onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
+                      {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
+                        <div class="overlay">+{{ extra_count }}</div>
+                      {% endif %}
+                    </div>
+                  {% elif file.endswith(('.mp4', '.mov', '.avi', '.webm')) %}
+                    <div class="media-wrapper">
+                      <video controls class="media-item"
+                             onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
+                        <source src="{{ url_for('static', filename=file) }}">
+                      </video>
+                      {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
+                        <div class="overlay">+{{ extra_count }}</div>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="post-actions">
+          <form action="{{ url_for('views.like_post', post_id=post.id) }}" method="POST">
+            <button class="like-button" data-post-id="{{ post.id }}">
+              <img
+                src="{{ url_for('static', filename='assets/likeP.png') if post.id in liked_post_ids else url_for('static', filename='assets/like.png') }}"
+                class="like-icon"
+                id="like-icon-{{ post.id }}"
+                alt="Like"
+              />
+            </button>
+            <span id="like-count-{{ post.id }}">{{ post.like_count }}</span>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="no-posts">
+      <img src="{{ url_for('static', filename='assets/no_post.png') }}" alt="No Posts" class="no-posts-img">
+      <p>No posts yet</p>
     </div>
-  </section>
-  <!-- Lightbox -->
+  {% endif %}
+</div>
+
   
   
   <div id="lightbox" class="lightbox">

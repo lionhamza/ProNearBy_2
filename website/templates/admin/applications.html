@@ -21,7 +21,7 @@
           <td>{{ app.service }}</td>
           <td>{{ app.status }}</td>
           <td>
-            <a href="{{ url_for('admin.view_application', application_id=app.id) }}" class="button btn-approve">View</a>
+            <a href="{{ url_for('admin.view_applications', application_id=app.id) }}" class="button btn-approve">View</a>
           </td>
         </tr>
         {% endfor %}

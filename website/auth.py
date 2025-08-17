@@ -12,9 +12,18 @@ from . import db
 from .models import ProRegistrationRequest
 import uuid
 import os
-
+from flask_mail import Message
+from . import mail
+from twilio.rest import Client
+import re
+import random
+import string
+from flask_login import current_user, login_required
+from flask_login import login_user
 
 auth = Blueprint('auth', __name__)
+
+
 
 @auth.route('/login', methods=['GET'])
 def login_get():
@@ -24,7 +33,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 @auth.route('/login', methods=['POST'])
 def login_post():
-    email = request.form['username']
+    email = request.form['username'].strip().lower()
     password = request.form['password']
 
     # Try to find Admin first
@@ -40,11 +49,15 @@ def login_post():
         flash("No account found with that email.", "error")
         return redirect(url_for('auth.login_get'))
 
-    # Compare password directly (no hashing)
+    # Compare password (replace with check_password_hash if passwords are hashed)
     stored_password = account.password if is_admin else account.Password
-
     if password != stored_password:
         flash("Incorrect password", "error")
+        return redirect(url_for('auth.login_get'))
+
+    # Email verification for normal users
+    if not is_admin and not account.is_email_verified:
+        flash("Please verify your email before logging in.", "error")
         return redirect(url_for('auth.login_get'))
 
     # Login successful
@@ -54,8 +67,11 @@ def login_post():
         return redirect(url_for('admin.dashboard'))
     else:
         session['user_id'] = account.ID
+        login_user(account)  # ← FIXED: pass the actual user object
         flash("Logged in successfully!", "success")
         return redirect(url_for('views.Base'))
+
+
 
 
 # Google OAuth routes
@@ -138,7 +154,12 @@ def google_callback():
         else:
             flash(f"Welcome back {user.Name}! Logged in with Google.", "success")
         
+        # ✅ Log user in with Flask-Login
+        login_user(user)
+
+        # (optional) keep session['user_id'] if you still use it elsewhere
         session['user_id'] = user.ID
+
         return redirect(url_for('views.Base'))
         
     except Exception as e:
@@ -146,34 +167,120 @@ def google_callback():
         flash("Google login failed. Please try again.", "error")
         return redirect(url_for('auth.login_get'))
 
+
+
+# --------------------------
+# Helpers
+# --------------------------
+def generate_code(length=6):
+    """Generate a numeric verification code."""
+    return ''.join(random.choices(string.digits, k=length))
+
+def send_email_verification(email, code):
+    """Send verification code to user's email."""
+    msg = Message(
+        subject="Your ProNearBy Email Verification Code",
+        recipients=[email],
+        body=f"Your verification code is: {code}"
+    )
+    mail.send(msg)
+
+# --------------------------
+# Signup Routes
+# --------------------------
 @auth.route('/signup', methods=['GET'])
 def signup_get():
     return render_template('signUp.html')
 
 @auth.route('/signup', methods=['POST'])
 def signup_post():
-    name = request.form['name']
-    surname = request.form['surname']
-    email = request.form['email']
-    contact = request.form['contact']
+    name = request.form['name'].strip()
+    surname = request.form['surname'].strip()
+    email = request.form['email'].strip().lower()
+    contact = request.form['contact'].strip()
     password = request.form['password']
     confirm_password = request.form['confirm_password']
-    
+
+    # Password match check
     if password != confirm_password:
         flash("Passwords do not match", "error")
-        return redirect(url_for('auth.signup_get'))
+        return render_template("signUp.html", name=name, surname=surname, email=email, contact=contact)
 
-    existing_user = User.query.filter_by(Email=email).first()
-    if existing_user:
+    # Email validation
+    email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+    if not re.match(email_regex, email):
+        flash("Invalid email format", "error")
+        return render_template("signUp.html", name=name, surname=surname, email=email, contact=contact)
+
+    # Contact number validation
+    phone_regex = r"^\d{10}$"
+    if not re.match(phone_regex, contact):
+        flash("Invalid contact number. Must be 10 digits.", "error")
+        return render_template("signUp.html", name=name, surname=surname, email=email, contact=contact)
+
+    # Check for duplicates
+    if User.query.filter_by(Email=email).first():
         flash("Email already registered", "error")
-        return redirect(url_for('auth.signup_get'))
+        return render_template("signUp.html", name=name, surname=surname, email=email, contact=contact)
 
-    new_user = User(Name=name, Surname=surname, Email=email, CellPhone=contact, Password=password)
+    if User.query.filter_by(CellPhone=contact).first():
+        flash("Contact number already registered", "error")
+        return render_template("signUp.html", name=name, surname=surname, email=email, contact=contact)
+
+    # Save new user (email verification pending)
+    new_user = User(
+        Name=name,
+        Surname=surname,
+        Email=email,
+        CellPhone=contact,
+        Password=password,  # TODO: hash password
+        is_email_verified=False,
+        is_phone_verified=False
+    )
     db.session.add(new_user)
     db.session.commit()
 
-    flash("Account created! You can now sign in.", "success")
-    return redirect(url_for('auth.login_get'))
+    # Generate email verification code
+    email_code = generate_code()
+    session['pending_user_id'] = new_user.ID
+    session['pending_email'] = new_user.Email
+    session['email_code'] = email_code
+
+    # Send email code
+    send_email_verification(email, email_code)
+
+    flash("Account created! Please verify your email.", "info")
+    return redirect(url_for('auth.verify_page'))
+
+# --------------------------
+# Verification Routes
+# --------------------------
+@auth.route('/verify', methods=['GET'])
+def verify_page():
+    """Show form to enter email verification code."""
+    if 'pending_user_id' not in session:
+        flash("No user pending verification.", "error")
+        return redirect(url_for('auth.signup_get'))
+    return render_template('verify.html')
+
+@auth.route('/verify_email', methods=['POST'])
+def verify_email():
+    entered_code = request.form['code']
+    if entered_code == session.get('email_code'):
+        user = User.query.filter_by(Email=session.get('pending_email')).first()
+        if user:
+            user.is_email_verified = True
+            db.session.commit()
+            flash("Email verified successfully!", "success")
+            # Clean up session
+            session.pop('pending_user_id', None)
+            session.pop('pending_email', None)
+            session.pop('email_code', None)
+        return redirect(url_for('auth.login_get'))
+    flash("Invalid verification code", "error")
+    return redirect(url_for('auth.verify_page'))
+
+
 
 
 @auth.route('/register/pro_type')
@@ -220,49 +327,67 @@ def save_file(file, subfolder):
     return None
 
 
+
 @auth.route('/register/certified', methods=['GET', 'POST'])
+
 def register_certified():
     if request.method == 'POST':
-        form_data = {
-            'name': request.form.get('name', '').strip(),
-            'surname': request.form.get('surname', '').strip(),
-            'email': request.form.get('email', '').strip().lower(),
-            'contact': request.form.get('contact', '').strip(),
-            'service': request.form.get('service', '').strip(),
-            'experience': request.form.get('experience', '').strip(),
-            'availability': request.form.get('availability', '').strip(),
-            'location': request.form.get('location', '').strip()
-        }
+        if current_user.is_authenticated:
+            # Auto-fill from logged-in user
+            form_data = {
+                'name': current_user.Name,
+                'surname': current_user.Surname,
+                'email': current_user.Email,
+                'contact': current_user.CellPhone,
+                'service': request.form.get('service', '').strip(),
+                'experience': request.form.get('experience', '').strip(),
+                'availability': request.form.get('availability', '').strip(),
+                'location': request.form.get('location', '').strip()
+            }
+            password = None
+            confirm_password = None
+        else:
+            # Normal flow
+            form_data = {
+                'name': request.form.get('name', '').strip(),
+                'surname': request.form.get('surname', '').strip(),
+                'email': request.form.get('email', '').strip().lower(),
+                'contact': request.form.get('contact', '').strip(),
+                'service': request.form.get('service', '').strip(),
+                'experience': request.form.get('experience', '').strip(),
+                'availability': request.form.get('availability', '').strip(),
+                'location': request.form.get('location', '').strip()
+            }
+            password = request.form.get('password', '')
+            confirm_password = request.form.get('confirm_password', '')
 
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
+        # Validation (skip name/email/password if logged in)
+        if not current_user.is_authenticated:
+            if not re.match(r"^[A-Za-z]{2,50}$", form_data['name']):
+                flash("First name must contain only letters and be 2–50 characters.", "error")
+                return render_template('register_certified.html', form_data=form_data)
 
-        # Validations
-        if not re.match(r"^[A-Za-z]{2,50}$", form_data['name']):
-            flash("First name must contain only letters and be 2–50 characters.", "error")
-            return render_template('register_certified.html', form_data=form_data)
+            if not re.match(r"^[A-Za-z]{2,50}$", form_data['surname']):
+                flash("Surname must contain only letters and be 2–50 characters.", "error")
+                return render_template('register_certified.html', form_data=form_data)
 
-        if not re.match(r"^[A-Za-z]{2,50}$", form_data['surname']):
-            flash("Surname must contain only letters and be 2–50 characters.", "error")
-            return render_template('register_certified.html', form_data=form_data)
+            if not re.match(r"^[^@]+@[^@]+\.[^@]+$", form_data['email']):
+                flash("Invalid email address format.", "error")
+                return render_template('register_certified.html', form_data=form_data)
 
-        if not re.match(r"^[^@]+@[^@]+\.[^@]+$", form_data['email']):
-            flash("Invalid email address format.", "error")
-            return render_template('register_certified.html', form_data=form_data)
+            if not re.match(r"^(\+27|0)[0-9]{9}$", form_data['contact']):
+                flash("Invalid contact number. Example: +27831234567 or 0831234567", "error")
+                return render_template('register_certified.html', form_data=form_data)
 
-        if not re.match(r"^(\+27|0)[0-9]{9}$", form_data['contact']):
-            flash("Invalid contact number. Example: +27831234567 or 0831234567", "error")
-            return render_template('register_certified.html', form_data=form_data)
+            if password != confirm_password:
+                flash("Passwords do not match.", "error")
+                return render_template('register_certified.html', form_data=form_data)
 
-        if password != confirm_password:
-            flash("Passwords do not match.", "error")
-            return render_template('register_certified.html', form_data=form_data)
+            if not re.match(r"^(?=.*[A-Z])(?=.*\d).{8,}$", password):
+                flash("Password must have at least 8 characters, one uppercase letter, and one number.", "error")
+                return render_template('register_certified.html', form_data=form_data)
 
-        if not re.match(r"^(?=.*[A-Z])(?=.*\d).{8,}$", password):
-            flash("Password must have at least 8 characters, one uppercase letter, and one number.", "error")
-            return render_template('register_certified.html', form_data=form_data)
-
-        if len(form_data['service']) < 2 or len(form_data['experience']) < 2 or len(form_data['availability']) < 2 or len(form_data['location']) < 2:
+        if len(form_data['service']) < 2 or len(form_data['experience']) < 1 or len(form_data['availability']) < 2 or len(form_data['location']) < 2:
             flash("All service details must be filled out correctly.", "error")
             return render_template('register_certified.html', form_data=form_data)
 
@@ -275,26 +400,21 @@ def register_certified():
             return render_template('register_certified.html', form_data=form_data)
 
         # Handle file uploads
-        id_doc_file = request.files.get('id_doc')
-        cert_doc_file = request.files.get('cert_doc')
-        portfolio_files = request.files.getlist('portfolio_files')
-        intro_video_file = request.files.get('intro_video')
-
-        id_doc_path = save_file(id_doc_file, 'uploads/id_docs')
-        cert_doc_path = save_file(cert_doc_file, 'uploads/cert_docs')
+        id_doc_path = save_file(request.files.get('id_doc'), 'uploads/id_docs')
+        cert_doc_path = save_file(request.files.get('cert_doc'), 'uploads/cert_docs')
 
         portfolio_paths = []
-        for f in portfolio_files:
+        for f in request.files.getlist('portfolio_files'):
             path = save_file(f, 'uploads/portfolio')
             if path:
                 portfolio_paths.append(path)
 
-        intro_video_path = save_file(intro_video_file, 'uploads/videos')
+        intro_video_path = save_file(request.files.get('intro_video'), 'uploads/videos')
 
-        # Hash password
-        hashed_password = generate_password_hash(password)
+        # Hash password only if new user
+        hashed_password = generate_password_hash(password) if password else current_user.Password
 
-        # Create new ProRegistrationRequest record
+        # Create new ProRegistrationRequest
         new_request = ProRegistrationRequest(
             name=form_data['name'],
             surname=form_data['surname'],
@@ -316,10 +436,19 @@ def register_certified():
         db.session.add(new_request)
         db.session.commit()
 
+        # Generate and send email verification code
+        if not current_user.is_authenticated:
+            email_code = generate_code()
+            session['pending_user_id'] = new_request.id
+            session['pending_email'] = new_request.email
+            session['email_code'] = email_code
+            send_email_verification(new_request.email, email_code)
+
         flash("Your registration request has been submitted for review.", "success")
-        return redirect(url_for('auth.login_get'))
+        return redirect(url_for('auth.verify_page' if not current_user.is_authenticated else 'views.feed'))
 
     return render_template('register_certified.html', form_data={})
+
 
 import re
 import json
@@ -353,78 +482,101 @@ def save_file(file, subfolder):
 @auth.route('/register/experienced', methods=['GET', 'POST'])
 def register_experienced():
     if request.method == 'POST':
-        form_data = {
-            'name': request.form.get('name', '').strip(),
-            'surname': request.form.get('surname', '').strip(),
-            'email': request.form.get('email', '').strip().lower(),
-            'contact': request.form.get('contact', '').strip(),
-            'service': request.form.get('service', '').strip(),
-            'experience': request.form.get('experience', '').strip(),
-            'availability': request.form.get('availability', '').strip(),
-            'location': request.form.get('location', '').strip()
-        }
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
+        if current_user.is_authenticated:
+            # Auto-fill from logged-in user
+            form_data = {
+                'name': current_user.Name,
+                'surname': current_user.Surname,
+                'email': current_user.Email,
+                'contact': current_user.CellPhone,
+                'service': request.form.get('service', '').strip(),
+                'experience': request.form.get('experience', '').strip(),
+                'availability': request.form.get('availability', '').strip(),
+                'location': request.form.get('location', '').strip()
+            }
+            password = None
+            confirm_password = None
+        else:
+            # Normal flow
+            form_data = {
+                'name': request.form.get('name', '').strip(),
+                'surname': request.form.get('surname', '').strip(),
+                'email': request.form.get('email', '').strip().lower(),
+                'contact': request.form.get('contact', '').strip(),
+                'service': request.form.get('service', '').strip(),
+                'experience': request.form.get('experience', '').strip(),
+                'availability': request.form.get('availability', '').strip(),
+                'location': request.form.get('location', '').strip()
+            }
+            password = request.form.get('password', '')
+            confirm_password = request.form.get('confirm_password', '')
 
-        # Basic validations (same as certified)
-        if not re.match(r"^[A-Za-z]{2,50}$", form_data['name']):
-            flash("First name must contain only letters and be 2–50 characters.", "error")
-            return render_template('register_experienced.html', form_data=form_data)
+        # Validations (skip name/email/password if logged in)
+        if not current_user.is_authenticated:
+            if not re.match(r"^[A-Za-z]{2,50}$", form_data['name']):
+                flash("First name must contain only letters and be 2–50 characters.", "error")
+                return render_template('register_experienced.html', form_data=form_data)
 
-        if not re.match(r"^[A-Za-z]{2,50}$", form_data['surname']):
-            flash("Surname must contain only letters and be 2–50 characters.", "error")
-            return render_template('register_experienced.html', form_data=form_data)
+            if not re.match(r"^[A-Za-z]{2,50}$", form_data['surname']):
+                flash("Surname must contain only letters and be 2–50 characters.", "error")
+                return render_template('register_experienced.html', form_data=form_data)
 
-        if not re.match(r"^[^@]+@[^@]+\.[^@]+$", form_data['email']):
-            flash("Invalid email format.", "error")
-            return render_template('register_experienced.html', form_data=form_data)
+            if not re.match(r"^[^@]+@[^@]+\.[^@]+$", form_data['email']):
+                flash("Invalid email format.", "error")
+                return render_template('register_experienced.html', form_data=form_data)
 
-        if not re.match(r"^(\+27|0)[0-9]{9}$", form_data['contact']):
-            flash("Invalid contact number format.", "error")
-            return render_template('register_experienced.html', form_data=form_data)
+            if not re.match(r"^(\+27|0)[0-9]{9}$", form_data['contact']):
+                flash("Invalid contact number format.", "error")
+                return render_template('register_experienced.html', form_data=form_data)
 
-        if password != confirm_password:
-            flash("Passwords do not match.", "error")
-            return render_template('register_experienced.html', form_data=form_data)
+            if password != confirm_password:
+                flash("Passwords do not match.", "error")
+                return render_template('register_experienced.html', form_data=form_data)
 
-        if not re.match(r"^(?=.*[A-Z])(?=.*\d).{8,}$", password):
-            flash("Password must have at least 8 characters, one uppercase letter, and one number.", "error")
-            return render_template('register_experienced.html', form_data=form_data)
+            if not re.match(r"^(?=.*[A-Z])(?=.*\d).{8,}$", password):
+                flash("Password must have at least 8 characters, one uppercase letter, and one number.", "error")
+                return render_template('register_experienced.html', form_data=form_data)
 
         if len(form_data['service']) < 2 or len(form_data['experience']) < 1 or len(form_data['location']) < 2:
             flash("Service, experience, and location must be filled in.", "error")
             return render_template('register_experienced.html', form_data=form_data)
 
-        # Check for duplicates
-        if ProRegistrationRequest.query.filter(
+        # Duplicate check
+        existing_request = ProRegistrationRequest.query.filter(
             (ProRegistrationRequest.email == form_data['email']) |
             (ProRegistrationRequest.contact == form_data['contact'])
-        ).first():
+        ).first()
+        if existing_request:
             flash("A registration request with this email or contact already exists.", "error")
             return render_template('register_experienced.html', form_data=form_data)
 
-        # File uploads
-        id_doc_path = save_file(request.files.get('id_doc'), 'id_docs')
+        # Handle file uploads
+        id_doc_path = save_file(request.files.get('id_doc'), 'uploads/id_docs')
         if not id_doc_path:
             flash("Valid government ID (pdf/jpg/png) is required.", "error")
             return render_template('register_experienced.html', form_data=form_data)
 
-        intro_video_path = save_file(request.files.get('intro_video'), 'videos')
+        intro_video_path = save_file(request.files.get('intro_video'), 'uploads/videos')
 
-        portfolio_files = request.files.getlist('portfolio_files')
         portfolio_paths = []
+        portfolio_files = request.files.getlist('portfolio_files')
         for f in portfolio_files[:3]:
-            path = save_file(f, 'portfolio')
+            path = save_file(f, 'uploads/portfolio')
             if path:
                 portfolio_paths.append(path)
+        if len(portfolio_files) > 3:
+            flash("Only the first 3 portfolio files were uploaded.", "info")
 
-        # Save to DB
+        # Hash password only if new user
+        hashed_password = generate_password_hash(password) if password else current_user.Password
+
+        # Create new ProRegistrationRequest
         new_request = ProRegistrationRequest(
             name=form_data['name'],
             surname=form_data['surname'],
             email=form_data['email'],
             contact=form_data['contact'],
-            password=generate_password_hash(password),
+            password=hashed_password,
             service=form_data['service'],
             experience=form_data['experience'],
             availability=form_data['availability'],
@@ -437,17 +589,19 @@ def register_experienced():
             submitted_at=datetime.utcnow()
         )
 
-        try:
-            db.session.add(new_request)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            flash("Something went wrong. Please try again.", "error")
-            print(f"Error: {e}")
-            return render_template('register_experienced.html', form_data=form_data)
+        db.session.add(new_request)
+        db.session.commit()
+
+        # Generate and send email verification code if not logged in
+        if not current_user.is_authenticated:
+            email_code = generate_code()
+            session['pending_user_id'] = new_request.id
+            session['pending_email'] = new_request.email
+            session['email_code'] = email_code
+            send_email_verification(new_request.email, email_code)
 
         flash("Your registration request has been submitted for review.", "success")
-        return redirect(url_for('auth.login_get'))
+        return redirect(url_for('auth.verify_page' if not current_user.is_authenticated else 'views.feed'))
 
     return render_template('register_experienced.html', form_data={})
 

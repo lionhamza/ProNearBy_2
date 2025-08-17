@@ -195,3 +195,25 @@ input:focus {
   border-color: #007BFF; /* Match your theme */
   box-shadow: 0 0 4px rgba(0,123,255,0.4);
 }
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 60px; /* space for the button */
+  box-sizing: border-box;
+}
+
+.password-wrapper button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 0.9em;
+}

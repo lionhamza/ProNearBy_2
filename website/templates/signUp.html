@@ -8,6 +8,21 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='loginfinal.css') }}" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
+
+  <style>
+    .error-message {
+      color: red;
+      font-size: 0.85em;
+      margin-top: 3px;
+      display: none;
+    }
+    .valid {
+      border-color: green;
+    }
+    .invalid {
+      border-color: red;
+    }
+  </style>
 </head>
 <body>
   <main class="form-container col col-xs-12 col-sm-10 col-lg-6">
@@ -20,38 +35,56 @@
       </header>
 
       <form id="signup-form" method="POST" action="{{ url_for('auth.signup_post') }}" autocomplete="off" novalidate>
+        
+       <div class="input-group">
+  <label for="name">Name *</label>
+  <input type="text" id="name" name="name" value="{{ name or '' }}" required />
+  <div class="error-message" id="name-error">Name is required.</div>
+</div>
 
-        <div class="input-group">
-          <label for="name">Name *</label>
-          <input type="text" id="name" name="name" required />
-        </div>
+<div class="input-group">
+  <label for="surname">Surname *</label>
+  <input type="text" id="surname" name="surname" value="{{ surname or '' }}" required />
+  <div class="error-message" id="surname-error">Surname is required.</div>
+</div>
 
-        <div class="input-group">
-          <label for="surname">Surname *</label>
-          <input type="text" id="surname" name="surname" required />
-        </div>
+<div class="input-group">
+  <label for="email">Email *</label>
+  <input type="text" id="email" name="email" value="{{ email or '' }}" required />
+  <div class="error-message" id="email-error">Enter a valid email address.</div>
+</div>
 
-        <div class="input-group">
-          <label for="email">Email *</label>
-          <input type="text" id="email" name="email" required />
-        </div>
+<div class="input-group">
+  <label for="contact">Contact Number *</label>
+  <input type="text" id="contact" name="contact" value="{{ contact or '' }}" required />
+  <div class="error-message" id="contact-error">Enter a valid contact number (10 digits).</div>
+</div>
 
-        <div class="input-group">
-          <label for="contact">Contact Number *</label>
-          <input type="text" id="contact" name="contact" required />
-        </div>
+
+<div class="input-group password-group">
+  <label for="password">Password *</label>
+  
+  <div class="password-wrapper">
+    <input type="password" id="password" name="password" required />
+    <button type="button" id="toggle-password" aria-label="Show password">Show</button>
+  </div>
+
+  <div id="password-rules">
+    <small id="rule-length" style="color:red;">• At least 6 characters</small><br>
+    <small id="rule-uppercase" style="color:red;">• At least 1 uppercase letter</small><br>
+    <small id="rule-number" style="color:red;">• At least 1 number</small>
+  </div>
+  <div class="error-message" id="password-error">Password must meet the requirements above.</div>
+</div>
+
+
 
         <div class="input-group password-group">
-          <label for="password">Password *</label>
-          <input type="password" id="password" name="password" required />
-          <button type="button" id="toggle-password" aria-label="Show password">Show</button>
-        </div>
+  <label for="confirm_password">Confirm Password *</label>
+  <input type="password" id="confirm_password" name="confirm_password" required />
+  <div class="error-message" id="confirm-error">Passwords do not match.</div>
+</div>
 
-        <div class="input-group password-group">
-          <label for="confirm_password">Confirm Password *</label>
-          <input type="password" id="confirm_password" name="confirm_password" required />
-          
-        </div>
 
         <button type="submit" id="submitBtn" class="btn btn-primary">Sign Up</button>
       </form>
@@ -61,35 +94,139 @@
         <a href="{{ url_for('auth.login_get') }}">Sign in</a>
       </p>
       <p class="recovery-links">
-  Want to offer services?
-  <a href="{{ url_for('auth.choose_pro_type') }}">Become a Professional</a>
-</p>
-
+        Want to offer services?
+        <a href="{{ url_for('auth.choose_pro_type') }}">Become a Professional</a>
+      </p>
     </section>
   </main>
 
   <script>
-    const togglePasswordBtn = document.getElementById('toggle-password');
+    // Field references
+    const nameInput = document.getElementById('name');
+    const surnameInput = document.getElementById('surname');
+    const emailInput = document.getElementById('email');
+    const contactInput = document.getElementById('contact');
     const passwordInput = document.getElementById('password');
-    togglePasswordBtn.addEventListener('click', () => {
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        togglePasswordBtn.textContent = 'Hide';
-      } else {
-        passwordInput.type = 'password';
-        togglePasswordBtn.textContent = 'Show';
+    const confirmInput = document.getElementById('confirm_password');
+
+    // Error messages
+    const nameError = document.getElementById('name-error');
+    const surnameError = document.getElementById('surname-error');
+    const emailError = document.getElementById('email-error');
+    const contactError = document.getElementById('contact-error');
+    const passwordError = document.getElementById('password-error');
+    const confirmError = document.getElementById('confirm-error');
+
+    // Validation functions
+    function validateName() {
+      if (nameInput.value.trim() === '') {
+        showError(nameInput, nameError);
+        return false;
       }
+      showValid(nameInput, nameError);
+      return true;
+    }
+
+    function validateSurname() {
+      if (surnameInput.value.trim() === '') {
+        showError(surnameInput, surnameError);
+        return false;
+      }
+      showValid(surnameInput, surnameError);
+      return true;
+    }
+
+    function validateEmail() {
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!regex.test(emailInput.value.trim())) {
+        showError(emailInput, emailError);
+        return false;
+      }
+      showValid(emailInput, emailError);
+      return true;
+    }
+
+    function validateContact() {
+      const regex = /^\d{10}$/;
+      if (!regex.test(contactInput.value.trim())) {
+        showError(contactInput, contactError);
+        return false;
+      }
+      showValid(contactInput, contactError);
+      return true;
+    }
+
+    function validatePassword() {
+  const value = passwordInput.value;
+  let isValid = true;
+
+  // Rules
+  const hasLength = value.length >= 6;
+  const hasUppercase = /[A-Z]/.test(value);
+  const hasNumber = /\d/.test(value);
+
+  // Update rule colors
+  document.getElementById('rule-length').style.color = hasLength ? 'green' : 'red';
+  document.getElementById('rule-uppercase').style.color = hasUppercase ? 'green' : 'red';
+  document.getElementById('rule-number').style.color = hasNumber ? 'green' : 'red';
+
+  // Final check
+  if (!hasLength || !hasUppercase || !hasNumber) {
+    showError(passwordInput, passwordError);
+    isValid = false;
+  } else {
+    showValid(passwordInput, passwordError);
+  }
+
+  return isValid;
+}
+
+
+    function validateConfirmPassword() {
+      if (confirmInput.value !== passwordInput.value || confirmInput.value === '') {
+        showError(confirmInput, confirmError);
+        return false;
+      }
+      showValid(confirmInput, confirmError);
+      return true;
+    }
+
+    // Helper to show errors
+    function showError(input, errorElement) {
+      input.classList.remove('valid');
+      input.classList.add('invalid');
+      errorElement.style.display = 'block';
+    }
+
+    function showValid(input, errorElement) {
+      input.classList.remove('invalid');
+      input.classList.add('valid');
+      errorElement.style.display = 'none';
+    }
+
+    // Real-time listeners
+    nameInput.addEventListener('input', validateName);
+    surnameInput.addEventListener('input', validateSurname);
+    emailInput.addEventListener('input', validateEmail);
+    contactInput.addEventListener('input', validateContact);
+    passwordInput.addEventListener('input', () => {
+      validatePassword();
+      validateConfirmPassword(); // update match check instantly
+    });
+    confirmInput.addEventListener('input', validateConfirmPassword);
+
+    // Toggle password visibility
+    document.getElementById('toggle-password').addEventListener('click', () => {
+      passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+    });
+    document.getElementById('toggle-confirm').addEventListener('click', () => {
+      confirmInput.type = confirmInput.type === 'password' ? 'text' : 'password';
     });
 
-    const toggleConfirmBtn = document.getElementById('toggle-confirm');
-    const confirmPasswordInput = document.getElementById('confirm_password');
-    toggleConfirmBtn.addEventListener('click', () => {
-      if (confirmPasswordInput.type === 'password') {
-        confirmPasswordInput.type = 'text';
-        toggleConfirmBtn.textContent = 'Hide';
-      } else {
-        confirmPasswordInput.type = 'password';
-        toggleConfirmBtn.textContent = 'Show';
+    // Prevent form submit if invalid
+    document.getElementById('signup-form').addEventListener('submit', (e) => {
+      if (!validateName() || !validateSurname() || !validateEmail() || !validateContact() || !validatePassword() || !validateConfirmPassword()) {
+        e.preventDefault();
       }
     });
   </script>

@@ -1,6 +1,68 @@
 {% extends "pro_base.html" %}
 {% block title %}Experienced Professional - ProNearBy{% endblock %}
 {% block div %}
+
+<style>
+  .error-message {
+    color: red;
+    font-size: 0.85em;
+    margin-top: 3px;
+    display: none;
+  }
+  .valid {
+    border-color: green;
+  }
+  .invalid {
+    border-color: red;
+  }
+    .input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+
+  .input-group label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+  }
+
+  .input-group input {
+    padding: 10px 12px;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-group input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+    outline: none;
+  }
+
+  .input-group input.valid {
+    border-color: green;
+  }
+
+  .input-group input.invalid {
+    border-color: red;
+  }
+
+  .error-message {
+    color: red;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: none;
+  }
+
+  /* Optional placeholder styling */
+  .input-group input::placeholder {
+    color: #aaa;
+    font-style: italic;
+  }
+</style>
+
 <main class="form-container">
   <section id="signup-panel" class="card ux-card">
     <header id="form-header" class="idp-form-header">
@@ -12,84 +74,106 @@
     </header>
 
     <form id="experiencedForm" method="POST" enctype="multipart/form-data" action="{{ url_for('auth.register_experienced') }}">
+    {% if not current_user.is_authenticated %}
       <!-- Basic Info -->
       <div class="input-group">
         <label for="name">First Name *</label>
-        <input type="text" id="name" name="name" pattern="[A-Za-z]{2,50}" placeholder="Enter your first name" required />
+        <input type="text" id="name" name="name" required />
+        <div class="error-message" id="name-error">First name is required.</div>
       </div>
 
       <div class="input-group">
         <label for="surname">Surname *</label>
-        <input type="text" id="surname" name="surname" pattern="[A-Za-z]{2,50}" placeholder="Enter your last name" required />
+        <input type="text" id="surname" name="surname" required />
+        <div class="error-message" id="surname-error">Surname is required.</div>
       </div>
 
       <div class="input-group">
         <label for="email">Email *</label>
-        <input type="email" id="email" name="email" placeholder="Enter your email address" required />
+        <input type="text" id="email" name="email" required />
+        <div class="error-message" id="email-error">Enter a valid email address.</div>
       </div>
 
       <div class="input-group">
         <label for="contact">Contact Number *</label>
-        <input type="tel" id="contact" name="contact" pattern="^(\+27|0)[0-9]{9}$" placeholder="e.g. 0821234567 or +27821234567" required />
+        <input type="text" id="contact" name="contact" required />
+        <div class="error-message" id="contact-error">Enter a valid contact number (10 digits).</div>
       </div>
 
+      <!-- Password -->
       <div class="input-group password-group">
         <label for="password">Password *</label>
-        <input type="password" id="password" name="password" pattern="^(?=.*[A-Z])(?=.*\d).{8,}$" placeholder="At least 8 chars, 1 uppercase & 1 number" required />
+        <input type="password" id="password" name="password" required />
         <button type="button" class="toggle-password-btn" id="toggle-password">Show</button>
+        <div id="password-rules">
+          <small id="rule-length" style="color:red;">• At least 8 characters</small><br>
+          <small id="rule-uppercase" style="color:red;">• At least 1 uppercase letter</small><br>
+          <small id="rule-number" style="color:red;">• At least 1 number</small>
+        </div>
+        <div class="error-message" id="password-error">Password must meet the requirements above.</div>
       </div>
 
       <div class="input-group password-group">
         <label for="confirm_password">Confirm Password *</label>
-        <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter your password" required />
-        <button type="button" class="toggle-password-btn" id="toggle-confirm-password">Show</button>
+        <input type="password" id="confirm_password" name="confirm_password" required />
+        <div class="error-message" id="confirm-error">Passwords do not match.</div>
       </div>
-      <small id="passwordError" style="color: red; display: none;">Passwords do not match.</small>
-      
+      {% else %}
+    <!-- Already logged in -->
+    <p><strong>Logged in as:</strong> {{ current_user.Name }} {{ current_user.Surname }} ({{ current_user.Email }})</p>
+    <input type="hidden" name="name" value="{{ current_user.Name }}">
+    <input type="hidden" name="surname" value="{{ current_user.Surname }}">
+    <input type="hidden" name="email" value="{{ current_user.Email }}">
+    <input type="hidden" name="contact" value="{{ current_user.CellPhone }}">
+  {% endif %}
       <!-- Portfolio & Reputation -->
       <h2 style="font-size: 1rem; margin-top: 1rem; text-align: center;">📂 Portfolio & Reputation</h2>
       <div class="input-group full-width">
         <label for="id_doc">🪪 Upload Government ID *</label>
         <input type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required />
-        <small id="idDocError" style="color: red; display: none;"></small>
+        <div class="error-message" id="idDocError"></div>
       </div>
 
       <div class="input-group full-width">
         <label for="portfolio_files">📁 Upload Portfolio Images</label>
         <input type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple />
         <small style="color: #666; font-size: 0.75rem;">Up to 3 images.</small>
-        <small id="portfolioError" style="color: red; display: none;"></small>
+        <div class="error-message" id="portfolioError"></div>
       </div>
 
       <div class="input-group full-width">
         <label for="intro_video">🎥 Upload Video Introduction</label>
         <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm" />
         <small style="color: #666; font-size: 0.75rem;">Max size: 50MB.</small>
-        <small id="videoError" style="color: red; display: none;"></small>
+        <div class="error-message" id="videoError"></div>
       </div>
 
-      <!-- Service Info -->
-      <div class="input-group">
-        <label for="service">🧰 Service Offered *</label>
-        <input type="text" id="service" name="service" placeholder="e.g. Plumbing, Carpentry" required />
-      </div>
+     <div class="input-group">
+  <label for="service">🧰 Service Offered *</label>
+  <input type="text" id="service" name="service" placeholder="e.g., Plumbing, Electrical" required />
+  <div class="error-message" id="service-error">Service is required.</div>
+</div>
 
-      <div class="input-group">
-        <label for="experience">📅 Years of Experience *</label>
-        <input type="text" id="experience" name="experience" placeholder="e.g. 5 years" required />
-      </div>
+<div class="input-group">
+  <label for="experience">📅 Years of Experience *</label>
+  <input type="number" id="experience" name="experience" placeholder="e.g., 5" min="0" required />
+  <div class="error-message" id="experience-error">Experience is required.</div>
+</div>
 
-      <div class="input-group">
-        <label for="availability">🕒 Availability *</label>
-        <input type="text" id="availability" name="availability" placeholder="e.g. Weekdays 8am-5pm" required />
-      </div>
+<div class="input-group">
+  <label for="availability">🕒 Availability *</label>
+  <input type="text" id="availability" name="availability" placeholder="e.g., Mon-Fri 9am-5pm" required />
+  <div class="error-message" id="availability-error">Availability is required.</div>
+</div>
 
-      <div class="input-group">
-        <label for="location">📍 Location *</label>
-        <input type="text" id="location" name="location" placeholder="Enter your service location" required />
-      </div>
+<div class="input-group">
+  <label for="location">📍 Location *</label>
+  <input type="text" id="location" name="location" placeholder="e.g., Cape Town, South Africa" required />
+  <div class="error-message" id="location-error">Location is required.</div>
+</div>
 
-      <button type="submit" id="submitBtn" class="btn btn-primary">Register as Certified Pro</button>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary">Register as Experienced Pro</button>
     </form>
 
     <p class="recovery-links">
@@ -100,54 +184,90 @@
 </main>
 
 <script>
-  // Password toggle
-  function togglePasswordVisibility(inputId, btnId) {
-    const input = document.getElementById(inputId);
-    const btn = document.getElementById(btnId);
-    btn.addEventListener('click', () => {
-      input.type = input.type === 'password' ? 'text' : 'password';
-      btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
-    });
-  }
-  togglePasswordVisibility('password', 'toggle-password');
-  togglePasswordVisibility('confirm_password', 'toggle-confirm-password');
+document.addEventListener("DOMContentLoaded", () => {
+  const inputs = {
+    name: document.getElementById('name'),
+    surname: document.getElementById('surname'),
+    email: document.getElementById('email'),
+    contact: document.getElementById('contact'),
+    password: document.getElementById('password'),
+    confirm: document.getElementById('confirm_password'),
+    service: document.getElementById('service'),
+    experience: document.getElementById('experience'),
+    availability: document.getElementById('availability'),
+    location: document.getElementById('location')
+  };
 
-  // Password match check
-  const password = document.getElementById('password');
-  const confirmPassword = document.getElementById('confirm_password');
-  const passwordError = document.getElementById('passwordError');
-  function checkPasswords() {
-    const mismatch = (password.value && confirmPassword.value && password.value !== confirmPassword.value);
-    passwordError.style.display = mismatch ? 'inline' : 'none';
-    return !mismatch;
+  const errors = {
+    name: document.getElementById('name-error'),
+    surname: document.getElementById('surname-error'),
+    email: document.getElementById('email-error'),
+    contact: document.getElementById('contact-error'),
+    password: document.getElementById('password-error'),
+    confirm: document.getElementById('confirm-error'),
+    service: document.getElementById('service-error'),
+    experience: document.getElementById('experience-error'),
+    availability: document.getElementById('availability-error'),
+    location: document.getElementById('location-error')
+  };
+
+  function showError(input, errorEl) {
+    input.classList.remove('valid');
+    input.classList.add('invalid');
+    errorEl.style.display = 'block';
   }
-  password.addEventListener('input', checkPasswords);
-  confirmPassword.addEventListener('input', checkPasswords);
+  function showValid(input, errorEl) {
+    input.classList.remove('invalid');
+    input.classList.add('valid');
+    errorEl.style.display = 'none';
+  }
+
+  function validateName() { return inputs.name.value.trim() ? showValid(inputs.name, errors.name) || true : showError(inputs.name, errors.name) || false; }
+  function validateSurname() { return inputs.surname.value.trim() ? showValid(inputs.surname, errors.surname) || true : showError(inputs.surname, errors.surname) || false; }
+  function validateEmail() { const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; return regex.test(inputs.email.value.trim()) ? showValid(inputs.email, errors.email) || true : showError(inputs.email, errors.email) || false; }
+  function validateContact() { const regex = /^\d{10}$/; return regex.test(inputs.contact.value.trim()) ? showValid(inputs.contact, errors.contact) || true : showError(inputs.contact, errors.contact) || false; }
+  function validateService() { return inputs.service.value.trim() ? showValid(inputs.service, errors.service) || true : showError(inputs.service, errors.service) || false; }
+  function validateExperience() { return inputs.experience.value.trim() ? showValid(inputs.experience, errors.experience) || true : showError(inputs.experience, errors.experience) || false; }
+  function validateAvailability() { return inputs.availability.value.trim() ? showValid(inputs.availability, errors.availability) || true : showError(inputs.availability, errors.availability) || false; }
+  function validateLocation() { return inputs.location.value.trim() ? showValid(inputs.location, errors.location) || true : showError(inputs.location, errors.location) || false; }
+
+  const ruleLength = document.getElementById('rule-length');
+  const ruleUppercase = document.getElementById('rule-uppercase');
+  const ruleNumber = document.getElementById('rule-number');
+
+  function validatePassword() {
+    const val = inputs.password.value;
+    const hasLength = val.length >= 8;
+    const hasUppercase = /[A-Z]/.test(val);
+    const hasNumber = /\d/.test(val);
+    ruleLength.style.color = hasLength ? 'green' : 'red';
+    ruleUppercase.style.color = hasUppercase ? 'green' : 'red';
+    ruleNumber.style.color = hasNumber ? 'green' : 'red';
+    return hasLength && hasUppercase && hasNumber ? showValid(inputs.password, errors.password) || true : showError(inputs.password, errors.password) || false;
+  }
+  function validateConfirmPassword() { return inputs.confirm.value && inputs.confirm.value === inputs.password.value ? showValid(inputs.confirm, errors.confirm) || true : showError(inputs.confirm, errors.confirm) || false; }
+
+  // Event listeners
+  inputs.name.addEventListener('input', validateName);
+  inputs.surname.addEventListener('input', validateSurname);
+  inputs.email.addEventListener('input', validateEmail);
+  inputs.contact.addEventListener('input', validateContact);
+  inputs.password.addEventListener('input', () => { validatePassword(); validateConfirmPassword(); });
+  inputs.confirm.addEventListener('input', validateConfirmPassword);
+  inputs.service.addEventListener('input', validateService);
+  inputs.experience.addEventListener('input', validateExperience);
+  inputs.availability.addEventListener('input', validateAvailability);
+  inputs.location.addEventListener('input', validateLocation);
 
   // File validation
-  function validateFile(input, allowed, maxMB, errorElem, maxCount=1) {
-    errorElem.style.display = 'none';
+  function validateFile(input, allowed, maxSizeMB, errorEl, maxCount=1) {
+    errorEl.style.display = 'none';
     const files = input.files;
-    if (files.length > maxCount) {
-      errorElem.textContent = `Max ${maxCount} file(s) allowed.`;
-      errorElem.style.display = 'block';
-      input.value = '';
-      return false;
-    }
-    for (let f of files) {
-      const ext = '.' + f.name.split('.').pop().toLowerCase();
-      if (!allowed.includes(ext)) {
-        errorElem.textContent = `Invalid file type for ${f.name}`;
-        errorElem.style.display = 'block';
-        input.value = '';
-        return false;
-      }
-      if (f.size > maxMB * 1024 * 1024) {
-        errorElem.textContent = `${f.name} exceeds ${maxMB}MB.`;
-        errorElem.style.display = 'block';
-        input.value = '';
-        return false;
-      }
+    if (files.length > maxCount) { errorEl.textContent = `Max ${maxCount} file(s).`; errorEl.style.display = 'block'; input.value=''; return false; }
+    for (let file of files) {
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if (!allowed.includes(ext)) { errorEl.textContent = `Invalid type: ${file.name}`; errorEl.style.display='block'; input.value=''; return false; }
+      if (file.size > maxSizeMB * 1024 * 1024) { errorEl.textContent = `${file.name} too large.`; errorEl.style.display='block'; input.value=''; return false; }
     }
     return true;
   }
@@ -163,14 +283,27 @@
   portfolio.addEventListener('change', () => validateFile(portfolio, ['.jpg','.jpeg','.png'], 5, portfolioError, 3));
   video.addEventListener('change', () => validateFile(video, ['.mp4','.mov','.webm'], 50, videoError));
 
-  // Final check on submit
-  document.getElementById('experiencedForm').addEventListener('submit', (e) => {
-    let valid = true;
-    if (!validateFile(idDoc, ['.pdf','.jpg','.jpeg','.png'], 5, idDocError)) valid = false;
-    if (!validateFile(portfolio, ['.jpg','.jpeg','.png'], 5, portfolioError, 3)) valid = false;
-    if (!validateFile(video, ['.mp4','.mov','.webm'], 50, videoError)) valid = false;
-    if (!checkPasswords()) valid = false;
-    if (!valid) e.preventDefault();
+  // Submit
+  document.getElementById('experiencedForm').addEventListener('submit', e => {
+    if (!(validateName() && validateSurname() && validateEmail() && validateContact() && validatePassword() && validateConfirmPassword() && validateService() && validateExperience() && validateAvailability() && validateLocation() && 
+          validateFile(idDoc, ['.pdf','.jpg','.jpeg','.png'], 5, idDocError) &&
+          validateFile(portfolio, ['.jpg','.jpeg','.png'], 5, portfolioError, 3) &&
+          validateFile(video, ['.mp4','.mov','.webm'], 50, videoError))) {
+      e.preventDefault();
+    }
   });
+
+  // Password toggles
+  function togglePasswordVisibility(inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    btn.addEventListener('click', () => {
+      input.type = input.type === 'password' ? 'text' : 'password';
+      btn.textContent = input.type === 'password' ? 'Show' : 'Hide';
+    });
+  }
+  togglePasswordVisibility('password', 'toggle-password');
+  togglePasswordVisibility('confirm_password', 'toggle-confirm-password');
+});
 </script>
 {% endblock %}

@@ -1,8 +1,10 @@
 ﻿from datetime import datetime
 from sqlalchemy.dialects.postgresql import JSON
 from . import db  # ✅ now safe, since db is defined in __init__.py
+from sqlalchemy import Boolean
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(db.Model,UserMixin):
     __tablename__ = 'User_Info'
 
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -21,7 +23,13 @@ class User(db.Model):
     CoverImage = db.Column(db.String(200))
     Password = db.Column(db.String(200))
     
-    user_type = db.Column(db.String(50), default='regular')  # new field
+    user_type = db.Column(db.String(50), default='regular')
+
+    # ✅ New verification fields
+    is_email_verified = db.Column(Boolean, default=False)
+    is_phone_verified = db.Column(Boolean, default=False)
+    def get_id(self):
+        return str(self.ID)
 
 
 class Post(db.Model):

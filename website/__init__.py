@@ -1,7 +1,13 @@
 ﻿from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail
 
 db = SQLAlchemy()
+mail = Mail()
+from flask_login import LoginManager, current_user
+from .models import User
+
+login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__)
@@ -14,12 +20,28 @@ def create_app():
     app.config['GOOGLE_CLIENT_SECRET'] = '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'
 
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
-    
+
+    # Email config
+    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+    app.config['MAIL_PORT'] = 587
+    app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USERNAME'] = 'pronearby.service@gmail.com'
+    app.config['MAIL_PASSWORD'] = 'ovlw fhpk nrbq ctkv'  # App-specific password
+    app.config['MAIL_DEFAULT_SENDER'] = 'ProNearBy <pronearby.service@gmail.com>'
+
+    # Initialize extensions
     db.init_app(app)
+    mail.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login_get'  # page to redirect if not logged in
+
+    # User loader for Flask-Login
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
     from .views import views
     from .auth import auth
-    from .models import User
     from .admin import admin
 
     app.register_blueprint(views, url_prefix='/')
@@ -28,13 +50,10 @@ def create_app():
 
     @app.context_processor
     def inject_user():
-        user_id = session.get('user_id')
-        if user_id:
-            user = User.query.get(user_id)
-            return dict(user=user)
-        return dict(user=None)
+        # current_user is now available
+        return dict(user=current_user)
 
-    # ✅ 413 Error Handler goes here
+    # 413 Error Handler
     @app.errorhandler(413)
     def too_large(e):
         return "File is too large. Maximum allowed size is 50MB.", 413

@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from .models import User , Post , ServiceRequest,Message, Like
+# in views.py
+from .models import User, Post, ServiceRequest, Message as MessageModel, Like
+
 from . import db
 from flask import session
 from datetime import datetime
 from flask import jsonify
-
+from . import mail
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 views = Blueprint('views', __name__)
 
@@ -316,7 +318,7 @@ def messages():
     if request.method == 'POST':
         content = request.form['message']
         if selected_user_id and content.strip():
-            new_message = Message(
+            new_message = MessageModel(
                 sender_id=current_user_id,
                 receiver_id=selected_user_id,
                 content=content
@@ -331,25 +333,28 @@ def messages():
     selected_user = None
     if selected_user_id:
         selected_user = User.query.get(selected_user_id)
-        messages = Message.query.filter(
+        messages = MessageModel.query.filter(
             or_(
-                (Message.sender_id == current_user_id) & (Message.receiver_id == selected_user_id),
-                (Message.sender_id == selected_user_id) & (Message.receiver_id == current_user_id)
+                (MessageModel.sender_id == current_user_id) & (MessageModel.receiver_id == selected_user_id),
+                (MessageModel.sender_id == selected_user_id) & (MessageModel.receiver_id == current_user_id)
             )
-        ).order_by(Message.timestamp).all()
+        ).order_by(MessageModel.timestamp).all()
 
-    # ✅ Only show users who have exchanged messages (accepted requests)
+    # ✅ Only show users who have exchanged messages
     from sqlalchemy import distinct
-    messaged_user_ids = db.session.query(distinct(Message.sender_id)).filter(Message.receiver_id == current_user_id).union(
-        db.session.query(distinct(Message.receiver_id)).filter(Message.sender_id == current_user_id)
+    messaged_user_ids = db.session.query(distinct(MessageModel.sender_id)).filter(MessageModel.receiver_id == current_user_id).union(
+        db.session.query(distinct(MessageModel.receiver_id)).filter(MessageModel.sender_id == current_user_id)
     ).all()
     messaged_user_ids = [uid[0] for uid in messaged_user_ids]
     other_users = User.query.filter(User.ID.in_(messaged_user_ids)).all()
 
-    return render_template('messages.html', 
-                           users=other_users, 
-                           selected_user=selected_user,
-                           messages=messages)
+    return render_template(
+        'messages.html',
+        users=other_users,
+        selected_user=selected_user,
+        messages=messages
+    )
+
 
 
 @views.route('/request/<int:request_id>/accept', methods=['POST'])
@@ -377,6 +382,7 @@ def accept_request(request_id):
 
     # Update status to accepted instead of deleting
     request_obj.status = 'accepted'
+    db.session.delete(request_obj)
     db.session.commit()
 
     flash("Service request accepted. Details sent to user!", "success")
@@ -394,6 +400,7 @@ def decline_request(request_id):
     # Update status to declined instead of deleting
     request_obj.status = 'declined'
     db.session.commit()
+    db.session.delete(request_obj)
 
     flash("Service request declined.", "info")
     return redirect(url_for('views.Base'))
@@ -427,41 +434,101 @@ def like_post(post_id):
     })
 
 import os
-import uuid
-from flask import request, redirect, url_for, flash
+import re
+from flask import request, redirect, url_for, flash, current_app
 from werkzeug.utils import secure_filename
 
-
-UPLOAD_FOLDER = 'static/uploads'  # make sure this folder exists
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+import random
+import string
+import re
+from flask import flash, redirect, url_for, request, current_app
+from werkzeug.utils import secure_filename
+
+from flask_mail import Message
+
+import os
+
+def generate_code(length=6):
+    """Generate a numeric verification code."""
+    return ''.join(random.choices(string.digits, k=length))
+
+def send_email_verification(email, code):
+    """Send verification code to user's email."""
+    msg = Message(
+        subject="Your ProNearBy Email Verification Code",
+        recipients=[email],
+        body=f"Your verification code is: {code}"
+    )
+    mail.send(msg)
+
 @views.route('/update_contact/<int:user_id>', methods=['POST'])
 def update_contact(user_id):
     user = User.query.get_or_404(user_id)
 
-    email = request.form.get('email')
-    cellphone = request.form.get('cellphone')
-    
+    new_email = request.form.get('email').strip().lower()
+    new_phone = request.form.get('cellphone').strip()
 
-    # Update fields
-    user.Email = email
-    user.CellPhone = cellphone
+    email_changed = new_email != user.Email
+    phone_changed = new_phone != user.CellPhone
+
+    # Email validation
+    email_regex = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    if not re.match(email_regex, new_email):
+        flash("Invalid email format.", "error")
+        return redirect(url_for('views.Base'))
+
+    # Check if new email already exists
+    if email_changed:
+        existing_user = User.query.filter_by(Email=new_email).first()
+        if existing_user and existing_user.ID != user.ID:
+            flash("This email is already in use by another account.", "error")
+            return redirect(url_for('views.Base'))
+
+    # Phone validation
+    phone_regex = r"^\+?[0-9]{7,15}$"
+    if not re.match(phone_regex, new_phone):
+        flash("Invalid phone number format.", "error")
+        return redirect(url_for('views.Base'))
+
+    # Update contact details
+    user.Email = new_email
+    user.CellPhone = new_phone
+
+    # Reset verification if changed
+    if email_changed:
+        user.is_email_verified = False
+        code = generate_code()
+        user.email_verification_code = code  # Make sure your User model has this column
+        send_email_verification(new_email, code)
+
+    if phone_changed:
+        user.is_phone_verified = False
+        # Optionally send SMS verification here
 
     # Handle profile picture upload
     if 'profile_pic' in request.files:
         file = request.files['profile_pic']
-        if file and file.filename != '':
+        if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
             file.save(filepath)
-            user.Image = f'uploads/{filename}' 
+            user.Image = f'uploads/{filename}'
 
     db.session.commit()
-    flash("Contact info updated successfully.")
-    return redirect(url_for('views.Base'))  # redirect to your profile page
+
+    if email_changed or phone_changed:
+        flash("Please verify your updated contact information.", "warning")
+        return redirect(url_for('views.verify_contact', user_id=user.ID))
+
+    flash("Contact info updated successfully.", "success")
+    return redirect(url_for('views.Base'))
+
+
 
 @views.route('/regular_profile/<int:user_id>')
 def regular_profile(user_id):
@@ -472,3 +539,8 @@ def regular_profile(user_id):
 def edit_contact_info(user_id):
     user = User.query.get_or_404(user_id)
     return render_template('edit_contact_info.html', user=user)
+
+@views.route('/verify_contact/<int:user_id>')
+def verify_contact(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template('verify.html', user=user)

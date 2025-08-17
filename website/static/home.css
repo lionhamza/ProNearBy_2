@@ -134,7 +134,16 @@ header {
   border-radius: 20px;
   font-size: 14px;
   min-width: 140px;
+  width: 255px; /* increase width */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease; /* smooth effect */
 }
+
+.header-search-input:focus {
+  border-color: #007bff; /* blue border on focus */
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* optional glow */
+  outline: none; /* remove default outline */
+}
+
 .search-form {
   display: flex;
   align-items: center;
@@ -144,6 +153,14 @@ header {
   justify-content: center;
 }
 
+.error-message {
+    display: none;
+    color: red;
+    font-size: 0.85em;
+    margin-top: 3px;
+  }
+  .invalid { border-color: red; }
+  .valid { border-color: green; }
 
 
 .logo-link {
@@ -699,7 +716,8 @@ body {
   width: 800px;
   height: 50px;
   /*border: solid rgb(20, 142, 199) 2px;*/
-  text-align: left;              /* For inline or text-only elements */
+  text-align: left;   
+  background-color: white;           /* For inline or text-only elements */
 }
 
 .apost {
@@ -1544,4 +1562,42 @@ body {
     font-size: 14px;
     padding: 10px 14px;
   }
+}
+
+
+.profile-button {
+  background-color: transparent;
+  color: rgb(94, 114, 224);
+  border: none;
+  padding: 10px 25px;
+  font-size: 20px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* space between text and arrow */
+}
+
+.profile-button:hover {
+  background-color: transparent;
+  transform: scale(1.05);
+}
+
+.arrow {
+  transition: transform 0.3s;
+}
+.no-posts {
+  text-align: center;
+  padding: 40px 20px;
+  color: #7097e0;
+  font-size: 1.2em;
+}
+
+.no-posts-img {
+  width: 160px;
+  height: auto;
+  opacity: 0.6;
+  margin-bottom: 10px;
 }
