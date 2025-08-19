@@ -23,15 +23,23 @@ def Base():
     user_id = session['user_id']
     user = User.query.get(user_id)
 
+    # ✅ Unread messages count
+    unread_messages_count = MessageModel.query.filter_by(
+        receiver_id=user_id,
+        is_read=False
+    ).count()
+
+    # ✅ Pending service requests count
+    pending_requests_count = ServiceRequest.query.filter_by(
+        receiver_id=user_id
+    ).count()
+
     service_requests = ServiceRequest.query.filter_by(receiver_id=user_id).order_by(ServiceRequest.created_at.desc()).all()
 
     # Fetch posts (excluding own)
     posts = Post.query.filter(Post.user_id != user_id).options(joinedload(Post.user)).all()
-
-    # 🔀 Shuffle the posts randomly
     random.shuffle(posts)
 
-    # ✅ Get list of post IDs that the user has liked
     liked_post_ids = [like.post_id for like in Like.query.filter_by(user_id=user_id).all()]
 
     return render_template(
@@ -39,9 +47,10 @@ def Base():
         user=user,
         posts=posts,
         service_requests=service_requests,
-        liked_post_ids=liked_post_ids  # ✅ pass this to the template
+        liked_post_ids=liked_post_ids,
+        unread_messages_count=unread_messages_count,   # 👈 pass to template
+        pending_requests_count=pending_requests_count # 👈 pass to template
     )
-
 
 
 
@@ -306,6 +315,8 @@ def inject_service_requests():
 from flask import session, request, redirect, url_for, render_template, flash
 from sqlalchemy import or_
 
+from sqlalchemy import or_
+
 @views.route('/messages', methods=['GET', 'POST'])
 def messages():
     if 'user_id' not in session:
@@ -314,7 +325,7 @@ def messages():
     current_user_id = session['user_id']
     selected_user_id = request.args.get('user_id', type=int)
 
-    # Handle message sending
+    # Sending new message
     if request.method == 'POST':
         content = request.form['message']
         if selected_user_id and content.strip():
@@ -328,31 +339,64 @@ def messages():
             flash("Message sent!", "success")
             return redirect(url_for('views.messages', user_id=selected_user_id))
 
-    # Fetch conversation
+    # Conversation with selected user
     messages = []
     selected_user = None
     if selected_user_id:
         selected_user = User.query.get(selected_user_id)
         messages = MessageModel.query.filter(
-            or_(
-                (MessageModel.sender_id == current_user_id) & (MessageModel.receiver_id == selected_user_id),
-                (MessageModel.sender_id == selected_user_id) & (MessageModel.receiver_id == current_user_id)
-            )
+            (MessageModel.sender_id == current_user_id) & (MessageModel.receiver_id == selected_user_id) |
+            (MessageModel.sender_id == selected_user_id) & (MessageModel.receiver_id == current_user_id)
         ).order_by(MessageModel.timestamp).all()
 
-    # ✅ Only show users who have exchanged messages
-    from sqlalchemy import distinct
-    messaged_user_ids = db.session.query(distinct(MessageModel.sender_id)).filter(MessageModel.receiver_id == current_user_id).union(
-        db.session.query(distinct(MessageModel.receiver_id)).filter(MessageModel.sender_id == current_user_id)
-    ).all()
-    messaged_user_ids = [uid[0] for uid in messaged_user_ids]
-    other_users = User.query.filter(User.ID.in_(messaged_user_ids)).all()
+        # Mark unread messages as read
+        for msg in messages:
+            if msg.receiver_id == current_user_id and not msg.is_read:
+                msg.is_read = True
+        db.session.commit()
+
+    # 1️⃣ Users who have exchanged messages
+    messaged_user_ids = db.session.query(MessageModel.sender_id).filter(
+        MessageModel.receiver_id == current_user_id
+    ).union(
+        db.session.query(MessageModel.receiver_id).filter(
+            MessageModel.sender_id == current_user_id
+        )
+    ).distinct().all()
+    messaged_user_ids = [uid[0] for uid in messaged_user_ids if uid[0] != current_user_id]
+
+    # 2️⃣ Users you are “connected” with (example: service requests sent/received)
+    from .models import ServiceRequest
+    connected_user_ids = db.session.query(ServiceRequest.sender_id).filter_by(
+        receiver_id=current_user_id
+    ).union(
+        db.session.query(ServiceRequest.receiver_id).filter_by(
+            sender_id=current_user_id
+        )
+    ).distinct().all()
+    connected_user_ids = [uid[0] for uid in connected_user_ids if uid[0] != current_user_id]
+
+    # Combine both sets
+    final_user_ids = list(set(messaged_user_ids + connected_user_ids))
+
+    # Fetch user objects
+    users = User.query.filter(User.ID.in_(final_user_ids)).all()
+
+    # Count unread messages
+    unread_counts = {}
+    for u in users:
+        unread_counts[u.ID] = MessageModel.query.filter_by(
+            sender_id=u.ID,
+            receiver_id=current_user_id,
+            is_read=False
+        ).count()
 
     return render_template(
         'messages.html',
-        users=other_users,
+        users=users,
         selected_user=selected_user,
-        messages=messages
+        messages=messages,
+        unread_counts=unread_counts
     )
 
 
@@ -373,7 +417,7 @@ def accept_request(request_id):
 📝 Description: {request_obj.description}
 """
 
-    msg = Message(
+    msg = MessageModel(
         sender_id=request_obj.receiver_id,
         receiver_id=request_obj.sender_id,
         content=default_msg.strip()
@@ -389,6 +433,7 @@ def accept_request(request_id):
     return redirect(url_for('views.Base'))
 
 
+
 @views.route('/request/<int:request_id>/decline', methods=['POST'])
 def decline_request(request_id):
     request_obj = ServiceRequest.query.get_or_404(request_id)
@@ -399,7 +444,7 @@ def decline_request(request_id):
 
     # Update status to declined instead of deleting
     request_obj.status = 'declined'
-    db.session.commit()
+    db.session.commit() 
     db.session.delete(request_obj)
 
     flash("Service request declined.", "info")

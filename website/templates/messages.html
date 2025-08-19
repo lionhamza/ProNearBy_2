@@ -4,14 +4,17 @@
 {% block div %}
 <div class="chat-container">
   <!-- User List -->
-  <div id="userList" class="user-list">
-    <h3>Chats</h3>
-    {% for user in users %}
-      <a href="{{ url_for('views.messages', user_id=user.ID) }}" class="chat-user {% if selected_user and user.ID == selected_user.ID %}active{% endif %}">
-        {{ user.Name }} {{ user.Surname }}
-      </a>
-    {% endfor %}
-  </div>
+<div id="userList" class="user-list">
+  <h3>Chats</h3>
+  {% for user in users %}
+    <a href="{{ url_for('views.messages', user_id=user.ID) }}" class="chat-user {% if selected_user and user.ID == selected_user.ID %}active{% endif %}">
+      {{ user.Name }} {{ user.Surname }}
+      {% if unread_counts[user.ID] > 0 %}
+        <span class="unread-badge">{{ unread_counts[user.ID] }}</span>
+      {% endif %}
+    </a>
+  {% endfor %}
+</div>
 
   <!-- Chat Box -->
   <div id="chatBox" class="chat-box {% if selected_user %}active{% endif %}">

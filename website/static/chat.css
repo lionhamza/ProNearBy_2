@@ -208,3 +208,12 @@
     font-size: 12px;
   }
 }
+.unread-badge {
+  background-color: #e53e3e;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}

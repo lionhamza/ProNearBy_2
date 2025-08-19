@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
   
-
 </head>
 <body>
   <header>
@@ -57,45 +56,57 @@
     </div>
 
     <!-- Icons and notification -->
-    <div class="icons-container">
+    <!-- Icons and notification -->
+<div class="icons-container">
 
-      <a href="{{ url_for('views.messages') }}">
-        <img src="{{ url_for('static', filename='assets/message.png') }}" alt="Messages" class="header-icon" />
-      </a>
+  <!-- Messages with badge -->
+  <a href="{{ url_for('views.messages') }}" class="icon-badge">
+    <img src="{{ url_for('static', filename='assets/message.png') }}" alt="Messages" class="header-icon" />
+    {% if unread_messages_count and unread_messages_count > 0 %}
+      <span class="badge">{{ unread_messages_count }}</span>
+    {% endif %}
+  </a>
 
-      <div class="notification-wrapper">
-        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="Notifications" class="header-icon" id="notificationBell" />
-        <div class="notification-dropdown" id="notificationDropdown">
-          <h4>New Requests</h4>
-          {% if service_requests %}
-            {% for request in service_requests %}
-              <div class="notification-item">
-                <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
-                <small>
-                  {{ request.service_type }} |
-                  {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
-                  {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
-                </small>
-                <div class="notification-actions">
-                  <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
-                    <button type="submit" class="accept-btn">Accept</button>
-                  </form>
-                  <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
-                    <button type="submit" class="decline-btn">Decline</button>
-                  </form>
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <p class="no-notifications">No new requests</p>
-          {% endif %}
-        </div>
-      </div>
+  <!-- Notifications with badge -->
+  <div class="notification-wrapper icon-badge">
+    <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="Notifications" class="header-icon" id="notificationBell" />
+    {% if pending_requests_count and pending_requests_count > 0 %}
+      <span class="badge">{{ pending_requests_count }}</span>
+    {% endif %}
 
-      <a href="{{ url_for('auth.logout') }}" class="icon-link logout-icon">
-     <i class="fas fa-sign-out-alt"></i>
-     </a>
+    <div class="notification-dropdown" id="notificationDropdown">
+      <h4>New Requests</h4>
+      {% if service_requests %}
+        {% for request in service_requests %}
+          <div class="notification-item">
+            <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
+            <small>
+              {{ request.service_type }} |
+              {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
+              {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
+            </small>
+            <div class="notification-actions">
+              <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
+                <button type="submit" class="accept-btn">Accept</button>
+              </form>
+              <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
+                <button type="submit" class="decline-btn">Decline</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="no-notifications">No new requests</p>
+      {% endif %}
     </div>
+  </div>
+
+  <!-- Logout -->
+  <a href="{{ url_for('auth.logout') }}" class="icon-link logout-icon">
+    <i class="fas fa-sign-out-alt"></i>
+  </a>
+</div>
+
 
 
       <!-- Mobile hamburger -->
