@@ -339,5 +339,26 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+<script>
+  function initAutocomplete() {
+    const input = document.getElementById("location");
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+      types: ['(cities)'], // restrict to cities
+      componentRestrictions: { country: "za" } // ZA = South Africa
+    });
 
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry) {
+        document.getElementById("location-error").textContent = "Please select a valid location.";
+        document.getElementById("location-error").style.display = "block";
+      } else {
+        document.getElementById("location-error").style.display = "none";
+      }
+    });
+  }
+</script>
+
+<!-- Google Maps Places API with your API key -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDJFVTmZmg0unwvXNO9iKT__SDQHbRvXs4&libraries=places&callback=initAutocomplete" async defer></script>
 {% endblock %}

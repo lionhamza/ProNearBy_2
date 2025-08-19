@@ -585,7 +585,7 @@ body {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden; /* 👈 prevents horizontal scroll */
-  padding: 5px 60px 30px 30px;
+  padding: 5px 30px 30px 30px;
   background-color: #fafafa;
   min-width: 0;
   height: auto;
