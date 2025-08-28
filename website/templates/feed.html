@@ -3,7 +3,7 @@
 {% block div %}
 <div class="feed-container">
   
-  <!-- Results info (remains here) -->
+  <!-- Results info -->
   {% if search or location %}
   <div class="results-info">
     <div class="results-text">
@@ -15,7 +15,7 @@
   </div>
   {% endif %}
 
-  <!-- No results message -->
+  <!-- No results -->
   {% if professionals|length == 0 %}
   <div class="no-results">
     <i class="fas fa-search"></i>
@@ -27,22 +27,25 @@
 
   <!-- Professional cards -->
   {% for pro in professionals %}
- <div class="pro-card">
+  <div class="pro-card" onclick="window.location.href='{{ url_for('views.profile', user_id=pro.ID) }}'">
     <div class="pro-header">
       <img 
-        src="{{ url_for('static', filename=pro.Image) if pro.Image else url_for('static', filename='assets/defualtPP.png') }}"
+        src="{{ url_for('static', filename=pro.Image) }}"
         alt="{{ pro.Name }}"
         class="pro-avatar"
         onerror="this.onerror=null; this.src='{{ url_for('static', filename='assets/defualtPP.png') }}';"
-      >
+      />
 
       <div class="pro-title">
-        <h3 class="pro-name">{{ pro.Name }} {{ pro.Surname }}</h3>
+        <h3 class="pro-name">{{ pro.Name }} {{ pro.Surname }}
+          {% if pro.user_type == 'certifiedPro' %} 🎓
+          {% elif pro.user_type == 'experiencedPro' %} ⭐
+          {% endif %}
+        </h3>
         <p class="pro-role">{{ pro.Service }}</p>
         <div class="pro-rating">
           <i class="fas fa-star"></i> {{ (pro.Rating or 0)|round(1) }}
-           <span>({{ pro.Reviews or 0 }} reviews)</span>
-
+          <span>({{ pro.Reviews or 0 }} reviews)</span>
         </div>
       </div>
     </div>
@@ -68,13 +71,14 @@
       </div>
     </div>
 
-    <div class="pro-actions">
-      <a href="{{ url_for('views.profile', user_id=pro.ID) }}" class="profile-btn">View Profile</a>
-      <button class="connect-btn" data-pro-id="{{ pro.ID }}" data-pro-name="{{ pro.Name }} {{ pro.Surname }}">Request Service</button>
+    <div class="pro-actions" onclick="event.stopPropagation();">
+      <button class="service-btn profile-btn" data-pro-id="{{ pro.ID }}" data-pro-name="{{ pro.Name }} {{ pro.Surname }}">Request Service</button>
+      <button class="connect-btn" data-pro-id="{{ pro.ID }}" data-pro-name="{{ pro.Name }} {{ pro.Surname }}">Request Quote</button>
     </div>
   </div>
   {% endfor %}
 </div>
+
 <!-- Global Request Service Modal -->
 <div id="globalServiceRequestModal" class="modal">
   <div class="modal-content">
@@ -116,15 +120,47 @@
     </form>
   </div>
 </div>
+<!-- Request Quote Modal -->
+<div id="globalQuoteRequestModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="globalCloseQuoteModal">&times;</span>
+    <form action="{{ url_for('views.request_quote') }}" method="POST" enctype="multipart/form-data" class="edit-form">
+      <h3>Request a Quote</h3>
+
+      <input type="hidden" name="receiver_id" id="quote-modal-receiver-id">
+
+      <label>Project Title:</label>
+      <input type="text" name="project_title" placeholder="Title of your project" required>
+
+      <label>Details:</label>
+      <textarea name="details" placeholder="Briefly describe your project" required></textarea>
+
+      <label>Location (optional):</label>
+      <input type="text" name="location">
+
+      <label>Upload File / Image (optional):</label>
+      <input type="file" name="attachment">
+
+      <label>Preferred Date (optional):</label>
+      <input type="date" name="preferred_date">
+
+      <label>Preferred Time (optional):</label>
+      <input type="time" name="preferred_time">
+
+      <button type="submit" class="save-btn">Send Quote Request</button>
+    </form>
+  </div>
+</div>
+
 
 <script>
-  // Global service modal logic
-  const connectButtons = document.querySelectorAll(".connect-btn");
+  // Service modal logic (only for service-btn)
+  const serviceButtons = document.querySelectorAll(".service-btn");
   const globalModal = document.getElementById("globalServiceRequestModal");
   const closeGlobalBtn = document.getElementById("globalCloseServiceModal");
   const receiverInput = document.getElementById("modal-receiver-id");
 
-  connectButtons.forEach(button => {
+  serviceButtons.forEach(button => {
     button.addEventListener("click", () => {
       const proId = button.getAttribute("data-pro-id");
       receiverInput.value = proId;
@@ -139,6 +175,28 @@
       globalModal.style.display = "none";
     }
   };
-</script>
 
+  document.querySelectorAll('.connect-btn').forEach(button => {
+  button.addEventListener('click', function(event) {
+    event.stopPropagation();
+    const proId = this.getAttribute('data-pro-id');
+    document.getElementById('quote-modal-receiver-id').value = proId;
+    document.getElementById('globalQuoteRequestModal').style.display = 'block';
+  });
+});
+
+// Close modal
+document.getElementById('globalCloseQuoteModal').onclick = function() {
+  document.getElementById('globalQuoteRequestModal').style.display = 'none';
+}
+
+// Close if clicked outside
+window.onclick = function(event) {
+  const quoteModal = document.getElementById('globalQuoteRequestModal');
+  if (event.target == quoteModal) {
+    quoteModal.style.display = 'none';
+  }
+}
+
+</script>
 {% endblock %}

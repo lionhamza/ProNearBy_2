@@ -51,6 +51,11 @@
 
       <div class="pro-title">
         <h3 class="pro-name">{{ pro.Name }} {{ pro.Surname }}</h3>
+        {% if pro.user_type == 'certifiedPro' %}
+    🎓
+  {% elif pro.user_type == 'experiencedPro' %}
+    ⭐
+  {% endif %}
         <p class="pro-role">{{ pro.Service }}</p>
         <div class="pro-rating">
           <i class="fas fa-star"></i> {{ pro.Rating|round(1) }}

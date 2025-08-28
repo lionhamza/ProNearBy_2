@@ -128,3 +128,31 @@ class UserComplaint(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship('User')
+
+class QuoteRequest(db.Model):
+    __tablename__ = 'quote_requests'
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'), nullable=True)  # optional if anonymous
+    receiver_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'), nullable=False)
+    
+    project_title = db.Column(db.String(150), nullable=False)
+    details = db.Column(db.Text, nullable=False)
+    
+    location = db.Column(db.String(200))  # optional
+    attachment = db.Column(db.String(300))  # optional, file path
+    
+    preferred_date = db.Column(db.Date)  # optional
+    preferred_time = db.Column(db.Time)  # optional
+    
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'accepted', 'declined'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_quote_requests')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_quote_requests')
+
+    def __repr__(self):
+        return f"<QuoteRequest {self.project_title} to {self.receiver_id}>"
+

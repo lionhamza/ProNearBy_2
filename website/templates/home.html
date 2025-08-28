@@ -9,7 +9,15 @@
     
   {% if user.user_type == 'regular' %}
     <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}" alt="Profile Picture" class="profile-pic" />
-    <h2 class="username"><span>{{ user.Name }}</span> <span>{{ user.Surname }}</span></h2>
+    <h2 class="username">
+  {{ user.Name }} {{ user.Surname }}
+  {% if user.user_type == 'certifiedPro' %}
+    🎓
+  {% elif user.user_type == 'experiencedPro' %}
+    ⭐
+  {% endif %}
+</h2>
+
 
     {% if user.Email %}
       <p><strong>Email:</strong> {{ user.Email }}</p>
@@ -26,7 +34,15 @@
 
   {% else %}
     <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}" alt="Profile Picture" class="profile-pic" />
-    <h2 class="username"><span>{{ user.Name }}</span> <span>{{ user.Surname }}</span></h2>
+    <h2 class="username">
+  {{ user.Name }} {{ user.Surname }}
+  {% if user.user_type == 'certifiedPro' %}
+    🎓
+  {% elif user.user_type == 'experiencedPro' %}
+    ⭐
+  {% endif %}
+</h2>
+
     <p class="role">{{ user.Service }}</p>
     <p class="bio">{{ user.Bio }}</p>
     <hr />
@@ -52,7 +68,13 @@
       <div class="post-user-info">
   <a href="{{ url_for('views.profile', user_id=post_user.ID) }}" class="post-user-name">
   {{ post_user.Name }} {{ post_user.Surname }}
+  {% if post_user.user_type == 'certifiedPro' %}
+    🎓
+  {% elif post_user.user_type == 'experiencedPro' %}
+    ⭐
+  {% endif %}
 </a>
+
 
   <span class="post-timestamp">{{ post.timestamp.strftime('%b %d, %Y %H:%M') }}</span>
 </div>
@@ -81,10 +103,9 @@
                 </div>
             {% elif file.endswith(('.mp4', '.mov', '.avi', '.webm')) %}
                 <div class="media-wrapper">
-                    <video controls class="media-item"
-                           onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
-                        <source src="{{ url_for('static', filename=file) }}">
-                    </video>
+                    <video autoplay playsinline loop class="media-item">
+  <source src="{{ url_for('static', filename=file) }}">
+</video>
                     {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
                         <div class="overlay">+{{ extra_count }}</div>
                     {% endif %}

@@ -75,7 +75,7 @@
     {% endif %}
 
     <div class="notification-dropdown" id="notificationDropdown">
-      <h4>New Requests</h4>
+      <h4>Notifications</h4>
       {% if service_requests %}
         {% for request in service_requests %}
           <div class="notification-item">
@@ -96,7 +96,7 @@
           </div>
         {% endfor %}
       {% else %}
-        <p class="no-notifications">No new requests</p>
+        <p class="no-notifications">No new notifications</p>
       {% endif %}
     </div>
   </div>
@@ -135,7 +135,7 @@
 
 <!-- Mobile Notification Dropdown -->
 <div class="mobile-notification-dropdown" id="mobileNotificationDropdown" style="display: none;">
-  <h4>New Requests</h4>
+  <h4>Notifications</h4>
   {% if service_requests %}
     {% for request in service_requests %}
       <div class="notification-item">
@@ -146,17 +146,28 @@
           {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
         </small>
         <div class="notification-actions">
-          <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
-            <button type="submit" class="accept-btn">Accept</button>
-          </form>
-          <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
-            <button type="submit" class="decline-btn">Decline</button>
-          </form>
-        </div>
+  {% if request.status == 'pending' %}
+    <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
+      <button type="submit" class="accept-btn">Accept</button>
+    </form>
+    <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
+      <button type="submit" class="decline-btn">Decline</button>
+    </form>
+
+  {% elif request.status == 'accepted' %}
+    <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
+      <button type="submit" class="complete-btn">Mark as Completed</button>
+    </form>
+
+  {% elif request.status == 'completed' %}
+    <span class="completed-label">✅ Completed</span>
+  {% endif %}
+</div>
+
       </div>
     {% endfor %}
   {% else %}
-    <p class="no-notifications">No new requests</p>
+    <p class="no-notifications">No new notifications</p>
   {% endif %}
 </div>
 
@@ -280,15 +291,19 @@ mobileDropdown.addEventListener('click', function (e) {
 }
 
 /* Single item fills width */
+
 .media-grid.single-media {
   grid-template-columns: 1fr;
 }
+
 .media-grid.single-media .media-wrapper img,
 .media-grid.single-media .media-wrapper video {
-  width: 100%;
+  
   height: auto;
-  max-height: 80vh;
-  object-fit: contain;
+  max-height: 350px;
+  max-width:500px   /* reduce from 80vh to a fixed, balanced size */
+  object-fit: contain; /* keeps aspect ratio */
+  border-radius: 10px; /* keeps style consistent with multi-image posts */
 }
 
 /* Exactly 3 items: make a mosaic without the empty slot */
@@ -441,6 +456,18 @@ document.querySelectorAll('.like-button').forEach(button => {
     }
   });
 });
+  document.querySelectorAll("video").forEach(video => {
+  let observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+  }, { threshold: 0.5 });
 
+  observer.observe(video);
+});
 </script>
 </html>

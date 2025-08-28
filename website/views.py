@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 # in views.py
-from .models import User, Post, ServiceRequest, Message as MessageModel, Like
-
+from .models import User, Post, ServiceRequest, Message as MessageModel, Like,QuoteRequest
+from flask_login import login_required, current_user
 from . import db
 from flask import session
 from datetime import datetime
@@ -187,7 +187,7 @@ def feed():
 def mock_feed():
     class MockPro:
         def __init__(self, id, name, surname, service, location, experience,
-                     availability, rating, reviews, bio=None, image=None):
+                     availability, rating, reviews, user_type, bio=None, image=None):
             self.ID = id
             self.Name = name
             self.Surname = surname
@@ -197,6 +197,7 @@ def mock_feed():
             self.availability = availability
             self.Rating = rating
             self.Reviews = reviews
+            self.user_type = user_type  # ✅ now available in template
             self.Bio = bio
             self.Image = image
 
@@ -235,62 +236,18 @@ def mock_feed():
             availability=u.availability,
             rating=u.Rating or 0.0,
             reviews=u.Reviews or 0,
+            user_type=u.user_type,  # ✅ passed in
             bio=u.Bio,
-            image=u.Image if u.Image else None
+            image=u.Image if u.Image else "assets/defualtPP.png"  # ✅ fallback handled here
         ) for u in users
     ]
 
-    return render_template("feed.html", professionals=professionals, 
+    return render_template("feed.html", professionals=professionals,
                            search=search_query, location=location_query)
 
 
 
-@views.route('/request_service', methods=['POST'])
-def request_service():
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login_get'))
 
-    sender_id = session['user_id']
-    receiver_id = request.form['receiver_id']
-    service = request.form['service']
-    service_type = request.form.get('service_type')
-    location = request.form['location']
-    description = request.form['description']
-    preferred_date = request.form.get('preferred_date')
-    preferred_time = request.form.get('preferred_time')
-
-    # Handle image upload
-    image_file = request.files.get('image')
-    image_filename = None
-
-    if image_file and image_file.filename != '':
-        from werkzeug.utils import secure_filename
-        import os
-
-        upload_folder = os.path.join('static', 'uploads')
-        os.makedirs(upload_folder, exist_ok=True)
-
-        filename = secure_filename(image_file.filename)
-        filepath = os.path.join(upload_folder, filename)
-        image_file.save(filepath)
-        image_filename = f"uploads/{filename}"  # saved path in DB
-
-    new_request = ServiceRequest(
-        sender_id=sender_id,
-        receiver_id=receiver_id,
-        service=service,
-        service_type=service_type,
-        location=location,
-        description=description,
-        image=image_filename,
-        preferred_date=datetime.strptime(preferred_date, '%Y-%m-%d').date() if preferred_date else None,
-        preferred_time=datetime.strptime(preferred_time, '%H:%M').time() if preferred_time else None
-    )
-
-    db.session.add(new_request)
-    db.session.commit()
-    flash('Service request sent successfully!', 'success')
-    return redirect(request.referrer or url_for('views.feed'))
 
 @views.app_context_processor
 def inject_service_requests():
@@ -399,9 +356,122 @@ def messages():
         unread_counts=unread_counts
     )
 
+from flask_mail import Message
 
+# Utility functions
+def send_request_email_to_pro(pro_email, pro_name, service, request_id):
+    """Notify pro about a new request."""
+    msg = Message(
+        subject="New Service Request on ProNearBy",
+        recipients=[pro_email],
+        body=f"""
+Hi {pro_name},
+
+You have received a new service request for: {service}.
+
+👉 Please log in to your ProNearBy account to accept or decline the request:
+{url_for('views.Base', _external=True)}
+
+Best regards,  
+ProNearBy Team
+"""
+    )
+    mail.send(msg)
+
+
+def send_decline_email_to_user(user_email, user_name, service):
+    """Notify user their request was declined."""
+    msg = Message(
+        subject="Your Service Request was Declined - ProNearBy",
+        recipients=[user_email],
+        body=f"""
+Hi {user_name},
+
+Unfortunately, your service request for "{service}" was declined.  
+
+👉 Please log in to ProNearBy to connect with other professionals who can help:
+{url_for('views.feed', _external=True)}
+
+Best regards,  
+ProNearBy Team
+"""
+    )
+    mail.send(msg)
+
+def send_request_accepted_email_to_user(user_email, user_name, pro_name, request_obj):
+    """Notify user that their request has been accepted by the pro."""
+    msg = Message(
+        subject="Your Service Request Has Been Accepted! - ProNearBy",
+        recipients=[user_email],
+        body=f"""
+Hi {user_name},
+
+Good news! {pro_name} has accepted your service request.
+
+Here are the request details:
+📍 Location: {request_obj.location}
+📅 Date: {request_obj.preferred_date.strftime('%Y-%m-%d') if request_obj.preferred_date else 'N/A'}
+⏰ Time: {request_obj.preferred_time.strftime('%H:%M') if request_obj.preferred_time else 'N/A'}
+📝 Description: {request_obj.description}
+
+👉 You can log in to your ProNearBy account to follow up and communicate directly:
+{url_for('views.Base', _external=True)}
+
+Best regards,  
+The ProNearBy Team
+"""
+    )
+    mail.send(msg)
+
+@views.route('/request_service', methods=['POST'])
+def request_service():
+    if 'user_id' not in session:
+        return redirect(url_for('auth.login_get'))
+
+    sender_id = session['user_id']
+    receiver_id = request.form['receiver_id']
+    service = request.form['service']
+    service_type = request.form.get('service_type')
+    location = request.form['location']
+    description = request.form['description']
+    preferred_date = request.form.get('preferred_date')
+    preferred_time = request.form.get('preferred_time')
+
+    # Handle image upload
+    image_file = request.files.get('image')
+    image_filename = None
+
+    if image_file and image_file.filename != '':
+        from werkzeug.utils import secure_filename
+        import os
+
+        upload_folder = os.path.join('static', 'uploads')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        filename = secure_filename(image_file.filename)
+        filepath = os.path.join(upload_folder, filename)
+        image_file.save(filepath)
+        image_filename = f"uploads/{filename}"  # saved path in DB
+
+    new_request = ServiceRequest(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        service=service,
+        service_type=service_type,
+        location=location,
+        description=description,
+        image=image_filename,
+        preferred_date=datetime.strptime(preferred_date, '%Y-%m-%d').date() if preferred_date else None,
+        preferred_time=datetime.strptime(preferred_time, '%H:%M').time() if preferred_time else None
+    )
+
+    db.session.add(new_request)
+    db.session.commit()
+    flash('Service request sent successfully!', 'success')
+    return redirect(request.referrer or url_for('views.feed'))
 
 @views.route('/request/<int:request_id>/accept', methods=['POST'])
+@login_required
 def accept_request(request_id):
     request_obj = ServiceRequest.query.get_or_404(request_id)
 
@@ -409,7 +479,7 @@ def accept_request(request_id):
         flash("Unauthorized action", "error")
         return redirect(url_for('views.Base'))
 
-    # Send default message with request details
+    # Build default message with request details
     default_msg = f"""
 📍 Location: {request_obj.location}
 📅 Date: {request_obj.preferred_date.strftime('%Y-%m-%d') if request_obj.preferred_date else 'N/A'}
@@ -424,14 +494,24 @@ def accept_request(request_id):
     )
     db.session.add(msg)
 
-    # Update status to accepted instead of deleting
+    # ✅ Only update status instead of deleting
     request_obj.status = 'accepted'
-    db.session.delete(request_obj)
+
     db.session.commit()
+
+    # ✅ Send email to user
+    user = User.query.get(request_obj.sender_id)
+    pro = User.query.get(request_obj.receiver_id)
+    if user and user.Email:
+        send_request_accepted_email_to_user(
+            user.Email,
+            user.Name,
+            pro.Name,
+            request_obj
+        )
 
     flash("Service request accepted. Details sent to user!", "success")
     return redirect(url_for('views.Base'))
-
 
 
 @views.route('/request/<int:request_id>/decline', methods=['POST'])
@@ -442,14 +522,37 @@ def decline_request(request_id):
         flash("Unauthorized action", "error")
         return redirect(url_for('views.Base'))
 
-    # Update status to declined instead of deleting
+    # Update status
     request_obj.status = 'declined'
-    db.session.commit() 
-    db.session.delete(request_obj)
+    db.session.commit()
 
-    flash("Service request declined.", "info")
+    # Send email to the User
+    user = User.query.get(request_obj.sender_id)
+    if user and user.Email:
+        send_decline_email_to_user(user.Email, user.Name, request_obj.service)
+
+    db.session.delete(request_obj)
+    db.session.commit()
+
+    flash("Service request declined. User notified.", "info")
     return redirect(url_for('views.Base'))
 
+@views.route('/complete_request/<int:request_id>', methods=['POST'])
+@login_required
+def complete_request(request_id):
+    request_obj = ServiceRequest.query.get_or_404(request_id)
+
+    # Only the assigned pro (receiver_id) can complete
+    if request_obj.receiver_id != current_user.ID:
+        flash("You cannot mark this request as completed.", "danger")
+        return redirect(url_for('views.Base'))
+
+    request_obj.status = 'completed'
+    db.session.commit()
+
+    # TODO: send review request notification/email to customer
+    flash("Service marked as completed. A review request has been sent to the customer.", "success")
+    return redirect(url_for('views.Base'))
 
 
 
@@ -510,6 +613,7 @@ def send_email_verification(email, code):
         body=f"Your verification code is: {code}"
     )
     mail.send(msg)
+
 
 @views.route('/update_contact/<int:user_id>', methods=['POST'])
 def update_contact(user_id):
@@ -589,3 +693,40 @@ def edit_contact_info(user_id):
 def verify_contact(user_id):
     user = User.query.get_or_404(user_id)
     return render_template('verify.html', user=user)
+
+
+@views.route('/request_quote', methods=['POST'])
+@login_required
+def request_quote():
+    # Get form data
+    receiver_id = request.form.get('receiver_id')
+    project_title = request.form.get('project_title')
+    details = request.form.get('details')
+    location = request.form.get('location')  # optional
+    preferred_date = request.form.get('preferred_date')  # optional
+    preferred_time = request.form.get('preferred_time')  # optional
+
+    # Handle optional file upload
+    attachment_file = request.files.get('attachment')
+    attachment_filename = None
+    if attachment_file and attachment_file.filename != '':
+        attachment_filename = f"uploads/{attachment_file.filename}"
+        attachment_file.save(os.path.join('static', attachment_filename))
+
+    # Create new QuoteRequest
+    new_quote = QuoteRequest(
+        sender_id=current_user.ID,
+        receiver_id=receiver_id,
+        project_title=project_title,
+        details=details,
+        location=location,
+        attachment=attachment_filename,
+        preferred_date=preferred_date if preferred_date else None,
+        preferred_time=preferred_time if preferred_time else None
+    )
+
+    db.session.add(new_quote)
+    db.session.commit()
+
+    flash("Quote request sent to pro!", "success")
+    return redirect(url_for('views.dashboard'))

@@ -16,8 +16,11 @@ def view_applications():
     applications = ProRegistrationRequest.query.all()
     return render_template('admin/applications.html', applications=applications)
 
+@admin.route('/application/<int:application_id>')
+def view_application_detail(application_id):
+    application = ProRegistrationRequest.query.get_or_404(application_id)
+    return render_template('admin/view_application.html', application=application)
 
-import json
 
 @admin.route('/application/<int:application_id>', methods=['POST'])
 def process_application(application_id):

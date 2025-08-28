@@ -38,28 +38,38 @@
 }
 
 /* Chat box */
+
+
 .chat-box {
-  flex: 1;
-  padding: 20px;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  overflow: hidden; /* prevent form from being pushed away */
 }
+
+.message-history {
+  flex: 1;               /* takes remaining height */
+  overflow-y: auto;  
+  background-color: white;    /* scroll only messages */
+}
+
+.message-form {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: #fff;      /* keeps input separate from messages */
+  border-top: 1px solid #ddd;
+  position: sticky;
+  bottom: 0;
+}
+
 
 .chat-box h3 {
   margin-bottom: 15px;
   color: #2b6cb0;
 }
 
-.message-history {
-  flex: 1;
-  overflow-y: auto;
-  background-color: #ffffff;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 15px;
-  margin-bottom: 20px;
-  scroll-behavior: smooth;
-}
+
 
 /* Messages */
 .sent {
@@ -101,10 +111,6 @@
 }
 
 /* Message input */
-.message-form {
-  display: flex;
-  gap: 10px;
-}
 
 .message-form input[type="text"] {
   flex: 1;
@@ -164,12 +170,7 @@
 }
 
 
-  .chat-box {
-    display: none; /* hidden by default on mobile */
-    width: 100%;
-    height: 100vh;
-    padding: 20px 15px;
-  }
+ 
 
   .chat-box.active {
     display: flex; /* shown only when a user is selected */
@@ -216,4 +217,63 @@
   padding: 4px 8px;
   border-radius: 12px;
   margin-left: 8px;
+}
+@media (max-width: 768px) {
+  .message-form {
+    flex-direction: row;   /* inline layout */
+    gap: 6px;
+  }
+
+  .message-form input[type="text"] {
+    flex: 1;               /* input stretches */
+    font-size: 14px;
+    padding: 10px;
+    width: auto;           /* override old 100% */
+  }
+
+  .message-form button {
+    flex: 0 0 auto;        /* shrink to fit */
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 20px;
+    width: auto;           /* override old 100% */
+  }
+}
+@media (max-width: 768px) {
+  .chat-container {
+    margin: 50px auto 0;
+    height: calc(100vh - 50px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-box {
+    display: none;
+    width: 100%;
+    flex: 1; /* 👈 instead of height: 100vh */
+    padding: 20px 15px;
+  }
+
+  .chat-box.active {
+    display: flex;
+    flex-direction: column;
+  }
+}
+@media (max-width: 768px) {
+  .message-form {
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .message-form input[type="text"] {
+    flex: 1;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .message-form button {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
 }

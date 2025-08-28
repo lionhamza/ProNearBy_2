@@ -105,10 +105,11 @@
                     </div>
                   {% elif file.endswith(('.mp4', '.mov', '.avi', '.webm')) %}
                     <div class="media-wrapper">
-                      <video controls class="media-item"
-                             onclick='openLightbox({{ post.media|tojson|safe }}, {{ loop.index0 }})'>
-                        <source src="{{ url_for('static', filename=file) }}">
-                      </video>
+                      <video autoplay playsinline loop class="media-item">
+  <source src="{{ url_for('static', filename=file) }}">
+</video>
+
+
                       {% if loop.index0 == max_visible - 1 and extra_count > 0 %}
                         <div class="overlay">+{{ extra_count }}</div>
                       {% endif %}
@@ -298,6 +299,8 @@ if (closeServiceBtn) {
       serviceRequestModal.style.display = "none";
     }
   };
+
+
 </script>
 
 

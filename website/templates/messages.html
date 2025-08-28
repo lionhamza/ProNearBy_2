@@ -47,6 +47,7 @@
     const userList = document.getElementById("userList");
     const chatBox = document.getElementById("chatBox");
     const selectedUser = {{ 'true' if selected_user else 'false' }};
+    const messageHistory = document.querySelector(".message-history");
 
     if (isMobile) {
       if (selectedUser) {
@@ -57,6 +58,11 @@
         chatBox.style.display = "none";
       }
     }
+
+    // ✅ Instantly set to bottom (no scroll animation)
+    if (messageHistory) {
+      messageHistory.scrollTop = messageHistory.scrollHeight;
+    }
   });
 
   function goBackToList() {
@@ -64,7 +70,17 @@
     document.getElementById("chatBox").style.display = "none";
     document.getElementById("userList").style.display = "block";
   }
+
+  // ✅ After sending a message, keep it stuck at bottom
+  document.querySelector(".message-form")?.addEventListener("submit", function () {
+    const messageHistory = document.querySelector(".message-history");
+    if (messageHistory) {
+      messageHistory.scrollTop = messageHistory.scrollHeight;
+    }
+  });
 </script>
+
+
 
 
 {% endblock %}

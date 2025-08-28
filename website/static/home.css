@@ -1623,3 +1623,20 @@ body {
   text-align: center;
   line-height: 1.2;
 }
+.complete-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.complete-btn:hover {
+  background-color: #218838;
+}
+
+.completed-label {
+  color: #28a745;
+  font-weight: bold;
+}
