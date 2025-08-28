@@ -17,3 +17,4 @@ Werkzeug>=2.3
 itsdangerous>=2.1
 Flask-SQLAlchemy>=3.0
 Flask-Mail>=0.9
+twilio>=8.0
