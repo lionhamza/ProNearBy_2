@@ -16,10 +16,13 @@ def create_app():
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "PRONEARBY.COM")
     
     # Database config
+    
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-        'postgresql://pronearby_db_user:eU5bWVLra6jEV5iJt55wb0BFqmuSJAat@dpg-d2qdr6mr433s73e6q010-a/pronearby_db',
-        #'postgresql://postgres:ProNearBy%4011@localhost:5432/ProNearBy_DB'
+    'SQLALCHEMY_DATABASE_URI',
+    'postgresql://pronearby_db_user:eU5bWVLra6jEV5iJt55wb0BFqmuSJAat@dpg-d2qdr6mr433s73e6q010-a/pronearby_db'
+    #'postgresql://postgres:ProNearBy%4011@localhost:5432/ProNearBy_DB'  
     )
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Google OAuth Config
