@@ -8,6 +8,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <!-- Mapbox Core -->
+  <script src='https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v3.14.0/mapbox-gl.css' rel='stylesheet' />
+
+  <!-- Mapbox Geocoder (Autocomplete) -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.2/mapbox-gl-geocoder.min.js"></script>
 </head>
 <body>
 
@@ -25,6 +32,37 @@
 {% endwith %}
 
 <style>
+  #detectLocationBtn {
+  background: #007bff; /* Primary blue */
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#detectLocationBtn:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+#detectLocationBtn:active {
+  background: #004085;
+  transform: scale(0.98);
+}
+
+#detectLocationBtn i {
+  font-size: 16px;
+}
+
 .flash-container { margin: 10px auto; width: 90%; max-width: 600px; }
 .flash-message {
   padding: 10px 15px;
