@@ -3,6 +3,7 @@
 {% block div %}
 
 <style>
+  
   .error-message {
     color: red;
     font-size: 0.85em;
@@ -167,10 +168,25 @@
 </div>
 
 <div class="input-group">
-  <label for="location">📍 Location *</label>
-  <input type="text" id="location" name="location" placeholder="e.g., Cape Town, South Africa" required />
-  <div class="error-message" id="location-error">Location is required.</div>
+        <label for="location">📍 Location *</label>
+        <!-- Geocoder input attaches here -->
+        <div id="geocoder" style="margin-bottom:10px;"></div>
+        <input type="hidden" id="location" name="location" required />
+        <div class="error-message" id="location-error">Location is required.</div>
+      </div>
+
+      <!-- Hidden fields for coords -->
+      <input type="hidden" id="latitude" name="latitude">
+      <input type="hidden" id="longitude" name="longitude">
+
+      <!-- Map & detect button -->
+      <div style="margin: 1rem 0;">
+  <button type="button" id="detectLocationBtn">
+    <i class="fas fa-crosshairs"></i> Detect My Location
+  </button>
 </div>
+
+      <div id="map" style="width:100%; height:300px; border-radius:8px; margin-bottom:1rem;"></div>
 
 
       <button type="submit" id="submitBtn" class="btn btn-primary">Register as Experienced Pro</button>
@@ -305,5 +321,103 @@ document.addEventListener("DOMContentLoaded", () => {
   togglePasswordVisibility('password', 'toggle-password');
   togglePasswordVisibility('confirm_password', 'toggle-confirm-password');
 });
+
+
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof mapboxgl === "undefined") {
+    console.error("Mapbox failed to load");
+    return;
+  }
+
+  mapboxgl.accessToken = "pk.eyJ1IjoicHJvbmVhcmJ5IiwiYSI6ImNtZjF0Nno3MDFyZjkybHF5OWtvM2Q2ZTUifQ.z4Md_I2KDHvG0oFpkuGiwA";
+
+  const latInput = document.getElementById("latitude");
+  const lonInput = document.getElementById("longitude");
+  const locationInput = document.getElementById("location");
+
+  // Default (Cape Town fallback)
+  let defaultLat = -33.9249;
+  let defaultLon = 18.4241;
+
+  const map = new mapboxgl.Map({
+    container: "map",
+    style: "mapbox://styles/mapbox/streets-v12",
+    center: [defaultLon, defaultLat],
+    zoom: 11,
+  });
+
+  const marker = new mapboxgl.Marker({ draggable: true })
+    .setLngLat([defaultLon, defaultLat])
+    .addTo(map);
+
+  // === Geocoder (autocomplete) ===
+  const geocoder = new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    placeholder: "Search for your address",
+    marker: false
+  });
+  document.getElementById("geocoder").appendChild(geocoder.onAdd(map));
+
+  geocoder.on("result", (e) => {
+    const coords = e.result.center;
+    const place = e.result.place_name;
+    lonInput.value = coords[0];
+    latInput.value = coords[1];
+    locationInput.value = place;
+    map.flyTo({ center: coords, zoom: 14 });
+    marker.setLngLat(coords);
+  });
+
+  // === Marker drag updates ===
+  marker.on("dragend", () => {
+    const { lat, lng } = marker.getLngLat();
+    latInput.value = lat;
+    lonInput.value = lng;
+
+    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.features?.length > 0) {
+          locationInput.value = data.features[0].place_name;
+        }
+      })
+      .catch((err) => console.error("Geocoding error:", err));
+  });
+
+  // === Detect My Location ===
+  document.getElementById("detectLocationBtn").addEventListener("click", () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude: lat, longitude: lon } = pos.coords;
+          latInput.value = lat;
+          lonInput.value = lon;
+
+          map.flyTo({ center: [lon, lat], zoom: 14 });
+          marker.setLngLat([lon, lat]);
+
+          fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json?access_token=${mapboxgl.accessToken}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.features?.length > 0) {
+                locationInput.value = data.features[0].place_name;
+              }
+            })
+            .catch((err) => console.error("Geocoding error:", err));
+        },
+        (err) => {
+          alert("Unable to fetch location: " + err.message);
+        }
+      );
+    } else {
+      alert("Geolocation is not supported in this browser.");
+    }
+  });
+});
+</script>
+
+
 {% endblock %}
