@@ -32,18 +32,28 @@
     value="{{ request.args.get('search', '') }}"
     onclick="showMobileSearch()"
   />
+  
 
   <!-- Hidden on small screens -->
-  <div class="location-search-wrapper" id="locationSearch">
+<div class="location-search-wrapper" id="locationSearch">
+  <div class="location-input-wrapper">
     <input
       type="text"
+      id="location"
       class="header-search-input location-input"
       name="location"
       placeholder="Which location..."
       value="{{ request.args.get('location', '') }}"
     />
-    <button type="submit" class="header-search-button">Search</button>
+    <button type="button" id="detectLocationBtn" class="location-btn">
+      <i class="fas fa-location-arrow"></i>
+    </button>
   </div>
+  <button type="submit" class="header-search-button">Search</button>
+</div>
+
+
+
 </form>
 
 
@@ -468,6 +478,106 @@ document.querySelectorAll('.like-button').forEach(button => {
   }, { threshold: 0.5 });
 
   observer.observe(video);
+});
+</script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.20.0/mapbox-gl.js"></script>
+<script>
+  const accessToken = "pk.eyJ1IjoicHJvbmVhcmJ5IiwiYSI6ImNtZjF0Nno3MDFyZjkybHF5OWtvM2Q2ZTUifQ.z4Md_I2KDHvG0oFpkuGiwA"; // replace with your token
+  const locationInput = document.getElementById("location");
+
+  let timeout = null;
+  let suggestionBox;
+
+  // Create a dropdown for suggestions
+  function createSuggestionBox() {
+    suggestionBox = document.createElement("div");
+    suggestionBox.style.position = "absolute";
+    suggestionBox.style.background = "#fff";
+    suggestionBox.style.border = "1px solid #ccc";
+    suggestionBox.style.width = locationInput.offsetWidth + "px";
+    suggestionBox.style.zIndex = "1000";
+    suggestionBox.style.maxHeight = "200px";
+    suggestionBox.style.overflowY = "auto";
+    suggestionBox.style.fontSize = "14px";
+    suggestionBox.style.cursor = "pointer";
+    suggestionBox.style.display = "none";
+    locationInput.parentNode.appendChild(suggestionBox);
+  }
+
+  createSuggestionBox();
+
+  locationInput.addEventListener("input", function () {
+    clearTimeout(timeout);
+    const query = locationInput.value.trim();
+    if (!query) {
+      suggestionBox.style.display = "none";
+      return;
+    }
+
+    timeout = setTimeout(async () => {
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        query
+      )}.json?access_token=${accessToken}&autocomplete=true&limit=5`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      suggestionBox.innerHTML = "";
+      if (data.features && data.features.length > 0) {
+        data.features.forEach((feature) => {
+          const div = document.createElement("div");
+          div.textContent = feature.place_name;
+          div.style.padding = "8px";
+
+          div.addEventListener("click", () => {
+            locationInput.value = feature.place_name;
+            suggestionBox.style.display = "none";
+          });
+
+          div.addEventListener("mouseover", () => {
+            div.style.background = "#f0f0f0";
+          });
+          div.addEventListener("mouseout", () => {
+            div.style.background = "#fff";
+          });
+
+          suggestionBox.appendChild(div);
+        });
+        suggestionBox.style.display = "block";
+      } else {
+        suggestionBox.style.display = "none";
+      }
+    }, 300);
+  });
+
+  // Hide suggestions when clicking outside
+  document.addEventListener("click", function (e) {
+    if (!suggestionBox.contains(e.target) && e.target !== locationInput) {
+      suggestionBox.style.display = "none";
+    }
+  });
+</script>
+<script>
+document.getElementById("detectLocationBtn").addEventListener("click", () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+
+      // Reverse geocode with Mapbox
+      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${accessToken}&limit=1`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.features && data.features.length > 0) {
+        locationInput.value = data.features[0].place_name;
+      }
+    }, (error) => {
+      alert("Unable to retrieve your location.");
+      console.error(error);
+    });
+  } else {
+    alert("Geolocation is not supported by your browser.");
+  }
 });
 </script>
 </html>
