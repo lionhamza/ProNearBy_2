@@ -4,6 +4,64 @@
   margin: 0;
   padding: 0;
 }
+/* Wraps input + location button */
+.location-input-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Ensure text doesn't overlap button */
+.location-input-wrapper .location-input {
+  width: 100%;
+  padding-right: 40px; /* make room for the button */
+}
+
+/* Location button inside input */
+.location-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-btn:hover {
+  color: #0073b1; /* Match your theme */
+}
+
+
+
+.geocoder-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  z-index: 9999;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.geocoder-dropdown .suggestion {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.geocoder-dropdown .suggestion:hover {
+  background: #f0f0f0;
+}
 
 body {
   font-family: Arial, sans-serif;
@@ -1640,3 +1698,147 @@ body {
   color: #28a745;
   font-weight: bold;
 }
+
+/* Fix conflict between location input + header search */
+.location-input-wrapper {
+  position: relative;
+  display: inline-block;
+  width: auto; /* let it size like the search bar */
+}
+
+.location-input-wrapper .location-input {
+  width: 255px; /* match .header-search-input */
+  padding-right: 40px; /* keep space for button */
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+/* Button inside input */
+.location-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+}
+
+.location-btn:hover {
+  color: #0073b1;
+}
+/* Wrapper around input + button */
+.location-input-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 255px; /* keep it tidy on desktop */
+}
+
+/* Input styling (matches header-search-input) */
+.location-input-wrapper .location-input {
+  width: 100%;
+  padding-right: 40px; /* leave space for button */
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Icon button inside input */
+.location-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-btn:hover {
+  color: #0073b1; /* theme blue */
+}
+
+/* 🔽 Mobile fix */
+@media (max-width: 768px) {
+  .location-input-wrapper {
+    max-width: 100%; /* let it stretch full width */
+  }
+
+  .location-input-wrapper .location-input {
+    padding-right: 40px; /* keep room for icon */
+    font-size: 16px; /* slightly bigger for touch */
+  }
+
+  .location-btn {
+    right: 10px; /* keep aligned inside on small screens */
+    font-size: 18px; /* make tap target bigger */
+  }
+}
+/* Default: desktop/big screens */
+.location-input-wrapper {
+  position: relative;
+  display: inline-block;
+  width: auto; /* shrink to fit */
+}
+
+.location-input-wrapper .location-input {
+  width: 255px;              /* match .header-search-input */
+  padding-right: 40px;       /* make room for button */
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Keep button inside */
+.location-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  color: #666;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-btn:hover {
+  color: #0073b1;
+}
+
+/* Override for small screens */
+@media (max-width: 768px) {
+  .location-input-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .location-input-wrapper .location-input {
+    width: 100%; /* stretch full width on mobile */
+    font-size: 16px;
+  }
+
+  .location-btn {
+    right: 10px;
+    font-size: 18px;
+  }
+}
+
