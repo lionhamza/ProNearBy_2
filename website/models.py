@@ -1,16 +1,21 @@
-﻿from datetime import datetime
+from datetime import datetime
 from sqlalchemy.dialects.postgresql import JSON
 from . import db  # ✅ now safe, since db is defined in __init__.py
 from sqlalchemy import Boolean
 from flask_login import UserMixin
 
-class User(db.Model,UserMixin):
+class User(db.Model, UserMixin):
     __tablename__ = 'User_Info'
 
     ID = db.Column(db.Integer, primary_key=True, autoincrement=True)
     Name = db.Column(db.String(100))
     Email = db.Column(db.String(100))
     Location = db.Column(db.String(200))
+    
+    # New fields for coordinates
+    Latitude = db.Column(db.Float, nullable=True)
+    Longitude = db.Column(db.Float, nullable=True)
+
     Service = db.Column(db.String(100))
     Experience = db.Column(db.String(200))
     CellPhone = db.Column(db.String(20))
@@ -25,12 +30,11 @@ class User(db.Model,UserMixin):
     
     user_type = db.Column(db.String(50), default='regular')
 
-    # ✅ New verification fields
     is_email_verified = db.Column(Boolean, default=False)
     is_phone_verified = db.Column(Boolean, default=False)
+
     def get_id(self):
         return str(self.ID)
-
 
 class Post(db.Model):
     __tablename__ = 'posts'
@@ -155,4 +159,6 @@ class QuoteRequest(db.Model):
 
     def __repr__(self):
         return f"<QuoteRequest {self.project_title} to {self.receiver_id}>"
+
+
 
