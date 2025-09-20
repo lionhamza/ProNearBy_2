@@ -1,3 +1,4 @@
+from sqlalchemy import func
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 # in views.py
 from .models import User, Post, ServiceRequest, Message as MessageModel, Like,QuoteRequest
@@ -6,6 +7,7 @@ from . import db
 from flask import session
 from datetime import datetime
 from flask import jsonify
+from flask_mail import Message
 from . import mail
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 views = Blueprint('views', __name__)
@@ -29,12 +31,15 @@ def Base():
         is_read=False
     ).count()
 
-    # ✅ Pending service requests count
-    pending_requests_count = ServiceRequest.query.filter_by(
-        receiver_id=user_id
-    ).count()
-
-    service_requests = ServiceRequest.query.filter_by(receiver_id=user_id).order_by(ServiceRequest.created_at.desc()).all()
+    # ✅ Pending service requests count (respect user type)
+    if user.user_type == "professional":
+        pending_requests_count = ServiceRequest.query.filter_by(
+            receiver_id=user_id
+        ).count()
+    else:
+        pending_requests_count = ServiceRequest.query.filter_by(
+            sender_id=user_id
+        ).count()
 
     # Fetch posts (excluding own)
     posts = Post.query.filter(Post.user_id != user_id).options(joinedload(Post.user)).all()
@@ -46,10 +51,10 @@ def Base():
         "home.html",
         user=user,
         posts=posts,
-        service_requests=service_requests,
         liked_post_ids=liked_post_ids,
-        unread_messages_count=unread_messages_count,   # 👈 pass to template
-        pending_requests_count=pending_requests_count # 👈 pass to template
+        unread_messages_count=unread_messages_count,
+        pending_requests_count=pending_requests_count
+        # 👈 no need to pass service_requests, handled by context_processor
     )
 
 
@@ -159,35 +164,11 @@ def create_post(user_id):
     return redirect(url_for('views.profile', user_id=user_id))
 
 
-
-@views.route('/feed', methods=['GET'])
-def feed():
-    search_query = request.args.get('search', '')
-    location_query = request.args.get('location', '')
-    
-    query = User.query
-    
-    if search_query:
-        query = query.filter(
-            db.or_(
-                User.Service.ilike(f'%{search_query}%'),
-                User.Name.ilike(f'%{search_query}%'),
-                User.Surname.ilike(f'%{search_query}%')
-            )
-        )
-    
-    if location_query:
-        query = query.filter(User.Location.ilike(f'%{location_query}%'))
-    
-    professionals = query.all()
-    return render_template("feed.html", professionals=professionals, search=search_query, location=location_query)
-
-
 @views.route('/mock-feed', methods=['GET'])
 def mock_feed():
     class MockPro:
         def __init__(self, id, name, surname, service, location, experience,
-                     availability, rating, reviews, user_type, bio=None, image=None):
+                     availability, rating, reviews, user_type, bio=None, image=None, distance=None):
             self.ID = id
             self.Name = name
             self.Surname = surname
@@ -197,82 +178,89 @@ def mock_feed():
             self.availability = availability
             self.Rating = rating
             self.Reviews = reviews
-            self.user_type = user_type  # ✅ now available in template
-            self.Bio = bio
-            self.Image = image
+            self.user_type = user_type
+            self.Bio = bio or ""
+            self.Image = image or "assets/defaultPP.png"
+            self.Distance = distance
 
-    search_query = request.args.get('search', '')
-    location_query = request.args.get('location', '')
+            # ETA in minutes
+            if distance is not None:
+                average_speed_kmh = 50
+                self.ETA_minutes = round((distance / average_speed_kmh) * 60)
+            else:
+                self.ETA_minutes = None
 
-    # ✅ Only show certified and experienced professionals
+    search_query = request.args.get('search', '').strip()
+    location_query = request.args.get('location', '').strip()
+    lat = request.args.get('lat', type=float)
+    lng = request.args.get('lng', type=float)
+
+    # Base query
     query = User.query.filter(User.user_type.in_(["certifiedPro", "experiencedPro"]))
 
     if search_query:
         query = query.filter(
             db.or_(
-                User.Service.ilike(f'%{search_query}%'),
-                User.Name.ilike(f'%{search_query}%'),
-                User.Surname.ilike(f'%{search_query}%')
+                User.Service.ilike(f"%{search_query}%"),
+                User.Name.ilike(f"%{search_query}%"),
+                User.Surname.ilike(f"%{search_query}%")
             )
         )
 
-    if location_query:
-        query = query.filter(User.Location.ilike(f'%{location_query}%'))
-
-    # Exclude the logged-in user
     if 'user_id' in session:
         query = query.filter(User.ID != session['user_id'])
 
-    users = query.all()
+    # Distance calculation
+    if lat is not None and lng is not None:
+        distance_col = func.sqrt(
+            func.pow(User.Latitude - lat, 2) + func.pow(User.Longitude - lng, 2)
+        ).label("distance")
+        query = query.add_columns(distance_col).order_by(distance_col)
 
-    professionals = [
-        MockPro(
-            id=u.ID,
-            name=u.Name,
-            surname=u.Surname,
-            service=u.Service,
-            location=u.Location,
-            experience=u.Experience,
-            availability=u.availability,
-            rating=u.Rating or 0.0,
-            reviews=u.Reviews or 0,
-            user_type=u.user_type,  # ✅ passed in
-            bio=u.Bio,
-            image=u.Image if u.Image else "assets/defualtPP.png"  # ✅ fallback handled here
-        ) for u in users
-    ]
+    results = query.all()
 
-    return render_template("feed.html", professionals=professionals,
-                           search=search_query, location=location_query)
+    professionals = []
+    for row in results:
+      if isinstance(row, tuple):  # old behavior
+        u, dist = row
+      elif hasattr(row, "_mapping"):  # new SQLAlchemy 2.x Row object
+        u = row[0]
+        dist = row[1] if len(row) > 1 else None
+      else:
+        u = row
+        dist = None
+
+      professionals.append(MockPro(
+        id=getattr(u, "ID", None),
+        name=getattr(u, "Name", ""),
+        surname=getattr(u, "Surname", ""),
+        service=getattr(u, "Service", ""),
+        location=getattr(u, "Location", ""),
+        experience=getattr(u, "Experience", ""),
+        availability=getattr(u, "availability", ""),
+        rating=getattr(u, "Rating", 0.0),
+        reviews=getattr(u, "Reviews", 0),
+        user_type=getattr(u, "user_type", "regular"),
+        bio=getattr(u, "Bio", ""),
+        image=getattr(u, "Image") or "assets/defaultPP.png",
+        distance=round(dist, 2) if dist is not None else None
+      ))
+
+    return render_template(
+        "feed.html",
+        professionals=professionals,
+        search=search_query,
+        location=location_query,
+        lat=lat,
+        lng=lng
+    )
 
 
-
-
-
-@views.app_context_processor
-def inject_service_requests():
-    from .models import ServiceRequest, User
-
-    if 'user_id' not in session:
-        return {}
-
-    pro_id = session['user_id']
-
-    # Requests where this user is the professional (receiver)
-    service_requests = ServiceRequest.query.filter_by(receiver_id=pro_id).order_by(ServiceRequest.created_at.desc()).all()
-
-
-    # Load sender details (who sent the request)
-    for request in service_requests:
-        request.sender = User.query.get(request.sender_id)
-
-    return {'service_requests': service_requests}
 
 
 from flask import session, request, redirect, url_for, render_template, flash
 from sqlalchemy import or_
 
-from sqlalchemy import or_
 
 @views.route('/messages', methods=['GET', 'POST'])
 def messages():
@@ -336,8 +324,19 @@ def messages():
     # Combine both sets
     final_user_ids = list(set(messaged_user_ids + connected_user_ids))
 
+    # ✅ Exclude users whose last service request with current user is completed
+    filtered_user_ids = []
+    for uid in final_user_ids:
+        completed_request = ServiceRequest.query.filter(
+            ((ServiceRequest.sender_id == current_user_id) & (ServiceRequest.receiver_id == uid)) |
+            ((ServiceRequest.receiver_id == current_user_id) & (ServiceRequest.sender_id == uid)),
+            ServiceRequest.status == "completed"
+        ).first()
+        if not completed_request:
+            filtered_user_ids.append(uid)
+
     # Fetch user objects
-    users = User.query.filter(User.ID.in_(final_user_ids)).all()
+    users = User.query.filter(User.ID.in_(filtered_user_ids)).all()
 
     # Count unread messages
     unread_counts = {}
@@ -356,7 +355,6 @@ def messages():
         unread_counts=unread_counts
     )
 
-from flask_mail import Message
 
 # Utility functions
 def send_request_email_to_pro(pro_email, pro_name, service, request_id):
@@ -537,23 +535,51 @@ def decline_request(request_id):
     flash("Service request declined. User notified.", "info")
     return redirect(url_for('views.Base'))
 
-@views.route('/complete_request/<int:request_id>', methods=['POST'])
+@views.route('/complete_request/<int:request_id>', methods=['POST']) 
 @login_required
 def complete_request(request_id):
     request_obj = ServiceRequest.query.get_or_404(request_id)
 
-    # Only the assigned pro (receiver_id) can complete
     if request_obj.receiver_id != current_user.ID:
         flash("You cannot mark this request as completed.", "danger")
+        return redirect(url_for('views.Base'))
+
+    # Update request status only
+    request_obj.status = 'awaiting_confirmation'
+    db.session.commit()
+
+    flash("You marked the service as completed. Waiting for user confirmation.", "success")
+    return redirect(url_for('views.Base'))
+
+
+
+@views.route('/confirm_completion/<int:request_id>', methods=['POST'])
+@login_required
+def confirm_completion_by_user(request_id):
+    request_obj = ServiceRequest.query.get_or_404(request_id)
+
+    if request_obj.sender_id != current_user.ID:
+        flash("You cannot confirm this request.", "danger")
         return redirect(url_for('views.Base'))
 
     request_obj.status = 'completed'
     db.session.commit()
 
-    # TODO: send review request notification/email to customer
-    flash("Service marked as completed. A review request has been sent to the customer.", "success")
-    return redirect(url_for('views.Base'))
+    # Delete all messages between sender and receiver
+    from sqlalchemy import or_, and_
+    messages_to_delete = MessageModel.query.filter(
+        or_(
+            and_(MessageModel.sender_id == request_obj.sender_id, MessageModel.receiver_id == request_obj.receiver_id),
+            and_(MessageModel.sender_id == request_obj.receiver_id, MessageModel.receiver_id == request_obj.sender_id)
+        )
+    ).all()
 
+    for msg in messages_to_delete:
+        db.session.delete(msg)
+    db.session.commit()
+
+    flash("You confirmed the service is complete! Messages between you and the pro were deleted.", "success")
+    return redirect(url_for('views.Base'))
 
 
 @views.route("/like/<int:post_id>", methods=["POST"])
@@ -730,3 +756,4 @@ def request_quote():
 
     flash("Quote request sent to pro!", "success")
     return redirect(url_for('views.dashboard'))
+
