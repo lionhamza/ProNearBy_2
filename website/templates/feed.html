@@ -56,21 +56,28 @@
       {% endif %}
 
       <div class="pro-details">
-        <div class="detail-item">
-          <i class="fas fa-map-marker-alt"></i>
-          <span>{{ pro.Location }}</span>
-        </div>
-        <div class="detail-item">
-          <i class="fas fa-briefcase"></i>
-          <span>Experience: {{ pro.Experience }}</span>
-        </div>
-        <div class="detail-item">
-          <i class="fas fa-clock"></i>
-          <span>Available: {{ pro.availability }}</span>
-        </div>
-      </div>
-    </div>
+  {% if pro.Distance is not none %}
+  <div class="detail-item">
+      <i class="fas fa-map-marker-alt"></i>
+      <span>{{ pro.Distance }} km away
+      {% if pro.ETA_minutes %}
+          (~{{ pro.ETA_minutes }} min)
+      {% endif %}
+      </span>
+  </div>
+  {% endif %}
 
+  <div class="detail-item">
+    <i class="fas fa-briefcase"></i>
+    <span>Experience: {{ pro.Experience }}</span>
+  </div>
+
+  <div class="detail-item">
+    <i class="fas fa-clock"></i>
+    <span>Available: {{ pro.availability }}</span>
+  </div>
+</div>
+  
     <div class="pro-actions" onclick="event.stopPropagation();">
       <button class="service-btn profile-btn" data-pro-id="{{ pro.ID }}" data-pro-name="{{ pro.Name }} {{ pro.Surname }}">Request Service</button>
       <button class="connect-btn" data-pro-id="{{ pro.ID }}" data-pro-name="{{ pro.Name }} {{ pro.Surname }}">Request Quote</button>
