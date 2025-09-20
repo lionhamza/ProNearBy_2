@@ -22,7 +22,7 @@
     </a>
 
     <!-- Search form in center -->
-    <form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
+<form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
   <!-- Always visible -->
   <input
     type="text"
@@ -32,29 +32,30 @@
     value="{{ request.args.get('search', '') }}"
     onclick="showMobileSearch()"
   />
-  
 
   <!-- Hidden on small screens -->
-<div class="location-search-wrapper" id="locationSearch">
-  <div class="location-input-wrapper">
-    <input
-      type="text"
-      id="location"
-      class="header-search-input location-input"
-      name="location"
-      placeholder="Which location..."
-      value="{{ request.args.get('location', '') }}"
-    />
-    <button type="button" id="detectLocationBtn" class="location-btn">
-      <i class="fas fa-location-arrow"></i>
-    </button>
+  <div class="location-search-wrapper" id="locationSearch">
+    <div class="location-input-wrapper">
+      <input
+        type="text"
+        id="location"
+        class="header-search-input location-input"
+        name="location"
+        placeholder="Which location..."
+        value="{{ request.args.get('location', '') }}"
+      />
+      <button type="button" id="detectLocationBtn" class="location-btn">
+        <i class="fas fa-location-arrow"></i>
+      </button>
+    </div>
+    <button type="submit" class="header-search-button">Search</button>
   </div>
-  <button type="submit" class="header-search-button">Search</button>
-</div>
 
-
-
+  <!-- ✅ Hidden inputs for latitude and longitude -->
+  <input type="hidden" id="user-lat" name="lat" value="{{ request.args.get('lat', '') }}">
+  <input type="hidden" id="user-lng" name="lng" value="{{ request.args.get('lng', '') }}">
 </form>
+
 
 
     <!-- Nav links -->
@@ -85,31 +86,55 @@
     {% endif %}
 
     <div class="notification-dropdown" id="notificationDropdown">
-      <h4>Notifications</h4>
-      {% if service_requests %}
-        {% for request in service_requests %}
-          <div class="notification-item">
-            <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
-            <small>
-              {{ request.service_type }} |
-              {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
-              {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
-            </small>
-            <div class="notification-actions">
+  <h4>Notifications</h4>
+  {% if service_requests %}
+    {% for request in service_requests %}
+      <div class="notification-item">
+        <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
+        <small>
+          {{ request.service_type }} |
+          {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
+          {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
+        </small>
+        <div class="notification-actions">
+          {% if user.user_type in ['certifiedPro','experiencedPro'] and request.receiver_id == user.ID %}
+            <!-- PRO ACTIONS -->
+            {% if request.status == 'pending' %}
               <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
                 <button type="submit" class="accept-btn">Accept</button>
               </form>
               <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
                 <button type="submit" class="decline-btn">Decline</button>
               </form>
-            </div>
-          </div>
-        {% endfor %}
-      {% else %}
-        <p class="no-notifications">No new notifications</p>
-      {% endif %}
+            {% elif request.status == 'accepted' %}
+              <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
+                <button type="submit" class="complete-btn">Mark as Completed</button>
+              </form>
+            {% elif request.status == 'completed' %}
+              <span class="completed-label">✅ Completed</span>
+            {% endif %}
+          
+          {% else %}
+            <!-- REGULAR USER ACTIONS -->
+            {% if request.status == 'awaiting_confirmation' and current_user.ID == request.sender_id %}
+              <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=request.id) }}">
+                <button type="submit" class="confirm-btn">Confirm Completion</button>
+              </form>
+            {% elif request.status == 'completed' %}
+              <span class="completed-label">✅ Completed</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ request.status|capitalize }}</span>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p class="no-notifications">No new notifications</p>
+  {% endif %}
+</div>
+
     </div>
-  </div>
 
   <!-- Logout -->
   <a href="{{ url_for('auth.logout') }}" class="icon-link logout-icon">
@@ -117,14 +142,12 @@
   </a>
 </div>
 
+<!-- Mobile hamburger -->
+<div class="mobile-menu-icon" onclick="toggleMobileMenu()">
+  <i class="fas fa-bars"></i>
+</div>
 
-
-      <!-- Mobile hamburger -->
-      <div class="mobile-menu-icon" onclick="toggleMobileMenu()">
-        <i class="fas fa-bars"></i>
-      </div>
-
-  </div>
+</div>
 </header>
 
 <div class="mobile-menu" id="mobileMenu">
@@ -156,30 +179,43 @@
           {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
         </small>
         <div class="notification-actions">
-  {% if request.status == 'pending' %}
-    <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
-      <button type="submit" class="accept-btn">Accept</button>
-    </form>
-    <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
-      <button type="submit" class="decline-btn">Decline</button>
-    </form>
+          {% if user.user_type in ['certifiedPro','experiencedPro'] and request.receiver_id == user.ID %}
+            <!-- PRO ACTIONS -->
+            {% if request.status == 'pending' %}
+              <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
+                <button type="submit" class="accept-btn">Accept</button>
+              </form>
+              <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
+                <button type="submit" class="decline-btn">Decline</button>
+              </form>
+            {% elif request.status == 'accepted' %}
+              <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
+                <button type="submit" class="complete-btn">Mark as Completed</button>
+              </form>
+            {% elif request.status == 'completed' %}
+              <span class="completed-label">✅ Completed</span>
+            {% endif %}
 
-  {% elif request.status == 'accepted' %}
-    <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
-      <button type="submit" class="complete-btn">Mark as Completed</button>
-    </form>
-
-  {% elif request.status == 'completed' %}
-    <span class="completed-label">✅ Completed</span>
-  {% endif %}
-</div>
-
+          {% else %}
+            <!-- REGULAR USER ACTIONS -->
+            {% if request.status == 'awaiting_confirmation' and current_user.ID == request.sender_id %}
+              <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=request.id) }}">
+                <button type="submit" class="confirm-btn">Confirm Completion</button>
+              </form>
+            {% elif request.status == 'completed' %}
+              <span class="completed-label">✅ Completed</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ request.status|capitalize }}</span>
+            {% endif %}
+          {% endif %}
+        </div>
       </div>
     {% endfor %}
   {% else %}
     <p class="no-notifications">No new notifications</p>
   {% endif %}
 </div>
+
 
 
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -570,6 +606,10 @@ document.getElementById("detectLocationBtn").addEventListener("click", () => {
 
       if (data.features && data.features.length > 0) {
         locationInput.value = data.features[0].place_name;
+
+        // ✅ Fill hidden inputs
+        document.getElementById("user-lat").value = latitude;
+        document.getElementById("user-lng").value = longitude;
       }
     }, (error) => {
       alert("Unable to retrieve your location.");
@@ -579,5 +619,7 @@ document.getElementById("detectLocationBtn").addEventListener("click", () => {
     alert("Geolocation is not supported by your browser.");
   }
 });
+
 </script>
+
 </html>
