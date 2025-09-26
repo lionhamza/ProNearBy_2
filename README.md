@@ -4,17 +4,18 @@
 
 ## Features
 
-* User registration and authentication
-* Search for professionals based on category and location
-* Professional profiles with contact details and services
-* **Distance and estimated travel time displayed on map pins**
-* Interactive map integration for easy location discovery
-* Admin panel for managing users and services
+- User registration and authentication
+- Search for professionals based on category and location
+- Professional profiles with contact details and services
+- **Distance and estimated travel time displayed on Mapbox pins**
+- Users can **share posts and updates** on the platform
+- Interactive map integration using **Mapbox** for easy location discovery
+- Admin panel for managing users and services
 
 ## Technology Stack
 
-* **Backend:** Python, Flask
-* **Database:** PostgreSQL
-* **Frontend:** HTML, CSS, JavaScript (with map library such as Leaflet.js or Google Maps API)
-* **Other Tools:** SQLAlchemy (ORM), Flask-Migrate (database migrations)
+- **Backend:** Python, Flask
+- **Database:** PostgreSQL
+- **Frontend:** HTML, CSS, JavaScript (Mapbox GL JS for maps)
+- **Other Tools:** SQLAlchemy (ORM), Flask-Migrate (database migrations)
 
