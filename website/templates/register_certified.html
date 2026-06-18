@@ -3,93 +3,86 @@
 {% block div %}
 
 <style>
-  .error-message {
-    color: red;
-    font-size: 0.85rem;
-    margin-top: 4px;
-    display: none;
-  }
-
-  .input-group {
+  /* ── Wizard progress bar ── */
+  .wizard-steps {
     display: flex;
-    flex-direction: column;
-    margin-bottom: 20px;
+    align-items: flex-start;
+    justify-content: center;
+    margin-bottom: 2rem;
+    gap: 0;
   }
-
-  .input-group label {
-    font-weight: 600;
-    margin-bottom: 6px;
-    font-size: 0.95rem;
+  .wizard-step-col { display: flex; flex-direction: column; align-items: center; }
+  .wizard-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid #ccc;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #aaa;
+    background: #fff; transition: all .25s;
   }
+  .wizard-dot.active { border-color: #0073b1; color: #0073b1; background: #e8f4fd; }
+  .wizard-dot.done   { border-color: #3B6D11; background: #639922; color: #fff; }
+  .wizard-label { font-size: 11px; color: #888; margin-top: 4px; text-align: center; }
+  .wizard-line  { flex: 1; height: 2px; background: #ccc; margin: 14px 6px 0; min-width: 40px; transition: background .25s; }
+  .wizard-line.done { background: #639922; }
 
+  /* ── Panels ── */
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+
+  /* ── Shared input styles (reuse your existing ones) ── */
+  .error-message {
+    color: red; font-size: 0.85rem; margin-top: 4px; display: none;
+  }
+  .input-group { display: flex; flex-direction: column; margin-bottom: 20px; }
+  .input-group label { font-weight: 600; margin-bottom: 6px; font-size: 0.95rem; }
   .input-group input,
   .input-group select {
-    padding: 10px 12px;
-    border: 1.5px solid #ccc;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    padding: 10px 12px; border: 1.5px solid #ccc;
+    border-radius: 6px; font-size: 0.95rem;
+    transition: border-color .2s, box-shadow .2s;
   }
-
-  .input-group input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
-    outline: none;
-  }
-
+  .input-group input:focus { border-color: #007bff; box-shadow: 0 0 4px rgba(0,123,255,.3); outline: none; }
   .input-group input.valid   { border-color: green; }
   .input-group input.invalid { border-color: red; }
+  .input-group input::placeholder { color: #aaa; font-style: italic; }
 
-  .input-group input::placeholder {
-    color: #aaa;
-    font-style: italic;
+  /* ── Nav buttons ── */
+  .wizard-nav { display: flex; justify-content: space-between; margin-top: 1.5rem; gap: 12px; }
+  .btn-wizard-back {
+    padding: 10px 20px; border: 1.5px solid #ccc; background: #fff;
+    border-radius: 6px; font-size: 0.95rem; cursor: pointer;
   }
+  .btn-wizard-back:hover { background: #f5f5f5; }
+  .btn-wizard-next {
+    margin-left: auto;
+    padding: 10px 24px; background: #0073b1; color: #fff;
+    border: none; border-radius: 6px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer;
+  }
+  .btn-wizard-next:hover { background: #005f91; }
+  .btn-wizard-submit {
+    margin-left: auto;
+    padding: 10px 24px; background: #28a745; color: #fff;
+    border: none; border-radius: 6px; font-size: 0.95rem;
+    font-weight: 600; cursor: pointer;
+  }
+  .btn-wizard-submit:hover { background: #218838; }
 
+  /* ── Map / autocomplete ── */
   #detectLocationBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: #0073b1;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 1rem;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px; background: #0073b1; color: #fff;
+    border: none; border-radius: 6px; font-size: 0.9rem;
+    font-weight: 600; cursor: pointer; margin-bottom: 1rem;
   }
-
   #detectLocationBtn:hover { background: #005f91; }
-
-  #map {
-    width: 100%;
-    height: 300px;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-  }
-
-  /* Style the Google autocomplete input like our other inputs */
+  #map { width: 100%; height: 300px; border-radius: 8px; margin-bottom: 1rem; }
   #autocomplete-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1.5px solid #ccc;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    box-sizing: border-box;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%; padding: 10px 12px; border: 1.5px solid #ccc;
+    border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;
   }
-
-  #autocomplete-input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
-    outline: none;
-  }
-
-  /* Keep Google autocomplete dropdown above everything */
-  .pac-container {
-    z-index: 9999 !important;
-  }
+  #autocomplete-input:focus { border-color: #007bff; box-shadow: 0 0 4px rgba(0,123,255,.3); outline: none; }
+  .pac-container { z-index: 9999 !important; }
 </style>
 
 
@@ -100,151 +93,176 @@
         <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" />
       </figure>
       <h1 class="h3">🎓 Certified Pro Registration</h1>
-      <p style="font-size: 0.85rem; color: #555;">Join as a formally trained service provider.</p>
+      <p style="font-size:0.85rem;color:#555;">Join as a formally trained service provider.</p>
     </header>
 
-    <form id="registrationForm" method="POST" enctype="multipart/form-data" action="{{ url_for('auth.register_certified') }}">
-
-      {% if not current_user.is_authenticated %}
-      <div class="input-group">
-        <label for="name">First Name *</label>
-        <input type="text" id="name" name="name" value="{{ request.form.get('name', '') }}" required />
-        <div class="error-message" id="name-error">First name is required.</div>
+    <!-- ── Progress bar ── -->
+    <div class="wizard-steps">
+      <div class="wizard-step-col">
+        <div class="wizard-dot active" id="dot1">1</div>
+        <div class="wizard-label">Account</div>
       </div>
-
-      <div class="input-group">
-        <label for="surname">Surname *</label>
-        <input type="text" id="surname" name="surname" value="{{ request.form.get('surname', '') }}" required />
-        <div class="error-message" id="surname-error">Surname is required.</div>
+      <div class="wizard-line" id="line1"></div>
+      <div class="wizard-step-col">
+        <div class="wizard-dot" id="dot2">2</div>
+        <div class="wizard-label">Documents</div>
       </div>
-
-      <div class="input-group">
-        <label for="email">Email *</label>
-        <input type="text" id="email" name="email" value="{{ request.form.get('email', '') }}" required />
-        <div class="error-message" id="email-error">Enter a valid email address.</div>
+      <div class="wizard-line" id="line2"></div>
+      <div class="wizard-step-col">
+        <div class="wizard-dot" id="dot3">3</div>
+        <div class="wizard-label">Service</div>
       </div>
-
-      <div class="input-group">
-        <label for="contact">Contact Number *</label>
-        <input type="text" id="contact" name="contact" value="{{ request.form.get('contact', '') }}" required />
-        <div class="error-message" id="contact-error">Enter a valid contact number (10 digits).</div>
+      <div class="wizard-line" id="line3"></div>
+      <div class="wizard-step-col">
+        <div class="wizard-dot" id="dot4">4</div>
+        <div class="wizard-label">Location</div>
       </div>
+    </div>
 
-      <div class="input-group password-group">
-        <label for="password">Password *</label>
-        <div class="password-wrapper">
-          <input type="password" id="password" name="password" required />
-          <button type="button" id="toggle-pro-password">Show</button>
-        </div>
-        <div id="password-rules">
-          <small id="rule-length"    style="color:red;">• At least 8 characters</small><br>
-          <small id="rule-uppercase" style="color:red;">• At least 1 uppercase letter</small><br>
-          <small id="rule-number"    style="color:red;">• At least 1 number</small>
-        </div>
-        <div class="error-message" id="password-error">Password must meet the requirements above.</div>
+    <form id="registrationForm" method="POST" enctype="multipart/form-data"
+          action="{{ url_for('auth.register_certified') }}">
+
+      <!-- ══ STEP 1 — Account ══ -->
+      <div class="step-panel active" id="panel1">
+  <div class="fields-grid">
+    <div class="input-group">
+      <label for="name">First Name *</label>
+      <input type="text" id="name" name="name" required />
+      <div class="error-message" id="name-error">First name is required.</div>
+    </div>
+    <div class="input-group">
+      <label for="surname">Surname *</label>
+      <input type="text" id="surname" name="surname" required />
+      <div class="error-message" id="surname-error">Surname is required.</div>
+    </div>
+    <div class="input-group span2">
+      <label for="email">Email *</label>
+      <input type="text" id="email" name="email" required />
+      <div class="error-message" id="email-error">Enter a valid email address.</div>
+    </div>
+    <div class="input-group span2">
+      <label for="contact">Contact Number *</label>
+      <input type="text" id="contact" name="contact" required />
+      <div class="error-message" id="contact-error">Enter a valid 10-digit contact number.</div>
+    </div>
+    <div class="input-group password-group span2">
+      <label for="password">Password *</label>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" required />
+        <button type="button" id="toggle-pro-password">Show</button>
       </div>
-
-      <div class="input-group password-group">
-        <label for="confirm_password">Confirm Password *</label>
-        <input type="password" id="confirm_password" name="confirm_password" required />
-        <div class="error-message" id="confirm-error">Passwords do not match.</div>
+      <div id="password-rules">
+        <small id="rule-length" style="color:red;">• At least 8 characters</small>
+        <small id="rule-uppercase" style="color:red;">• At least 1 uppercase letter</small>
+        <small id="rule-number" style="color:red;">• At least 1 number</small>
       </div>
+      <div class="error-message" id="password-error">Password must meet the requirements above.</div>
+    </div>
+    <div class="input-group span2">
+      <label for="confirm_password">Confirm Password *</label>
+      <input type="password" id="confirm_password" name="confirm_password" required />
+      <div class="error-message" id="confirm-error">Passwords do not match.</div>
+    </div>
+  </div>
+  <div class="wizard-nav">
+    <button type="button" class="btn-wizard-next" onclick="nextStep(1)">Next →</button>
+  </div>
+</div>
 
-      {% else %}
-      <p><strong>Logged in as:</strong> {{ current_user.Name }} {{ current_user.Surname }} ({{ current_user.Email }})</p>
-      <input type="hidden" name="name"    value="{{ current_user.Name }}">
-      <input type="hidden" name="surname" value="{{ current_user.Surname }}">
-      <input type="hidden" name="email"   value="{{ current_user.Email }}">
-      <input type="hidden" name="contact" value="{{ current_user.CellPhone }}">
-      {% endif %}
+      <!-- ══ STEP 2 — Documents ══ -->
+      <div class="step-panel" id="panel2">
+  <div class="fields-grid">
+    <div class="input-group">
+      <label for="id_doc">🪪 Government ID *</label>
+      <input type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required />
+      <div class="error-message" id="idDocError"></div>
+    </div>
+    <div class="input-group">
+      <label for="cert_doc">📄 Certification / Business Reg. *</label>
+      <input type="file" id="cert_doc" name="cert_doc" accept=".pdf,.jpg,.jpeg,.png" required />
+      <div class="error-message" id="certDocError"></div>
+    </div>
+    <div class="input-group">
+      <label for="portfolio_files">📁 Portfolio Images</label>
+      <input type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple />
+      <small style="color:#6b7280;font-size:0.72rem;">Up to 3 images</small>
+      <div class="error-message" id="portfolioError"></div>
+    </div>
+    <div class="input-group">
+      <label for="intro_video">🎥 Video Introduction</label>
+      <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm" />
+      <small style="color:#6b7280;font-size:0.72rem;">Max 50 MB</small>
+      <div class="error-message" id="videoError"></div>
+    </div>
+  </div>
+  <div class="wizard-nav">
+    <button type="button" class="btn-wizard-back" onclick="goToStep(1)">← Back</button>
+    <button type="button" class="btn-wizard-next" onclick="nextStep(2)">Next →</button>
+  </div>
+</div>
 
-      <!-- File Uploads -->
-      <div class="input-group full-width">
-        <label for="id_doc">🪪 Upload Government ID *</label>
-        <input type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required />
-        <div class="error-message" id="idDocError"></div>
-      </div>
-
-      <div class="input-group full-width">
-        <label for="cert_doc">📄 Upload Certification or Business Reg. Document *</label>
-        <input type="file" id="cert_doc" name="cert_doc" accept=".pdf,.jpg,.jpeg,.png" required />
-        <div class="error-message" id="certDocError"></div>
-      </div>
-
-      <div class="input-group full-width">
-        <label for="portfolio_files">📁 Upload Portfolio Images</label>
-        <input type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple />
-        <small style="color: #666; font-size: 0.75rem;">Up to 3 images</small>
-        <div class="error-message" id="portfolioError"></div>
-      </div>
-
-      <div class="input-group full-width">
-        <label for="intro_video">🎥 Upload Video Introduction</label>
-        <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm" />
-        <small style="color: #666; font-size: 0.75rem;">Max size: 50MB</small>
-        <div class="error-message" id="videoError"></div>
-      </div>
-
-      <!-- Service Info -->
-      <div class="input-group">
-    <label for="category">🗂️ Service Category *</label>
-    <select id="category" name="category" required>
+      <!-- ══ STEP 3 — Service ══ -->
+  <div class="step-panel" id="panel3">
+  <div class="fields-grid">
+    <div class="input-group">
+      <label for="category">🗂️ Service Category *</label>
+      <select id="category" name="category" required>
         <option value="">-- Select a Category --</option>
-        <option value="Beauty & Personal Care">Beauty & Personal Care</option>
-        <option value="Construction & Trades">Construction & Trades</option>
+        <option value="Beauty & Personal Care">Beauty &amp; Personal Care</option>
+        <option value="Construction & Trades">Construction &amp; Trades</option>
         <option value="Cleaning Services">Cleaning Services</option>
-        <option value="Events & Entertainment">Events & Entertainment</option>
+        <option value="Events & Entertainment">Events &amp; Entertainment</option>
         <option value="Automotive">Automotive</option>
         <option value="Technology">Technology</option>
-        <option value="Education & Training">Education & Training</option>
-        <option value="Health & Wellness">Health & Wellness</option>
+        <option value="Education & Training">Education &amp; Training</option>
+        <option value="Health & Wellness">Health &amp; Wellness</option>
         <option value="Professional Services">Professional Services</option>
-    </select>
-    <div class="error-message" id="category-error">
-        Please select a category.
+      </select>
+      <div class="error-message" id="category-error">Please select a category.</div>
     </div>
-</div>
-
-<div class="input-group">
-    <label for="service">🧰 Service Offered *</label>
-    <select id="service" name="service" required disabled>
+    <div class="input-group">
+      <label for="service">🧰 Service Offered *</label>
+      <select id="service" name="service" required disabled>
         <option value="">-- Select a Category First --</option>
-    </select>
-    <div class="error-message" id="service-error">
-        Please select a service.
+      </select>
+      <div class="error-message" id="service-error">Please select a service.</div>
     </div>
+    <div class="input-group span2">
+      <label for="experience">📅 Years of Experience *</label>
+      <input type="number" id="experience" name="experience" placeholder="e.g. 5" min="0" required />
+      <div class="error-message" id="experience-error">Experience is required.</div>
+    </div>
+  </div>
+  <div class="wizard-nav">
+    <button type="button" class="btn-wizard-back" onclick="goToStep(2)">← Back</button>
+    <button type="button" class="btn-wizard-next" onclick="nextStep(3)">Next →</button>
+  </div>
 </div>
 
-      <div class="input-group">
-        <label for="experience">📅 Years of Experience *</label>
-        <input type="number" id="experience" name="experience" placeholder="e.g., 5" min="0" required />
-        <div class="error-message" id="experience-error">Experience is required.</div>
+      <!-- ══ STEP 4 — Location ══ -->
+      <div class="step-panel" id="panel4">
+
+        <div class="input-group">
+          <label for="autocomplete-input">📍 Location *</label>
+          <input id="autocomplete-input" type="text" placeholder="Search your address..." />
+          <input type="hidden" id="location"  name="location" />
+          <input type="hidden" id="latitude"  name="latitude" />
+          <input type="hidden" id="longitude" name="longitude" />
+          <div class="error-message" id="location-error">Location is required.</div>
+        </div>
+
+        <button type="button" id="detectLocationBtn">
+          <i class="fas fa-crosshairs"></i> Detect My Location
+        </button>
+
+        <div id="map"></div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn-wizard-back" onclick="goToStep(3)">← Back</button>
+          <button type="submit" id="submitBtn" class="btn-wizard-submit">Register as Certified Pro ✓</button>
+        </div>
       </div>
 
-
-
-      <!-- Location -->
-      <div class="input-group">
-        <label for="autocomplete-input">📍 Location *</label>
-        <input
-          id="autocomplete-input"
-          type="text"
-          placeholder="Search your address..."
-        />
-        <!-- Hidden fields submitted with the form -->
-        <input type="hidden" id="location"  name="location" />
-        <input type="hidden" id="latitude"  name="latitude" />
-        <input type="hidden" id="longitude" name="longitude" />
-        <div class="error-message" id="location-error">Location is required.</div>
-      </div>
-
-      <button type="button" id="detectLocationBtn">
-        <i class="fas fa-crosshairs"></i> Detect My Location
-      </button>
-
-      <div id="map"></div>
-
-      <button type="submit" id="submitBtn" class="btn btn-primary">Register as Certified Pro</button>
     </form>
 
     <p class="recovery-links">
@@ -255,52 +273,109 @@
 
 
 <!-- =====================
+     WIZARD NAVIGATION
+===================== -->
+<script>
+let currentStep = 1;
+const TOTAL_STEPS = 4;
+
+const isLoggedIn = {{ 'true' if current_user.is_authenticated else 'false' }};
+
+function goToStep(n) {
+  document.getElementById('panel' + currentStep).classList.remove('active');
+  document.getElementById('panel' + n).classList.add('active');
+  [1,2,3,4].forEach(i => {
+    const dot  = document.getElementById('dot' + i);
+    dot.className = 'wizard-dot' + (i === n ? ' active' : i < n ? ' done' : '');
+    if (i < 4) {
+      document.getElementById('line' + i).className = 'wizard-line' + (i < n ? ' done' : '');
+    }
+  });
+  currentStep = n;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep(fromStep) {
+  if (!validateStep(fromStep)) return;
+  goToStep(fromStep + 1);
+}
+
+function validateStep(step) {
+  if (step === 1) {
+    if (isLoggedIn) return true;
+    return validateName() && validateSurname() && validateEmail()
+        && validateContact() && validatePassword() && validateConfirmPassword();
+  }
+  if (step === 2) {
+    return validateFile(
+        document.getElementById('id_doc'),
+        ['.pdf','.jpg','.jpeg','.png'], 5,
+        document.getElementById('idDocError')
+      ) &&
+      validateFile(
+        document.getElementById('cert_doc'),
+        ['.pdf','.jpg','.jpeg','.png'], 5,
+        document.getElementById('certDocError')
+      ) &&
+      validateFile(
+        document.getElementById('portfolio_files'),
+        ['.jpg','.jpeg','.png'], 5,
+        document.getElementById('portfolioError'), 3
+      ) &&
+      validateFile(
+        document.getElementById('intro_video'),
+        ['.mp4','.mov','.webm'], 50,
+        document.getElementById('videoError')
+      );
+  }
+  if (step === 3) {
+    return validateCategory() && validateService() && validateExperience();
+  }
+  return true;
+}
+</script>
+
+
+<!-- =====================
      FORM VALIDATION
 ===================== -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  const isLoggedIn = {{ 'true' if current_user.is_authenticated else 'false' }};
-
   const inputs = {
-    name:         document.getElementById('name'),
-    surname:      document.getElementById('surname'),
-    email:        document.getElementById('email'),
-    contact:      document.getElementById('contact'),
-    password:     document.getElementById('password'),
-    confirm:      document.getElementById('confirm_password'),
-    category:     document.getElementById('category'),
-    service:      document.getElementById('service'),
-    experience:   document.getElementById('experience'),
-    availability: document.getElementById('availability'),
-    location:     document.getElementById('location'),
+    name:       document.getElementById('name'),
+    surname:    document.getElementById('surname'),
+    email:      document.getElementById('email'),
+    contact:    document.getElementById('contact'),
+    password:   document.getElementById('password'),
+    confirm:    document.getElementById('confirm_password'),
+    category:   document.getElementById('category'),
+    service:    document.getElementById('service'),
+    experience: document.getElementById('experience'),
+    location:   document.getElementById('location'),
   };
 
   const errors = {
-    name:         document.getElementById('name-error'),
-    surname:      document.getElementById('surname-error'),
-    email:        document.getElementById('email-error'),
-    contact:      document.getElementById('contact-error'),
-    password:     document.getElementById('password-error'),
-    confirm:      document.getElementById('confirm-error'),
-    category:     document.getElementById('category-error'),
-    service:      document.getElementById('service-error'),
-    experience:   document.getElementById('experience-error'),
-    availability: document.getElementById('availability-error'),
-    location:     document.getElementById('location-error'),
+    name:       document.getElementById('name-error'),
+    surname:    document.getElementById('surname-error'),
+    email:      document.getElementById('email-error'),
+    contact:    document.getElementById('contact-error'),
+    password:   document.getElementById('password-error'),
+    confirm:    document.getElementById('confirm-error'),
+    category:   document.getElementById('category-error'),
+    service:    document.getElementById('service-error'),
+    experience: document.getElementById('experience-error'),
+    location:   document.getElementById('location-error'),
   };
 
   function showError(input, errorEl) {
     if (!input || !errorEl) return;
-    input.classList.remove('valid');
-    input.classList.add('invalid');
+    input.classList.remove('valid'); input.classList.add('invalid');
     errorEl.style.display = 'block';
   }
-
   function showValid(input, errorEl) {
     if (!input || !errorEl) return;
-    input.classList.remove('invalid');
-    input.classList.add('valid');
+    input.classList.remove('invalid'); input.classList.add('valid');
     errorEl.style.display = 'none';
   }
 
@@ -308,52 +383,71 @@ document.addEventListener("DOMContentLoaded", () => {
     ? (showValid(inputs[key], errors[key]), true)
     : (showError(inputs[key], errors[key]), false);
 
-  const validateName         = simple('name');
-  const validateSurname      = simple('surname');
-  const validateCategory     = simple('category');
-  const validateService      = simple('service');
-  const validateExperience   = simple('experience');
-  const validateAvailability = simple('availability');
-  const validateLocation     = simple('location');
+  window.validateName       = simple('name');
+  window.validateSurname    = simple('surname');
+  window.validateCategory   = simple('category');
+  window.validateService    = simple('service');
+  window.validateExperience = simple('experience');
+  window.validateLocation   = simple('location');
 
-  function validateEmail() {
+  window.validateEmail = function() {
     if (!inputs.email) return true;
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputs.email.value.trim());
     ok ? showValid(inputs.email, errors.email) : showError(inputs.email, errors.email);
     return ok;
-  }
+  };
 
-  function validateContact() {
+  window.validateContact = function() {
     if (!inputs.contact) return true;
     const ok = /^\d{10}$/.test(inputs.contact.value.trim());
     ok ? showValid(inputs.contact, errors.contact) : showError(inputs.contact, errors.contact);
     return ok;
-  }
+  };
 
   const ruleLength    = document.getElementById('rule-length');
   const ruleUppercase = document.getElementById('rule-uppercase');
   const ruleNumber    = document.getElementById('rule-number');
 
-  function validatePassword() {
+  window.validatePassword = function() {
     if (!inputs.password) return true;
-    const val = inputs.password.value;
-    const hasLength    = val.length >= 8;
-    const hasUppercase = /[A-Z]/.test(val);
-    const hasNumber    = /\d/.test(val);
-    if (ruleLength)    ruleLength.style.color    = hasLength    ? 'green' : 'red';
-    if (ruleUppercase) ruleUppercase.style.color = hasUppercase ? 'green' : 'red';
-    if (ruleNumber)    ruleNumber.style.color    = hasNumber    ? 'green' : 'red';
-    const ok = hasLength && hasUppercase && hasNumber;
+    const v = inputs.password.value;
+    const l = v.length >= 8, u = /[A-Z]/.test(v), n = /\d/.test(v);
+    if (ruleLength)    ruleLength.style.color    = l ? 'green' : 'red';
+    if (ruleUppercase) ruleUppercase.style.color = u ? 'green' : 'red';
+    if (ruleNumber)    ruleNumber.style.color    = n ? 'green' : 'red';
+    const ok = l && u && n;
     ok ? showValid(inputs.password, errors.password) : showError(inputs.password, errors.password);
     return ok;
-  }
+  };
 
-  function validateConfirmPassword() {
+  window.validateConfirmPassword = function() {
     if (!inputs.confirm) return true;
     const ok = inputs.confirm.value && inputs.confirm.value === inputs.password?.value;
     ok ? showValid(inputs.confirm, errors.confirm) : showError(inputs.confirm, errors.confirm);
     return ok;
-  }
+  };
+
+  window.validateFile = function(input, allowed, maxMB, errorEl, maxCount = 1) {
+    if (!input) return true;
+    errorEl.style.display = 'none';
+    if (!input.files.length) return true;
+    for (let file of input.files) {
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if (!allowed.includes(ext)) {
+        errorEl.textContent = `Invalid file type: ${file.name}`;
+        errorEl.style.display = 'block'; input.value = ''; return false;
+      }
+      if (file.size > maxMB * 1024 * 1024) {
+        errorEl.textContent = `${file.name} exceeds ${maxMB} MB.`;
+        errorEl.style.display = 'block'; input.value = ''; return false;
+      }
+    }
+    if (input.files.length > maxCount) {
+      errorEl.textContent = `Max ${maxCount} file(s) allowed.`;
+      errorEl.style.display = 'block'; input.value = ''; return false;
+    }
+    return true;
+  };
 
   if (inputs.name)     inputs.name.addEventListener('input', validateName);
   if (inputs.surname)  inputs.surname.addEventListener('input', validateSurname);
@@ -361,10 +455,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (inputs.contact)  inputs.contact.addEventListener('input', validateContact);
   if (inputs.password) inputs.password.addEventListener('input', () => { validatePassword(); validateConfirmPassword(); });
   if (inputs.confirm)  inputs.confirm.addEventListener('input', validateConfirmPassword);
-  inputs.category.addEventListener('change', validateCategory);
-  inputs.service.addEventListener('change', validateService);
-  inputs.experience.addEventListener('input', validateExperience);
-  inputs.availability.addEventListener('input', validateAvailability);
+  inputs.category?.addEventListener('change', validateCategory);
+  inputs.service?.addEventListener('change', validateService);
+  inputs.experience?.addEventListener('input', validateExperience);
 
   const toggleBtn = document.getElementById('toggle-pro-password');
   if (toggleBtn && inputs.password) {
@@ -374,128 +467,42 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function validateFile(input, allowed, maxSizeMB, errorEl, maxCount = 1) {
-    errorEl.style.display = 'none';
-    for (let file of input.files) {
-      const ext = '.' + file.name.split('.').pop().toLowerCase();
-      if (!allowed.includes(ext)) {
-        errorEl.textContent = `Invalid file type: ${file.name}`;
-        errorEl.style.display = 'block';
-        input.value = '';
-        return false;
-      }
-      if (file.size > maxSizeMB * 1024 * 1024) {
-        errorEl.textContent = `${file.name} exceeds ${maxSizeMB}MB limit.`;
-        errorEl.style.display = 'block';
-        input.value = '';
-        return false;
-      }
-    }
-    if (input.files.length > maxCount) {
-      errorEl.textContent = `Max ${maxCount} file(s) allowed.`;
-      errorEl.style.display = 'block';
-      input.value = '';
-      return false;
-    }
-    return true;
-  }
-
-  const idDoc      = document.getElementById('id_doc');
-  const certDoc    = document.getElementById('cert_doc');
-  const portfolio  = document.getElementById('portfolio_files');
-  const video      = document.getElementById('intro_video');
-  const idDocError     = document.getElementById('idDocError');
-  const certDocError   = document.getElementById('certDocError');
-  const portfolioError = document.getElementById('portfolioError');
-  const videoError     = document.getElementById('videoError');
-
-  idDoc.addEventListener('change',     () => validateFile(idDoc,     ['.pdf','.jpg','.jpeg','.png'], 5,  idDocError));
-  certDoc.addEventListener('change',   () => validateFile(certDoc,   ['.pdf','.jpg','.jpeg','.png'], 5,  certDocError));
-  portfolio.addEventListener('change', () => validateFile(portfolio, ['.jpg','.jpeg','.png'],         5,  portfolioError, 3));
-  video.addEventListener('change',     () => validateFile(video,     ['.mp4','.mov','.webm'],         50, videoError));
-
+  // Final submit validation (location required on step 4)
   document.getElementById('registrationForm').addEventListener('submit', e => {
-    const authValid   = isLoggedIn || (validateName() && validateSurname() && validateEmail() && validateContact() && validatePassword() && validateConfirmPassword());
-    const fieldsValid = validateCategory() && validateService() && validateExperience() && validateAvailability() && validateLocation();
-    const filesValid  = validateFile(idDoc,     ['.pdf','.jpg','.jpeg','.png'], 5,  idDocError) &&
-                        validateFile(certDoc,   ['.pdf','.jpg','.jpeg','.png'], 5,  certDocError) &&
-                        validateFile(portfolio, ['.jpg','.jpeg','.png'],         5,  portfolioError, 3) &&
-                        validateFile(video,     ['.mp4','.mov','.webm'],         50, videoError);
-    if (!(authValid && fieldsValid && filesValid)) e.preventDefault();
+    if (!validateLocation()) { e.preventDefault(); }
   });
-
 });
 </script>
 
 
 <!-- =====================
-     CATEGORY -> SERVICE CASCADE
+     CATEGORY → SERVICE CASCADE
 ===================== -->
 <script>
-  const SERVICES_BY_CATEGORY = {
-    "Beauty & Personal Care": [
-      "Hair Stylist", "Barber", "Makeup Artist", "Nail Technician", "Beautician", "Massage Therapist"
-    ],
-    "Construction & Trades": [
-      "Builder", "Plumber", "Electrician", "Painter", "Welder", "Carpenter", "Tiler", "Roofer", "Handyman"
-    ],
-    "Cleaning Services": [
-      "House Cleaner", "Office Cleaner", "Carpet Cleaner", "Window Cleaner"
-    ],
-    "Events & Entertainment": [
-      "Photographer", "Videographer", "DJ", "MC", "Event Planner", "Decorator", "Caterer"
-    ],
-    "Automotive": [
-      "Mechanic", "Auto Electrician", "Panel Beater"
-    ],
-    "Technology": [
-      "IT Technician", "Computer Repair Technician", "Network Technician", "Web Developer", "Graphic Designer"
-    ],
-    "Education & Training": [
-      "Tutor", "Driving Instructor", "Music Teacher"
-    ],
-    "Health & Wellness": [
-      "Personal Trainer", "Fitness Coach", "Dietitian"
-    ],
-    "Professional Services": [
-      "Architect", "Accountant", "Consultant", "Lawyer"
-    ],
-  };
+const SERVICES_BY_CATEGORY = {
+  "Beauty & Personal Care":  ["Hair Stylist","Barber","Makeup Artist","Nail Technician","Beautician","Massage Therapist"],
+  "Construction & Trades":   ["Builder","Plumber","Electrician","Painter","Welder","Carpenter","Tiler","Roofer","Handyman"],
+  "Cleaning Services":       ["House Cleaner","Office Cleaner","Carpet Cleaner","Window Cleaner"],
+  "Events & Entertainment":  ["Photographer","Videographer","DJ","MC","Event Planner","Decorator","Caterer"],
+  "Automotive":              ["Mechanic","Auto Electrician","Panel Beater"],
+  "Technology":              ["IT Technician","Computer Repair Technician","Network Technician","Web Developer","Graphic Designer"],
+  "Education & Training":    ["Tutor","Driving Instructor","Music Teacher"],
+  "Health & Wellness":       ["Personal Trainer","Fitness Coach","Dietitian"],
+  "Professional Services":   ["Architect","Accountant","Consultant","Lawyer"],
+};
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const categorySelect = document.getElementById("category");
-    const serviceSelect  = document.getElementById("service");
-
-    categorySelect.addEventListener("change", () => {
-      const category = categorySelect.value;
-      const services = SERVICES_BY_CATEGORY[category] || [];
-
-      // Reset the service dropdown
-      serviceSelect.innerHTML = "";
-
-      if (!category) {
-        serviceSelect.disabled = true;
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = "-- Select a Category First --";
-        serviceSelect.appendChild(placeholder);
-        return;
-      }
-
-      serviceSelect.disabled = false;
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "-- Select Your Service --";
-      serviceSelect.appendChild(placeholder);
-
-      services.forEach(serviceName => {
-        const opt = document.createElement("option");
-        opt.value = serviceName;
-        opt.textContent = serviceName;
-        serviceSelect.appendChild(opt);
-      });
-    });
+document.addEventListener("DOMContentLoaded", () => {
+  const catEl = document.getElementById("category");
+  const svcEl = document.getElementById("service");
+  catEl.addEventListener("change", () => {
+    const svcs = SERVICES_BY_CATEGORY[catEl.value] || [];
+    svcEl.innerHTML = "";
+    if (!catEl.value) { svcEl.disabled = true; svcEl.innerHTML = '<option value="">-- Select a Category First --</option>'; return; }
+    svcEl.disabled = false;
+    svcEl.innerHTML = '<option value="">-- Select Your Service --</option>' +
+      svcs.map(s => `<option value="${s}">${s}</option>`).join('');
   });
+});
 </script>
 
 
@@ -503,98 +510,74 @@ document.addEventListener("DOMContentLoaded", () => {
      GOOGLE MAPS + PLACES
 ===================== -->
 <script>
-  let map, marker, geocoder;
+let map, marker, geocoder;
 
-  function initMap() {
-    const defaultPos = { lat: -29.8587, lng: 31.0218 }; // Durban
+function initMap() {
+  const defaultPos = { lat: -29.8587, lng: 31.0218 };
 
-    map = new google.maps.Map(document.getElementById("map"), {
-      center: defaultPos,
-      zoom: 12,
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false,
-    });
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: defaultPos, zoom: 12,
+    mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
+  });
 
-    geocoder = new google.maps.Geocoder();
+  geocoder = new google.maps.Geocoder();
 
-    marker = new google.maps.Marker({
-      position: defaultPos,
-      map: map,
-      draggable: true,
-      title: "Drag to set your location",
-    });
+  marker = new google.maps.Marker({
+    position: defaultPos, map, draggable: true, title: "Drag to set your location",
+  });
 
-    // ---- Places Autocomplete ----
-    const autocompleteInput = document.getElementById("autocomplete-input");
-    const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
-      componentRestrictions: { country: "za" },   // South Africa only
-      fields: ["geometry", "formatted_address"],
-    });
+  const autocompleteInput = document.getElementById("autocomplete-input");
+  const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
+    componentRestrictions: { country: "za" },
+    fields: ["geometry", "formatted_address"],
+  });
 
-    autocomplete.addListener("place_changed", () => {
-      const place = autocomplete.getPlace();
-      if (!place.geometry) return;
+  autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (!place.geometry) return;
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+    setLocation(lat, lng, place.formatted_address);
+    map.panTo({ lat, lng }); map.setZoom(15);
+  });
 
-      const lat = place.geometry.location.lat();
-      const lng = place.geometry.location.lng();
+  marker.addListener("dragend", () => {
+    const pos = marker.getPosition();
+    reverseGeocode(pos.lat(), pos.lng());
+  });
 
-      setLocation(lat, lng, place.formatted_address);
-      map.panTo({ lat, lng });
-      map.setZoom(15);
-    });
+  document.getElementById("detectLocationBtn").addEventListener("click", () => {
+    if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
+        map.panTo({ lat, lng }); map.setZoom(15);
+        marker.setPosition({ lat, lng });
+        reverseGeocode(lat, lng);
+      },
+      () => alert("Could not get your location. Please allow location access and try again.")
+    );
+  });
+}
 
-    // ---- Marker drag → reverse geocode ----
-    marker.addListener("dragend", () => {
-      const pos = marker.getPosition();
-      reverseGeocode(pos.lat(), pos.lng());
-    });
+function setLocation(lat, lng, address) {
+  document.getElementById("latitude").value  = lat;
+  document.getElementById("longitude").value = lng;
+  document.getElementById("location").value  = address;
+  document.getElementById("autocomplete-input").value = address;
+  marker.setPosition({ lat, lng });
+}
 
-    // ---- Detect My Location button ----
-    document.getElementById("detectLocationBtn").addEventListener("click", () => {
-      if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser.");
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          map.panTo({ lat, lng });
-          map.setZoom(15);
-          marker.setPosition({ lat, lng });
-          reverseGeocode(lat, lng);
-        },
-        () => alert("Could not get your location. Please allow location access and try again.")
-      );
-    });
-  }
-
-  function setLocation(lat, lng, address) {
-    document.getElementById("latitude").value  = lat;
-    document.getElementById("longitude").value = lng;
-    document.getElementById("location").value  = address;
-    document.getElementById("autocomplete-input").value = address;
-    marker.setPosition({ lat, lng });
-  }
-
-  function reverseGeocode(lat, lng) {
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === "OK" && results[0]) {
-        setLocation(lat, lng, results[0].formatted_address);
-      } else {
-        // Fallback: just save coords without a place name
-        document.getElementById("latitude").value  = lat;
-        document.getElementById("longitude").value = lng;
-      }
-    });
-  }
+function reverseGeocode(lat, lng) {
+  geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+    if (status === "OK" && results[0]) setLocation(lat, lng, results[0].formatted_address);
+    else { document.getElementById("latitude").value = lat; document.getElementById("longitude").value = lng; }
+  });
+}
 </script>
 
-<!-- Load Google Maps with Places library -->
 <script
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCiEtsuTYyF5GYph3n3V0_cKTl-k_pMz0g&libraries=places&callback=initMap"
   async defer>
 </script>
-
 {% endblock %}
