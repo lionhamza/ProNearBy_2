@@ -9,7 +9,13 @@
     <p class="role">{{ profile_owner.Service }}</p>
     <p class="bio">{{ profile_owner.Bio }}</p>
     <hr />
-    <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
+    {% if profile_owner.ID == current_user_id %}
+  <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
+{% elif profile_owner.Distance is not none %}
+  <p><strong>Distance:</strong> {{ profile_owner.Distance }} km away
+    {% if profile_owner.ETA_minutes %}(~{{ profile_owner.ETA_minutes }} min){% endif %}
+  </p>
+{% endif %}
     <p><strong>Experience:</strong> {{ profile_owner.Experience }}</p>
     <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
     <p><strong>Rating:</strong> ⭐ {{ profile_owner.Rating }} ({{ profile_owner.Reviews }} reviews)</p>
@@ -43,7 +49,13 @@
       <p class="role">{{ profile_owner.Service }}</p>
       <p class="bio">{{ profile_owner.Bio }}</p>
       <hr />
-      <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
+      {% if profile_owner.ID == current_user_id %}
+  <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
+{% elif profile_owner.Distance is not none %}
+  <p><strong>Distance:</strong> {{ profile_owner.Distance }} km away
+    {% if profile_owner.ETA_minutes %}(~{{ profile_owner.ETA_minutes }} min){% endif %}
+  </p>
+{% endif %}
       <p><strong>Experience:</strong> {{ profile_owner.Experience }}</p>
       <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
       <p><strong>Rating:</strong> ⭐ {{ profile_owner.Rating }} ({{ profile_owner.Reviews }} reviews)</p>
@@ -105,7 +117,7 @@
                     </div>
                   {% elif file.endswith(('.mp4', '.mov', '.avi', '.webm')) %}
                     <div class="media-wrapper">
-                      <video autoplay playsinline loop class="media-item">
+                      <video autoplay muted playsinline loop class="media-item">
   <source src="{{ url_for('static', filename=file) }}">
 </video>
 
@@ -122,18 +134,18 @@
         </div>
 
         <div class="post-actions">
-          <form action="{{ url_for('views.like_post', post_id=post.id) }}" method="POST">
-            <button class="like-button" data-post-id="{{ post.id }}">
-              <img
-                src="{{ url_for('static', filename='assets/likeP.png') if post.id in liked_post_ids else url_for('static', filename='assets/like.png') }}"
-                class="like-icon"
-                id="like-icon-{{ post.id }}"
-                alt="Like"
-              />
-            </button>
-            <span id="like-count-{{ post.id }}">{{ post.like_count }}</span>
-          </form>
-        </div>
+  <form action="{{ url_for('views.like_post', post_id=post.id) }}" method="POST">
+    <button type="button" class="like-button" data-post-id="{{ post.id }}" aria-label="Like this post">
+      <img
+        src="{{ url_for('static', filename='assets/LikeP.png') if post.id in liked_post_ids else url_for('static', filename='assets/like.png') }}"
+        class="like-icon"
+        id="like-icon-{{ post.id }}"
+        alt="Like"
+      />
+    </button>
+    <span id="like-count-{{ post.id }}">{{ post.like_count }}</span>
+  </form>
+</div>
       </div>
     {% endfor %}
   {% else %}

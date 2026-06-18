@@ -28,38 +28,37 @@ def process_application(application_id):
     action = request.form.get('action')
 
     if action == 'approve':
-        # Determine user_type based on is_certified flag
         user_type = "certifiedPro" if application.is_certified else "experiencedPro"
 
-        # Check if user already exists
         existing_user = User.query.filter_by(Email=application.email).first()
 
         if existing_user:
-            # Update existing user
             existing_user.Service = application.service
             existing_user.Experience = application.experience
             existing_user.availability = application.availability
             existing_user.Location = application.location
+            existing_user.Latitude = application.latitude
+            existing_user.Longitude = application.longitude
             existing_user.Rating = 0.0
             existing_user.Reviews = 0
             existing_user.Bio = application.bio or ""
             existing_user.Image = None
             existing_user.CoverImage = None
             existing_user.user_type = user_type
-
             message = 'Application approved and existing user updated.'
         else:
-            # Create a new user
             new_user = User(
                 Name=application.name,
                 Surname=application.surname,
                 Email=application.email,
                 CellPhone=application.contact,
-                Password=application.password,  # Already hashed
+                Password=application.password,
                 Service=application.service,
                 Experience=application.experience,
                 availability=application.availability,
                 Location=application.location,
+                Latitude=application.latitude,
+                Longitude=application.longitude,
                 Rating=0.0,
                 Reviews=0,
                 Bio=application.bio or "",
@@ -85,9 +84,6 @@ def process_application(application_id):
         flash('Application has been rejected and deleted.', 'success')
 
     return redirect(url_for('admin.view_applications'))
-
-
-
 
 
 @admin.route('/analytics')

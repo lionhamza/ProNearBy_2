@@ -104,6 +104,8 @@ class ProRegistrationRequest(db.Model):
     availability = db.Column(db.String(100), nullable=False)
     bio = db.Column(db.Text)
     location = db.Column(db.String(200))
+    latitude = db.Column(db.Float, nullable=True)   # ← ADD THIS
+    longitude = db.Column(db.Float, nullable=True)  # ← ADD THIS
 
     # Uploads
     id_doc = db.Column(db.String(300))  # file path to government ID

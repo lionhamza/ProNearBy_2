@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='feed.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='chat.css') }}">
-  
+  <link rel="stylesheet" href="{{ url_for('static', filename='posts.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
   
@@ -476,6 +476,29 @@ function prevMedia() {
 </script>
 
 <script>
+  // Auto-detect GPS on page load so distance shows on feed without manual location entry
+  window.addEventListener("load", function () {
+    const latInput = document.getElementById("user-lat");
+    const lngInput = document.getElementById("user-lng");
+
+    if (latInput && lngInput && !latInput.value && !lngInput.value && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function (position) {
+        latInput.value = position.coords.latitude;
+        lngInput.value = position.coords.longitude;
+
+        // If user is already on the feed page, reload it with coordinates so distance shows immediately
+        if (window.location.pathname.includes("mock-feed")) {
+          const url = new URL(window.location.href);
+          url.searchParams.set("lat", position.coords.latitude);
+          url.searchParams.set("lng", position.coords.longitude);
+          window.location.replace(url.toString());
+        }
+      });
+    }
+  });
+</script>
+
+<script>
   function showMobileSearch() {
     const wrapper = document.getElementById("locationSearch");
     wrapper.classList.toggle("show");
@@ -516,110 +539,148 @@ document.querySelectorAll('.like-button').forEach(button => {
   observer.observe(video);
 });
 </script>
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.20.0/mapbox-gl.js"></script>
-<script>
-  const accessToken = "pk.eyJ1IjoicHJvbmVhcmJ5IiwiYSI6ImNtZjF0Nno3MDFyZjkybHF5OWtvM2Q2ZTUifQ.z4Md_I2KDHvG0oFpkuGiwA"; // replace with your token
-  const locationInput = document.getElementById("location");
 
-  let timeout = null;
-  let suggestionBox;
-
-  // Create a dropdown for suggestions
-  function createSuggestionBox() {
-    suggestionBox = document.createElement("div");
-    suggestionBox.style.position = "absolute";
-    suggestionBox.style.background = "#fff";
-    suggestionBox.style.border = "1px solid #ccc";
-    suggestionBox.style.width = locationInput.offsetWidth + "px";
-    suggestionBox.style.zIndex = "1000";
-    suggestionBox.style.maxHeight = "200px";
-    suggestionBox.style.overflowY = "auto";
-    suggestionBox.style.fontSize = "14px";
-    suggestionBox.style.cursor = "pointer";
-    suggestionBox.style.display = "none";
-    locationInput.parentNode.appendChild(suggestionBox);
-  }
-
-  createSuggestionBox();
-
-  locationInput.addEventListener("input", function () {
-    clearTimeout(timeout);
-    const query = locationInput.value.trim();
-    if (!query) {
-      suggestionBox.style.display = "none";
-      return;
-    }
-
-    timeout = setTimeout(async () => {
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-        query
-      )}.json?access_token=${accessToken}&autocomplete=true&limit=5`;
-
-      const res = await fetch(url);
-      const data = await res.json();
-
-      suggestionBox.innerHTML = "";
-      if (data.features && data.features.length > 0) {
-        data.features.forEach((feature) => {
-          const div = document.createElement("div");
-          div.textContent = feature.place_name;
-          div.style.padding = "8px";
-
-          div.addEventListener("click", () => {
-            locationInput.value = feature.place_name;
-            suggestionBox.style.display = "none";
-          });
-
-          div.addEventListener("mouseover", () => {
-            div.style.background = "#f0f0f0";
-          });
-          div.addEventListener("mouseout", () => {
-            div.style.background = "#fff";
-          });
-
-          suggestionBox.appendChild(div);
-        });
-        suggestionBox.style.display = "block";
-      } else {
-        suggestionBox.style.display = "none";
-      }
-    }, 300);
-  });
-
-  // Hide suggestions when clicking outside
-  document.addEventListener("click", function (e) {
-    if (!suggestionBox.contains(e.target) && e.target !== locationInput) {
-      suggestionBox.style.display = "none";
-    }
-  });
+<!-- Google Places API -->
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCiEtsuTYyF5GYph3n3V0_cKTl-k_pMz0g&libraries=places"
+  async
+  defer>
 </script>
+
 <script>
-document.getElementById("detectLocationBtn").addEventListener("click", () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      const { latitude, longitude } = position.coords;
+let autocomplete;
 
-      // Reverse geocode with Mapbox
-      const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json?access_token=${accessToken}&limit=1`;
-      const res = await fetch(url);
-      const data = await res.json();
+function initGooglePlaces() {
 
-      if (data.features && data.features.length > 0) {
-        locationInput.value = data.features[0].place_name;
+    const locationInput =
+        document.getElementById("location");
 
-        // ✅ Fill hidden inputs
-        document.getElementById("user-lat").value = latitude;
-        document.getElementById("user-lng").value = longitude;
-      }
-    }, (error) => {
-      alert("Unable to retrieve your location.");
-      console.error(error);
-    });
-  } else {
-    alert("Geolocation is not supported by your browser.");
-  }
+    if (!locationInput) return;
+
+    autocomplete =
+        new google.maps.places.Autocomplete(
+            locationInput,
+            {
+                types: ["geocode"]
+            }
+        );
+
+    autocomplete.addListener(
+        "place_changed",
+        () => {
+
+            const place =
+                autocomplete.getPlace();
+
+            if (!place.geometry) return;
+
+            document.getElementById(
+                "user-lat"
+            ).value =
+                place.geometry.location.lat();
+
+            document.getElementById(
+                "user-lng"
+            ).value =
+                place.geometry.location.lng();
+        }
+    );
+}
+
+window.addEventListener("load", () => {
+
+    const checker =
+        setInterval(() => {
+
+            if (
+                window.google &&
+                google.maps &&
+                google.maps.places
+            ) {
+
+                clearInterval(checker);
+
+                initGooglePlaces();
+            }
+
+        }, 100);
+
 });
+</script>
 
+<script>
+document
+.getElementById("detectLocationBtn")
+.addEventListener("click", () => {
+
+    if (!navigator.geolocation) {
+
+        alert(
+            "Geolocation is not supported by your browser."
+        );
+
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+
+        (position) => {
+
+            const latitude =
+                position.coords.latitude;
+
+            const longitude =
+                position.coords.longitude;
+
+            document.getElementById(
+                "user-lat"
+            ).value = latitude;
+
+            document.getElementById(
+                "user-lng"
+            ).value = longitude;
+
+            const geocoder =
+                new google.maps.Geocoder();
+
+            geocoder.geocode(
+                {
+                    location: {
+                        lat: latitude,
+                        lng: longitude
+                    }
+                },
+
+                (results, status) => {
+
+                    if (
+                        status === "OK" &&
+                        results &&
+                        results.length > 0
+                    ) {
+
+                        document.getElementById(
+                            "location"
+                        ).value =
+                            results[0]
+                            .formatted_address;
+                    }
+                }
+            );
+
+        },
+
+        (error) => {
+
+            console.error(error);
+
+            alert(
+                "Unable to retrieve your location."
+            );
+
+        }
+    );
+});
 </script>
 
 </html>

@@ -326,10 +326,7 @@ def save_file(file, subfolder):
         return f'uploads/{subfolder}/{filename}'
     return None
 
-
-
 @auth.route('/register/certified', methods=['GET', 'POST'])
-
 def register_certified():
     if request.method == 'POST':
         if current_user.is_authenticated:
@@ -341,7 +338,6 @@ def register_certified():
                 'contact': current_user.CellPhone,
                 'service': request.form.get('service', '').strip(),
                 'experience': request.form.get('experience', '').strip(),
-                'availability': request.form.get('availability', '').strip(),
                 'location': request.form.get('location', '').strip()
             }
             password = None
@@ -355,7 +351,6 @@ def register_certified():
                 'contact': request.form.get('contact', '').strip(),
                 'service': request.form.get('service', '').strip(),
                 'experience': request.form.get('experience', '').strip(),
-                'availability': request.form.get('availability', '').strip(),
                 'location': request.form.get('location', '').strip()
             }
             password = request.form.get('password', '')
@@ -387,7 +382,7 @@ def register_certified():
                 flash("Password must have at least 8 characters, one uppercase letter, and one number.", "error")
                 return render_template('register_certified.html', form_data=form_data)
 
-        if len(form_data['service']) < 2 or len(form_data['experience']) < 1 or len(form_data['availability']) < 2 or len(form_data['location']) < 2:
+        if len(form_data['service']) < 2 or len(form_data['experience']) < 1 or len(form_data['location']) < 2:
             flash("All service details must be filled out correctly.", "error")
             return render_template('register_certified.html', form_data=form_data)
 
@@ -423,15 +418,17 @@ def register_certified():
             password=hashed_password,
             service=form_data['service'],
             experience=form_data['experience'],
-            availability=form_data['availability'],
+            availability="",  # no longer collected at signup
             location=form_data['location'],
+            latitude=float(request.form.get('latitude')) if request.form.get('latitude') else None,
+            longitude=float(request.form.get('longitude')) if request.form.get('longitude') else None,
             id_doc=id_doc_path,
             cert_doc=cert_doc_path,
             portfolio_files=json.dumps(portfolio_paths),
             intro_video=intro_video_path,
             is_certified=True,
             status='pending'
-        )
+        )  
 
         db.session.add(new_request)
         db.session.commit()
@@ -448,7 +445,6 @@ def register_certified():
         return redirect(url_for('auth.verify_page' if not current_user.is_authenticated else 'views.feed'))
 
     return render_template('register_certified.html', form_data={})
-
 
 import re
 import json
@@ -491,7 +487,6 @@ def register_experienced():
                 'contact': current_user.CellPhone,
                 'service': request.form.get('service', '').strip(),
                 'experience': request.form.get('experience', '').strip(),
-                'availability': request.form.get('availability', '').strip(),
                 'location': request.form.get('location', '').strip()
             }
             password = None
@@ -505,7 +500,6 @@ def register_experienced():
                 'contact': request.form.get('contact', '').strip(),
                 'service': request.form.get('service', '').strip(),
                 'experience': request.form.get('experience', '').strip(),
-                'availability': request.form.get('availability', '').strip(),
                 'location': request.form.get('location', '').strip()
             }
             password = request.form.get('password', '')
@@ -579,8 +573,10 @@ def register_experienced():
             password=hashed_password,
             service=form_data['service'],
             experience=form_data['experience'],
-            availability=form_data['availability'],
+            availability="",  # no longer collected at signup
             location=form_data['location'],
+            latitude=float(request.form.get('latitude')) if request.form.get('latitude') else None,
+            longitude=float(request.form.get('longitude')) if request.form.get('longitude') else None,
             id_doc=id_doc_path,
             intro_video=intro_video_path,
             portfolio_files=json.dumps(portfolio_paths),
