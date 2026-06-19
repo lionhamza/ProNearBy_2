@@ -1841,3 +1841,10 @@ body {
     font-size: 18px;
   }
 }
+
+/* Add this to your home.css */
+@media (max-width: 768px) {
+  .logo-link {
+    display: none;
+  }
+}

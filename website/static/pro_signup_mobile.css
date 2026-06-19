@@ -1,0 +1,174 @@
+/* ============================================================
+   ProNearBy — Certified Pro Signup: Mobile Fix
+   Link this AFTER loginfinal.css in pro_base.html
+   ============================================================ */
+
+/* ── ROOT FIX: body flex causes form to clip on left ── */
+/* loginfinal.css sets body { display:flex; justify-content:center; padding:1rem }
+   On narrow screens this causes the card to overflow left with no left margin.
+   We reset it to a simple block layout on mobile.                              */
+@media (max-width: 640px) {
+
+  body, html {
+    display: block;          /* kill the flex that clips content */
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+    width: 100%;
+    background-color: #f0f2f5;
+  }
+
+  /* ── Form container fills the viewport ── */
+  main.form-container {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100dvh;
+    padding: 1rem;
+    border-radius: 0;
+    box-shadow: none;
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  /* ── White card inside ── */
+  #signup-panel {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.25rem 1rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  /* ── Header ── */
+  #form-header h1,
+  #form-header .h3 {
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+
+  #form-header p { font-size: 0.78rem; margin-top: 4px; }
+  .brand-logo img { max-width: 40px; }
+
+  /* ── Wizard progress ── */
+  .wizard-steps {
+    margin-bottom: 1.1rem;
+    padding: 0 4px;
+    overflow: visible;
+  }
+  .wizard-dot        { width: 26px; height: 26px; font-size: 11px; }
+  .wizard-label      { font-size: 8.5px; max-width: 100%; white-space: nowrap; }
+  .wizard-step-col   { min-width: 0; flex-shrink: 1; }
+  .wizard-line       { min-width: 10px; flex: 1; margin-top: 12px; }
+
+  /* ── Inputs — 44 px tap target, 16 px stops iOS zoom ── */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  #autocomplete-input {
+    height: 44px;
+    font-size: 16px !important;   /* !important to beat specificity in loginfinal */
+    border-radius: 10px;
+    padding: 10px 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  input[type="file"] {
+    height: auto;
+    min-height: 44px;
+    padding: 10px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  label { font-size: 0.82rem; margin-bottom: 5px; }
+
+  /* ── Single-column grid ── */
+  .fields-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2px 0;
+  }
+  .fields-grid .span2 { grid-column: span 1 !important; }
+
+  .input-group { margin-bottom: 10px; }
+
+  /* ── Password ── */
+  .password-wrapper button { font-size: 0.8rem; right: 12px; }
+  #password-rules small    { font-size: 0.73rem; line-height: 1.6; }
+  .error-message           { font-size: 0.73rem; margin-top: 3px; }
+
+  /* ── Nav buttons: full-width, Next above Back ── */
+  .wizard-nav {
+    flex-direction: column-reverse;
+    gap: 10px;
+    margin-top: 1.25rem;
+    padding-top: 0.9rem;
+  }
+
+  .btn-wizard-next,
+  .btn-wizard-submit,
+  .btn-wizard-back {
+    width: 100%;
+    height: 46px;
+    font-size: 0.93rem;
+    border-radius: 10px;
+    margin-left: 0 !important;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-wizard-next   { order: 1; }
+  .btn-wizard-submit { order: 1; }
+  .btn-wizard-back   { order: 2; }
+
+  /* ── Location step ── */
+  #detectLocationBtn {
+    width: 100%;
+    height: 44px;
+    font-size: 0.88rem;
+    border-radius: 10px;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    box-sizing: border-box;
+  }
+
+  #map {
+    height: 190px;
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ── Submit ── */
+  #submitBtn {
+    height: 48px;
+    font-size: 1rem;
+    border-radius: 10px;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+
+  /* ── Recovery link ── */
+  .recovery-links {
+    font-size: 0.8rem;
+    margin-top: 1rem;
+    padding-bottom: 1.5rem;
+  }
+
+  /* ── Flash messages ── */
+  .flash-container { padding: 0 1rem; margin-top: 0.5rem; }
+  .flash-message   { border-radius: 10px; font-size: 0.84rem; padding: 10px 14px; }
+
+  /* ── Safe area (iPhone home bar) ── */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    main.form-container {
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+  }
+}
