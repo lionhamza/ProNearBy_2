@@ -1,20 +1,219 @@
 {% extends "pro_base.html" %}
-{% block title %}Choose Pro Type{% endblock %}
+{% block title %}Become a Pro - ProNearBy{% endblock %}
 {% block div %}
-<main class="form-container">
-  <h1 class="h3">Become a Service Provider</h1>
-  <p style="color: #666;">Choose your registration type</p>
 
-  <div class="input-group">
-    <a href="{{ url_for('auth.register_certified') }}" class="pro-btn certified">
-      🎓 I'm a Certified Professional
+<style>
+  /* ── Page wrapper ── */
+  .pro-choice-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  /* ── Brand header ── */
+  .pro-choice-header {
+    text-align: center;
+    margin-bottom: 1.75rem;
+  }
+
+  .pro-choice-header .brand-logo img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+  }
+
+  .pro-choice-header h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0 0 6px;
+  }
+
+  .pro-choice-header p {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  /* ── Cards grid ── */
+  .pro-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  /* ── Individual card ── */
+  .pro-card-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 14px;
+    padding: 2rem 1.25rem;
+    border: 2px solid transparent;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    gap: 0.75rem;
+  }
+
+  .pro-card-link:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+
+  .pro-card-link:active {
+    transform: translateY(-1px);
+  }
+
+  /* Certified — blue */
+  .pro-card-link.certified {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #bfdbfe;
+  }
+  .pro-card-link.certified:hover { border-color: #2563eb; }
+
+  /* Experienced — green */
+  .pro-card-link.experienced {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-color: #bbf7d0;
+  }
+  .pro-card-link.experienced:hover { border-color: #16a34a; }
+
+  /* ── Emoji icon circle ── */
+  .pro-card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+  }
+
+  .certified  .pro-card-icon { background: #dbeafe; }
+  .experienced .pro-card-icon { background: #dcfce7; }
+
+  /* ── Card text ── */
+  .pro-card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .certified  .pro-card-title { color: #1d4ed8; }
+  .experienced .pro-card-title { color: #15803d; }
+
+  .pro-card-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* ── CTA badge ── */
+  .pro-card-cta {
+    display: inline-block;
+    margin-top: 0.25rem;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .certified  .pro-card-cta { background: #2563eb; }
+  .experienced .pro-card-cta { background: #16a34a; }
+
+  /* ── Footer note ── */
+  .pro-choice-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.78rem;
+    color: #9ca3af;
+  }
+
+  .pro-choice-footer a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .pro-choice-footer a:hover { text-decoration: underline; }
+
+  /* ── Mobile: stack cards vertically ── */
+  @media (max-width: 500px) {
+    .pro-cards {
+      grid-template-columns: 1fr;
+    }
+
+    .pro-card-link {
+      flex-direction: row;
+      text-align: left;
+      padding: 1.25rem 1rem;
+      gap: 1rem;
+    }
+
+    .pro-card-icon {
+      width: 52px;
+      height: 52px;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .pro-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .pro-card-cta { display: none; }
+  }
+</style>
+
+<div class="pro-choice-container">
+
+  <header class="pro-choice-header">
+    <figure class="brand-logo">
+      <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" />
+    </figure>
+    <h1>Become a Service Provider</h1>
+    <p>Choose the registration type that best describes you</p>
+  </header>
+
+  <div class="pro-cards">
+
+    <!-- Certified Pro -->
+    <a href="{{ url_for('auth.register_certified') }}" class="pro-card-link certified">
+      <div class="pro-card-icon">🎓</div>
+      <div class="pro-card-body">
+        <p class="pro-card-title">Certified Professional</p>
+        <p class="pro-card-desc">Formally trained with qualifications, certificates, or a registered business.</p>
+        <span class="pro-card-cta">Get Started →</span>
+      </div>
     </a>
+
+    <!-- Experienced Pro -->
+    <a href="{{ url_for('auth.register_experienced') }}" class="pro-card-link experienced">
+      <div class="pro-card-icon">🛠️</div>
+      <div class="pro-card-body">
+        <p class="pro-card-title">Informally Experienced</p>
+        <p class="pro-card-desc">Self-taught or experienced through years of hands-on practice in your trade.</p>
+        <span class="pro-card-cta">Get Started →</span>
+      </div>
+    </a>
+
   </div>
 
-  <div class="input-group">
-    <a href="{{ url_for('auth.register_experienced') }}" class="pro-btn experienced">
-      🛠️ I'm Informally Experienced
-    </a>
-  </div>
-</main>
+  <p class="pro-choice-footer">
+    Not a service provider? <a href="{{ url_for('auth.signup_get') }}">Sign up as a regular user</a>
+  </p>
+
+</div>
+
 {% endblock %}

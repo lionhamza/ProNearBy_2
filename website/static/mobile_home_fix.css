@@ -1,0 +1,225 @@
+/* ============================================================
+   ProNearBy — Home + Posts Mobile Fix
+   Add AFTER home.css and posts.css in base.html
+   Targets screens ≤ 768px
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+  /* ── 1. Fix body overflow that clips content ── */
+  html, body {
+    height: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;   /* allow page to scroll */
+  }
+
+  /* ── 2. Main layout: full width, no side padding ── */
+  .main-layout {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    padding-top: 70px !important;  /* space for fixed header */
+    box-sizing: border-box;
+  }
+
+  /* ── 3. Hide sidebar on mobile (already hidden, reinforce) ── */
+  .sidebar { display: none !important; }
+
+  /* ── 4. Content section: edge-to-edge, no margin ── */
+  .content-section {
+    margin-left: 0 !important;
+    padding: 8px 0 24px !important;  /* NO left/right padding — cards handle their own */
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #f3f2ef;
+  }
+
+  /* ── 5. Post list container ── */
+  .apost {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 0 !important;          /* kill the 0 20px padding that causes side gaps */
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+
+  /* ── 6. Post card: full width, flush to edges with only a tiny gap ── */
+  .post-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;   /* flush card — feels native, like Instagram/Facebook */
+    box-shadow: 0 1px 0 rgba(0,0,0,0.08) !important;
+    padding: 14px 14px 10px !important;
+    box-sizing: border-box;
+  }
+
+  /* ── 7. Post header ── */
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .post-profile-pic {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .post-user-name,
+  .post-user-info strong {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .post-timestamp { font-size: 12px; }
+
+  /* ── 8. Post body text ── */
+  .post-body p {
+    font-size: 14.5px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+
+  /* ── 9. Media grid — clean equal tiles ── */
+  .media-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 2px !important;
+    margin-top: 8px !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* Single image: full width, natural height */
+  .media-grid.single-media {
+    grid-template-columns: 1fr !important;
+  }
+
+  .media-grid.single-media .media-wrapper .media-item {
+    height: auto !important;
+    max-height: 400px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+  }
+
+  /* Multi-image tiles: fixed square-ish height */
+  .media-wrapper {
+    border-radius: 0 !important;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .media-item {
+    width: 100% !important;
+    height: 160px !important;
+    object-fit: cover !important;
+    display: block;
+    border-radius: 0 !important;
+  }
+
+  /* 3-media mosaic */
+  .media-grid.three-media {
+    grid-template-columns: 2fr 1fr !important;
+    grid-auto-rows: 120px !important;
+  }
+
+  .media-grid.three-media .media-wrapper:nth-child(1) {
+    grid-row: span 2;
+  }
+
+  .media-grid.three-media .media-wrapper .media-item {
+    height: 100% !important;
+  }
+
+  /* Overlay (+N more) */
+  .media-wrapper .overlay {
+    font-size: 22px;
+    border-radius: 0;
+  }
+
+  /* ── 10. Like / actions bar ── */
+  .post-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding-top: 8px;
+    margin-top: 8px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  /* The form wrapping like button + count must also be a row */
+  .post-actions form {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .like-button {
+    padding: 5px;
+    border-radius: 50%;
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-shrink: 0;
+  }
+
+  .like-icon {
+    width: 22px;
+    height: 22px;
+    display: block;
+    pointer-events: none;
+  }
+
+  /* Like count sits right next to the icon */
+  .post-actions span[id^="like-count-"] {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* ── 11. Mobile profile info banner (shown instead of sidebar) ── */
+  .mobile-profile-info {
+    display: block;
+    background: #fff;
+    padding: 14px 14px 12px;
+    margin: 0 0 2px;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .mobile-profile-info h2.username {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin-bottom: 2px;
+  }
+
+  .mobile-profile-info .role {
+    font-size: 0.85rem;
+    color: #555;
+    margin-bottom: 4px;
+  }
+
+  .mobile-profile-info p {
+    font-size: 0.8rem;
+    color: #666;
+    margin: 3px 0;
+  }
+}

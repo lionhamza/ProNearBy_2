@@ -1,0 +1,404 @@
+/* ============================================================
+   ProNearBy — Profile Page Mobile Redesign
+   Link AFTER home.css in base.html
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+  /* ── 1. Kill the body flex that breaks layout ── */
+  html, body {
+    display: block !important;
+    height: auto !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+  }
+
+  /* ── 2. Hide desktop sidebar ── */
+  .sidebar { display: none !important; }
+
+  /* ── 3. Main layout: block, account for fixed header ── */
+  .main-layout {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    padding-top: 60px !important;
+    box-sizing: border-box;
+    height: auto !important;
+  }
+
+  /* Kill any empty space from flash message container when no flash is showing */
+  .flash-messages:empty,
+  #flash-container:empty {
+    display: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .flash-messages {
+    position: static !important;   /* stop it reserving fixed-position space */
+  }
+
+  /* ── 4. Content section: full width, no margins ── */
+  .content-section,
+  section.content-section {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #f3f2ef;
+    flex: none !important;
+  }
+
+  /* The cover card must be the very first visible block, flush to top */
+  .content-section > .cardP:first-child {
+    margin-top: 0 !important;
+  }
+
+  /* ══════════════════════════════════════════
+     COVER BANNER
+     ══════════════════════════════════════════ */
+  .cardP {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 110px !important;
+    max-height: 110px !important;
+    min-height: 110px !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: #c9d6e3 !important; /* fallback if no cover set */
+    display: block !important;
+    overflow: visible !important;         /* allow avatar to overflow */
+  }
+
+  /* ══════════════════════════════════════════
+     AVATAR CIRCLE — overlaps cover bottom-left
+     ══════════════════════════════════════════ */
+  .cardCircle {
+    position: absolute !important;
+    bottom: -36px !important;
+    left: 16px !important;
+    top: auto !important;
+    transform: none !important;
+    width: 80px !important;
+    height: 80px !important;
+    max-width: 80px !important;
+    max-height: 80px !important;
+    border-radius: 50% !important;
+    border: 3px solid #fff !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+    background: #fff;
+    z-index: 10;
+    overflow: hidden;
+  }
+
+  .cardCircle img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+  }
+
+  /* ══════════════════════════════════════════
+     PROFILE INFO CARD (below cover)
+     ══════════════════════════════════════════ */
+  .mobile-profile-info {
+    display: block !important;
+    background: #fff;
+    /* 36px avatar overlap + 12px breathing room */
+    padding: 48px 16px 18px 16px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.07);
+    position: relative;
+    box-sizing: border-box;
+    width: 100% !important;
+  }
+
+  /* Edit icon */
+  .edit-icon-wrapper {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+
+  .edit-icon { width: 26px; height: 26px; cursor: pointer; opacity: 0.65; }
+
+  /* Name */
+  .mobile-profile-info h2.username {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0 0 2px;
+    line-height: 1.3;
+  }
+
+  /* Role */
+  .mobile-profile-info .role {
+    font-size: 0.83rem;
+    color: #0073b1;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+
+  /* Bio */
+  .mobile-profile-info .bio {
+    font-size: 0.83rem;
+    color: #555;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+
+  /* Divider */
+  .mobile-profile-info hr {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 10px 0;
+  }
+
+  /* Info rows */
+  .mobile-profile-info p {
+    font-size: 0.82rem;
+    color: #555;
+    margin: 5px 0;
+    line-height: 1.4;
+  }
+
+  .mobile-profile-info p strong {
+    color: #1a202c;
+    font-weight: 600;
+  }
+
+  /* CTA button */
+  .mobile-profile-info .edit-profile-btn {
+    display: block !important;
+    width: 100% !important;
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #0073b1;
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    text-align: center;
+    box-sizing: border-box;
+    transition: background 0.2s;
+  }
+
+  .mobile-profile-info .edit-profile-btn:hover {
+    background: #005f91;
+  }
+
+  /* ══════════════════════════════════════════
+     SPACER between cover and info (extra gap fix)
+     ══════════════════════════════════════════ */
+  /* The inline <div style="margin-top: 20px;"> in the template */
+  .content-section > div[style*="margin-top"] {
+    display: none !important;  /* we handle spacing in padding-top of info card */
+  }
+
+  /* ══════════════════════════════════════════
+     CREATE POST / POSTS button bar
+     ══════════════════════════════════════════ */
+  .button_container {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 52px;
+    padding: 10px 16px !important;
+    border-radius: 0 !important;
+    margin: 2px 0 0 0 !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    background: #fff !important;
+    display: flex !important;
+    align-items: center;
+    box-sizing: border-box;
+  }
+
+  .profile-button,
+  .create_post-button {
+    font-size: 0.93rem !important;
+    padding: 8px 18px !important;
+    border-radius: 20px !important;
+  }
+
+  /* ══════════════════════════════════════════
+     POSTS FEED
+     ══════════════════════════════════════════ */
+  .apost {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding: 6px 0 32px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box;
+    background: #f3f2ef;
+  }
+
+  .post-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.07) !important;
+    padding: 14px 14px 10px !important;
+    box-sizing: border-box;
+    background: #fff;
+  }
+
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .post-profile-pic {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+  }
+
+  .post-user-info strong,
+  .post-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a202c;
+  }
+
+  .post-timestamp { font-size: 11.5px; color: #999; }
+
+  .post-body p {
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: #333;
+    word-break: break-word;
+    margin-bottom: 8px;
+  }
+
+  /* Media grid */
+  .media-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 2px !important;
+    margin-top: 8px !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .media-grid.single-media { grid-template-columns: 1fr !important; }
+
+  .media-grid.single-media .media-wrapper .media-item {
+    height: auto !important;
+    max-height: 380px !important;
+    object-fit: cover !important;
+  }
+
+  .media-wrapper { border-radius: 0 !important; overflow: hidden; background: #111; }
+
+  .media-item {
+    width: 100% !important;
+    height: 155px !important;
+    object-fit: cover !important;
+    display: block;
+    border-radius: 0 !important;
+  }
+
+  .media-grid.three-media {
+    grid-template-columns: 2fr 1fr !important;
+    grid-auto-rows: 115px !important;
+  }
+
+  .media-grid.three-media .media-wrapper:nth-child(1) { grid-row: span 2; }
+  .media-grid.three-media .media-wrapper .media-item  { height: 100% !important; }
+  .media-wrapper .overlay { font-size: 20px; border-radius: 0; }
+
+  /* Like row */
+  .post-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding-top: 8px;
+    margin-top: 8px;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .post-actions form {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .like-button {
+    padding: 5px;
+    border-radius: 50%;
+    display: inline-flex !important;
+    align-items: center !important;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .like-icon {
+    width: 22px !important;
+    height: 22px !important;
+    display: block;
+    pointer-events: none;
+  }
+
+  .post-actions span[id^="like-count-"] {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
+  }
+
+  /* No posts */
+  .no-posts { padding: 40px 20px; text-align: center; background: #fff; }
+  .no-posts-img { width: 120px; opacity: 0.55; margin-bottom: 10px; }
+
+  /* Modals */
+  .modal-content {
+    width: 93% !important;
+    margin: 16px auto !important;
+    padding: 20px 16px !important;
+    border-radius: 14px !important;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .edit-form input,
+  .edit-form textarea,
+  .edit-form select {
+    font-size: 16px !important;
+    padding: 10px 12px !important;
+    border-radius: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .save-btn { height: 46px; font-size: 0.95rem; border-radius: 10px; }
+}
