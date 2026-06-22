@@ -27,10 +27,10 @@ body {
   --wp-muted: #6b7280;
   --wp-card-radius: 14px;
 
-  padding-top: 60px;      /* clears the 78px fixed navbar exactly */
+  padding-top: 45px;      /* clears the 78px fixed navbar exactly */
   padding-bottom: 60px;
   background: #f3f2ef;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 45px);
   box-sizing: border-box;
 }
 
