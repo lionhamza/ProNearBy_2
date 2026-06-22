@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile_home_fix.css') }}">
+   <link rel="stylesheet" href="{{ url_for('static', filename='mobile_home_fix.css') }}">
+  {% block extra_css %}{% endblock %}   ← ADD THIS
 </head>
 <body>
   <header>
@@ -79,6 +81,9 @@
       <span class="badge">{{ unread_messages_count }}</span>
     {% endif %}
   </a>
+  <a href="{{ url_for('views.wallet') }}" class="icon-link">
+    <img src="{{ url_for('static', filename='assets/wallet_icon.png') }}" alt="Wallet" class="header-icon" />
+  </a>
 
   <!-- Notifications with badge -->
   <div class="notification-wrapper icon-badge">
@@ -137,6 +142,7 @@
 </div>
 
     </div>
+ <!-- Wallet -->
 
   <!-- Logout -->
   <a href="{{ url_for('auth.logout') }}" class="icon-link logout-icon">

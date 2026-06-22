@@ -1,6 +1,6 @@
 from sqlalchemy import func
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from .models import User, Post, ServiceRequest, Message as MessageModel, Like, QuoteRequest
+from .models import User, Post, ServiceRequest, Message as MessageModel, Like, QuoteRequest, Wallet, Transaction
 from flask_login import login_required, current_user
 from . import db
 from flask import session
@@ -721,3 +721,128 @@ def request_quote():
 
     flash("Quote request sent to pro!", "success")
     return redirect(url_for('views.dashboard'))
+
+
+
+# Add these routes to your views.py (inside the same blueprint as your other
+# views.* routes, e.g. the `views` blueprint). Adjust the auth decorator and
+# the payment gateway integration (marked TODO) to match your actual setup.
+# Wallet/PaymentMethod/Transaction come from wallet_models.py.
+
+from decimal import Decimal
+
+from flask import render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user  # adjust import to your auth setup
+from . import db  # adjust to your actual db import
+
+
+def get_or_create_wallet(user_id):
+    """Every user gets exactly one wallet, created on first visit."""
+    wallet = Wallet.query.filter_by(user_id=user_id).first()
+    if wallet is None:
+        wallet = Wallet(user_id=user_id, balance=0, pending_balance=0)
+        db.session.add(wallet)
+        db.session.commit()
+    return wallet
+
+
+@views.route('/wallet')
+@login_required
+def wallet():
+    user = current_user
+    user_wallet = get_or_create_wallet(user.ID)
+
+    service_requests = ServiceRequest.query.filter(
+        (ServiceRequest.sender_id == user.ID) | (ServiceRequest.receiver_id == user.ID)
+    ).order_by(ServiceRequest.created_at.desc()).all()
+
+    from .models import Message as MessageModel
+    unread_messages_count = db.session.query(MessageModel).filter_by(
+    receiver_id=user.ID, is_read=False
+    ).count()
+
+    pending_requests_count = ServiceRequest.query.filter_by(
+        receiver_id=user.ID, status='pending'
+    ).count()
+
+    return render_template(
+        'wallet.html',
+        user=user,
+        service_requests=service_requests,
+        unread_messages_count=unread_messages_count,
+        pending_requests_count=pending_requests_count,
+        wallet_balance=user_wallet.balance,
+        pending_balance=user_wallet.pending_balance,
+        payment_methods=user_wallet.payment_methods,
+        transactions=user_wallet.transactions.limit(50).all(),
+    )
+
+@views.route('/wallet/add-funds', methods=['POST'])
+@login_required
+def add_funds():
+    amount = request.form.get('amount', type=float)
+
+    if not amount or amount <= 0:
+        flash('Enter a valid amount.', 'error')
+        return redirect(url_for('views.wallet'))
+
+    user_wallet = get_or_create_wallet(current_user.ID)
+
+    # TODO: charge the user via your payment gateway (PayFast, Stripe, etc.)
+    # BEFORE crediting the wallet. The block below assumes the charge has
+    # already succeeded -- wire it in before this goes live, or every "Add
+    # funds" click hands out free money.
+    user_wallet.balance += Decimal(str(amount))
+    db.session.add(Transaction(
+        wallet_id=user_wallet.id,
+        type='credit',
+        description='Funds added',
+        amount=Decimal(str(amount)),
+        status='completed',
+    ))
+    db.session.commit()
+
+    flash('Funds added successfully.', 'success')
+    return redirect(url_for('views.wallet'))
+
+
+@views.route('/wallet/withdraw', methods=['POST'])
+@login_required
+def withdraw_funds():
+    amount = request.form.get('amount', type=float)
+    user_wallet = get_or_create_wallet(current_user.ID)
+
+    if not amount or amount <= 0:
+        flash('Enter a valid amount.', 'error')
+        return redirect(url_for('views.wallet'))
+
+    if Decimal(str(amount)) > user_wallet.balance:
+        flash('Withdrawal amount exceeds your available balance.', 'error')
+        return redirect(url_for('views.wallet'))
+
+    # TODO: trigger the actual payout (bank transfer / payout provider) here.
+    # Mark the transaction 'pending' until the payout provider confirms it,
+    # then flip it to 'completed' (or 'failed') from your webhook handler --
+    # don't mark money as gone before it's actually moved.
+    user_wallet.balance -= Decimal(str(amount))
+    db.session.add(Transaction(
+        wallet_id=user_wallet.id,
+        type='debit',
+        description='Withdrawal to bank',
+        amount=Decimal(str(amount)),
+        status='pending',
+    ))
+    db.session.commit()
+
+    flash('Withdrawal requested.', 'success')
+    return redirect(url_for('views.wallet'))
+
+
+@views.route('/wallet/add-payment-method')
+@login_required
+def add_payment_method():
+    # TODO: build this page, or swap for your payment provider's hosted
+    # card-collection flow (e.g. Stripe Elements / PayFast tokenization).
+    # Whatever you do here, never post raw card numbers to your own server --
+    # only a gateway-issued token should ever reach PaymentMethod.provider_token.
+    return render_template('add_payment_method.html')

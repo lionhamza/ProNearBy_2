@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Wallet · ProNearBy{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='wallet.css') }}">
+{% endblock %}
+
+{% block div %}
+<main class="wallet-page">
+  <div class="wallet-wrap">
+
+    {# ---- Page title ---------------------------------------------------- #}
+    <div class="wp-title-row">
+      <img src="{{ url_for('static', filename='assets/wallet_icon.png') }}"
+           alt="" aria-hidden="true" class="wp-title-icon" />
+      <div>
+        <h1>Wallet</h1>
+        <p class="wp-subtitle">Manage your balance, payment methods, and transaction history.</p>
+      </div>
+    </div>
+
+    {# ---- Balance card -------------------------------------------------- #}
+    <section class="wp-balance-card" aria-label="Balance">
+      <div>
+        <span class="wp-balance-label">Available balance</span>
+        <p class="wp-balance-amount">R{{ "%.2f"|format(wallet_balance|default(0)) }}</p>
+        {% if pending_balance and pending_balance > 0 %}
+        <p class="wp-balance-pending">
+          <i class="fas fa-clock" aria-hidden="true"></i>
+          R{{ "%.2f"|format(pending_balance) }} pending clearance
+        </p>
+        {% endif %}
+      </div>
+      <div class="wp-balance-actions">
+        <button type="button" class="wp-btn wp-btn-primary" id="addFundsBtn">
+          <i class="fas fa-plus" aria-hidden="true"></i> Add funds
+        </button>
+        {% if user.user_type in ['certifiedPro', 'experiencedPro'] %}
+        <button type="button" class="wp-btn wp-btn-outline" id="withdrawBtn">
+          <i class="fas fa-arrow-down" aria-hidden="true"></i> Withdraw
+        </button>
+        {% endif %}
+      </div>
+    </section>
+
+    {# ---- Two-column: payment methods + quick stats --------------------- #}
+    <div class="wp-grid">
+
+      {# Payment methods #}
+      <div class="wp-card">
+        <h2 class="wp-card-title">
+          Payment methods
+        </h2>
+
+        {% if payment_methods %}
+        <div class="wp-payment-list">
+          {% for method in payment_methods %}
+          <div class="wp-payment-item">
+            {% if method.brand|lower in ['visa','mastercard','amex','discover'] %}
+            <i class="fab fa-cc-{{ method.brand|lower }}" aria-hidden="true"></i>
+            {% else %}
+            <i class="fas fa-credit-card" aria-hidden="true"></i>
+            {% endif %}
+            <div class="wp-payment-info">
+              <span class="wp-payment-number">•••• {{ method.last4 }}</span>
+              <span class="wp-payment-expiry">Expires {{ method.exp_month }}/{{ method.exp_year }}</span>
+            </div>
+            {% if method.is_default %}
+            <span class="wp-default-badge">Default</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="wp-empty">
+          <i class="fas fa-credit-card" aria-hidden="true"></i>
+          <p>No payment methods saved yet.</p>
+        </div>
+        {% endif %}
+
+        <button type="button" class="wp-add-card-btn" id="addCardBtn">
+          <i class="fas fa-plus" aria-hidden="true"></i> Add a card
+        </button>
+      </div>
+
+      {# Quick stats #}
+      <div class="wp-card">
+        <h2 class="wp-card-title">Summary</h2>
+        <div class="wp-stats">
+          {% set total_in  = transactions | selectattr('type','equalto','credit') | selectattr('status','equalto','completed') | sum(attribute='amount') | float %}
+          {% set total_out = transactions | selectattr('type','equalto','debit')  | selectattr('status','equalto','completed') | sum(attribute='amount') | float %}
+          {% set pending_count = transactions | selectattr('status','equalto','pending') | list | length %}
+
+          <div class="wp-stat-item">
+            <div class="wp-stat-icon credit"><i class="fas fa-arrow-up" aria-hidden="true"></i></div>
+            <div>
+              <span class="wp-stat-label">Total received</span>
+              <span class="wp-stat-value">R{{ "%.2f"|format(total_in) }}</span>
+            </div>
+          </div>
+
+          <div class="wp-stat-item">
+            <div class="wp-stat-icon debit"><i class="fas fa-arrow-down" aria-hidden="true"></i></div>
+            <div>
+              <span class="wp-stat-label">Total withdrawn</span>
+              <span class="wp-stat-value">R{{ "%.2f"|format(total_out) }}</span>
+            </div>
+          </div>
+
+          <div class="wp-stat-item">
+            <div class="wp-stat-icon pending"><i class="fas fa-hourglass-half" aria-hidden="true"></i></div>
+            <div>
+              <span class="wp-stat-label">Pending transactions</span>
+              <span class="wp-stat-value">{{ pending_count }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>{# /wp-grid #}
+
+    {# ---- Transaction history ------------------------------------------- #}
+    <div class="wp-tx-card">
+      <h2 class="wp-card-title">Transaction history</h2>
+
+      {% if transactions %}
+      <ul class="wp-tx-list" aria-label="Transactions">
+        {% for tx in transactions %}
+        <li class="wp-tx-item">
+          <div class="wp-tx-icon {{ tx.type }}" aria-hidden="true">
+            <i class="fas fa-{{ 'arrow-up' if tx.type == 'credit' else 'arrow-down' }}"></i>
+          </div>
+          <div class="wp-tx-info">
+            <span class="wp-tx-desc">{{ tx.description }}</span>
+            <span class="wp-tx-date">{{ tx.created_at.strftime('%d %b %Y · %H:%M') }}</span>
+          </div>
+          <div class="wp-tx-meta">
+            <span class="wp-tx-amount {{ tx.type }}">
+              {{ '+' if tx.type == 'credit' else '−' }}R{{ "%.2f"|format(tx.amount) }}
+            </span>
+            <span class="wp-tx-status {{ tx.status }}">{{ tx.status|capitalize }}</span>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="wp-empty">
+        <i class="fas fa-receipt" aria-hidden="true"></i>
+        <p>No transactions yet — your activity will appear here.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>{# /wallet-wrap #}
+</main>
+
+{# ---- Modals ------------------------------------------------------------ #}
+<div class="modal" id="addFundsModal" role="dialog" aria-modal="true" aria-labelledby="addFundsTitle">
+  <div class="modal-content">
+    <span class="close" id="closeAddFunds" role="button" tabindex="0" aria-label="Close">&times;</span>
+    <h3 id="addFundsTitle">Add funds</h3>
+    <form class="edit-form wp-form" method="POST" action="{{ url_for('views.add_funds') }}">
+      <label for="addFundsAmt">Amount (ZAR)</label>
+      <input type="number" id="addFundsAmt" name="amount" min="10" step="0.01" required placeholder="0.00">
+      <button type="submit" class="save-btn">Continue to payment</button>
+    </form>
+  </div>
+</div>
+
+{% if user.user_type in ['certifiedPro', 'experiencedPro'] %}
+<div class="modal" id="withdrawModal" role="dialog" aria-modal="true" aria-labelledby="withdrawTitle">
+  <div class="modal-content">
+    <span class="close" id="closeWithdraw" role="button" tabindex="0" aria-label="Close">&times;</span>
+    <h3 id="withdrawTitle">Withdraw to bank</h3>
+    <form class="edit-form wp-form" method="POST" action="{{ url_for('views.withdraw_funds') }}">
+      <label for="withdrawAmt">Amount (ZAR)</label>
+      <input type="number" id="withdrawAmt" name="amount"
+             min="10" max="{{ wallet_balance|default(0) }}" step="0.01" required placeholder="0.00">
+      <p class="wp-form-hint">Available: R{{ "%.2f"|format(wallet_balance|default(0)) }}</p>
+      <button type="submit" class="save-btn">Withdraw</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+  const openModal  = id => { const m = document.getElementById(id); if(m) m.style.display = 'block'; };
+  const closeModal = id => { const m = document.getElementById(id); if(m) m.style.display = 'none';  };
+
+  document.getElementById('addFundsBtn')?.addEventListener('click', () => openModal('addFundsModal'));
+  document.getElementById('closeAddFunds')?.addEventListener('click', () => closeModal('addFundsModal'));
+
+  document.getElementById('withdrawBtn')?.addEventListener('click', () => openModal('withdrawModal'));
+  document.getElementById('closeWithdraw')?.addEventListener('click', () => closeModal('withdrawModal'));
+
+  const goAddCard = () => { window.location.href = "{{ url_for('views.add_payment_method') }}"; };
+  document.getElementById('addCardBtn')?.addEventListener('click', goAddCard);
+
+  // Backdrop + Escape close
+  window.addEventListener('click', e => {
+    ['addFundsModal','withdrawModal'].forEach(id => {
+      const m = document.getElementById(id);
+      if (m && e.target === m) closeModal(id);
+    });
+  });
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') ['addFundsModal','withdrawModal'].forEach(closeModal);
+  });
+</script>
+{% endblock %}

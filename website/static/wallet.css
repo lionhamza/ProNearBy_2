@@ -1,0 +1,465 @@
+/* ==========================================================================
+   wallet.css  —  ProNearBy Wallet Page
+   Fixes: scrollability, layout width, visual polish
+   Scoped tightly so nothing bleeds into base.html styles.
+   ========================================================================== */
+
+/* --- Scroll fix ---------------------------------------------------------- */
+/* base.html sets html,body { height:100%; overflow-x:hidden }
+   That alone is fine, but some pages inherit conflicting rules.
+   Force the wallet page wrapper to scroll naturally. */
+body {
+  overflow-y: auto !important;
+}
+
+/* --- Page shell ---------------------------------------------------------- */
+.wallet-page {
+  --wp: #0073b1;
+  --wp-dark: #005a8e;
+  --wp-success: #1a9e4a;
+  --wp-success-bg: #eafaf1;
+  --wp-danger: #d93025;
+  --wp-danger-bg: #fdecea;
+  --wp-pending: #b45309;
+  --wp-pending-bg: #fffbeb;
+  --wp-border: #e5e7eb;
+  --wp-text: #111827;
+  --wp-muted: #6b7280;
+  --wp-card-radius: 14px;
+
+  padding-top: 60px;      /* clears the 78px fixed navbar exactly */
+  padding-bottom: 60px;
+  background: #f3f2ef;
+  min-height: calc(100vh - 60px);
+  box-sizing: border-box;
+}
+
+.wallet-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* --- Page title ---------------------------------------------------------- */
+.wp-title-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.wp-title-icon {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.wp-title-row h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--wp-text);
+  margin: 0;
+}
+
+.wp-subtitle {
+  font-size: 14px;
+  color: var(--wp-muted);
+  margin: 3px 0 0;
+}
+
+/* --- Balance card -------------------------------------------------------- */
+.wp-balance-card {
+  background: linear-gradient(140deg, #0073b1 0%, #004f80 100%);
+  border-radius: var(--wp-card-radius);
+  padding: 32px 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 24px;
+  box-shadow: 0 6px 24px rgba(0,115,177,0.28);
+  color: #fff;
+}
+
+.wp-balance-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.75;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.wp-balance-amount {
+  font-size: 46px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+  margin: 0;
+}
+
+.wp-balance-pending {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wp-balance-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* --- Buttons ------------------------------------------------------------- */
+.wp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.18s, transform 0.18s, box-shadow 0.18s;
+  white-space: nowrap;
+}
+
+.wp-btn:hover  { transform: translateY(-1px); }
+.wp-btn:active { transform: translateY(0);    }
+
+/* On white background */
+.wp-btn-primary {
+  background: var(--wp);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,115,177,0.25);
+}
+.wp-btn-primary:hover { background: var(--wp-dark); }
+
+.wp-btn-outline {
+  background: transparent;
+  border: 2px solid var(--wp);
+  color: var(--wp);
+}
+.wp-btn-outline:hover { background: rgba(0,115,177,0.07); }
+
+/* On the dark balance card — invert */
+.wp-balance-actions .wp-btn-primary {
+  background: #fff;
+  color: var(--wp);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.wp-balance-actions .wp-btn-primary:hover { background: #e8f4fc; }
+
+.wp-balance-actions .wp-btn-outline {
+  border-color: rgba(255,255,255,0.7);
+  color: #fff;
+}
+.wp-balance-actions .wp-btn-outline:hover { background: rgba(255,255,255,0.12); }
+
+/* --- Two-column layout for payment methods + quick stats --------------- */
+.wp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* --- Card shell ---------------------------------------------------------- */
+.wp-card {
+  background: #fff;
+  border-radius: var(--wp-card-radius);
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+.wp-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--wp-text);
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--wp-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* --- Payment methods ----------------------------------------------------- */
+.wp-payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wp-payment-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--wp-border);
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.wp-payment-item i {
+  font-size: 24px;
+  color: var(--wp);
+  flex-shrink: 0;
+}
+
+.wp-payment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.wp-payment-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wp-text);
+  display: block;
+}
+
+.wp-payment-expiry {
+  font-size: 12px;
+  color: var(--wp-muted);
+}
+
+.wp-default-badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: var(--wp-success-bg);
+  color: var(--wp-success);
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.wp-add-card-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1.5px dashed var(--wp);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--wp);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.wp-add-card-btn:hover { background: rgba(0,115,177,0.05); }
+
+/* --- Quick stats --------------------------------------------------------- */
+.wp-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wp-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid var(--wp-border);
+}
+
+.wp-stat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.wp-stat-icon.credit  { background: var(--wp-success-bg); color: var(--wp-success); }
+.wp-stat-icon.debit   { background: #f1f3f5;              color: var(--wp-muted);   }
+.wp-stat-icon.pending { background: var(--wp-pending-bg); color: var(--wp-pending); }
+
+.wp-stat-label {
+  font-size: 12px;
+  color: var(--wp-muted);
+  display: block;
+}
+
+.wp-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--wp-text);
+  display: block;
+  margin-top: 2px;
+}
+
+/* --- Transaction list ---------------------------------------------------- */
+.wp-tx-card {
+  background: #fff;
+  border-radius: var(--wp-card-radius);
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+.wp-tx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wp-tx-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--wp-border);
+}
+
+.wp-tx-item:last-child { border-bottom: none; padding-bottom: 0; }
+.wp-tx-item:first-child { padding-top: 0; }
+
+.wp-tx-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.wp-tx-icon.credit { background: var(--wp-success-bg); color: var(--wp-success); }
+.wp-tx-icon.debit  { background: #f1f3f5;              color: var(--wp-muted);   }
+
+.wp-tx-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.wp-tx-desc {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wp-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.wp-tx-date {
+  font-size: 12px;
+  color: var(--wp-muted);
+  margin-top: 2px;
+  display: block;
+}
+
+.wp-tx-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.wp-tx-amount {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.wp-tx-amount.credit { color: var(--wp-success); }
+.wp-tx-amount.debit  { color: var(--wp-text);    }
+
+.wp-tx-status {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.wp-tx-status.completed { background: var(--wp-success-bg); color: var(--wp-success); }
+.wp-tx-status.pending   { background: var(--wp-pending-bg); color: var(--wp-pending); }
+.wp-tx-status.failed    { background: var(--wp-danger-bg);  color: var(--wp-danger);  }
+
+/* --- Empty state --------------------------------------------------------- */
+.wp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--wp-muted);
+}
+
+.wp-empty i {
+  font-size: 32px;
+  color: #d1d5db;
+  margin-bottom: 10px;
+}
+
+.wp-empty p {
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+
+/* --- Modal form additions ------------------------------------------------ */
+.wp-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wp-text);
+  margin-bottom: 6px;
+}
+
+.wp-form-hint {
+  font-size: 12px;
+  color: var(--wp-muted);
+  margin: -6px 0 12px;
+}
+
+/* --- Focus / a11y -------------------------------------------------------- */
+.wp-btn:focus-visible,
+.wp-add-card-btn:focus-visible {
+  outline: 3px solid #7ec8e3;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wp-btn { transition: none; }
+  .wp-btn:hover { transform: none; }
+}
+
+/* --- Responsive ---------------------------------------------------------- */
+@media (max-width: 768px) {
+  .wallet-page   { padding-top: 80px; }
+  .wallet-wrap   { padding: 20px 14px 0; gap: 16px; }
+  .wp-balance-card { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+  .wp-balance-amount { font-size: 36px; }
+  .wp-balance-actions { width: 100%; }
+  .wp-balance-actions .wp-btn { flex: 1; justify-content: center; }
+  .wp-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .wp-balance-amount { font-size: 30px; }
+  .wp-card, .wp-tx-card { padding: 16px; }
+}

@@ -325,3 +325,9 @@
   color: #555;
   line-height: 1;
 }
+
+.like-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
