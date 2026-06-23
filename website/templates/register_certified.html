@@ -1,485 +1,747 @@
 {% extends "pro_base.html" %}
-{% block title %}Certified Professional - ProNearBy{% endblock %}
+{% block title %}Certified Professional Registration – ProNearBy{% endblock %}
 {% block div %}
 
 <style>
-  /* ── Wizard progress bar ── */
-  .wizard-steps {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green:       #3B6D11;
+    --green-light: #639922;
+    --green-pale:  #eaf3de;
+    --blue:        #0073b1;
+    --blue-dark:   #005f91;
+    --text:        #1a1a1a;
+    --muted:       #6b7280;
+    --border:      #d1d5db;
+    --bg:          #f9fafb;
+    --white:       #ffffff;
+    --red:         #dc2626;
+    --radius:      10px;
+    --shadow:      0 4px 24px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* ── Page wrapper ── */
+  .reg-page {
+    min-height: 100vh;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    margin-bottom: 2rem;
-    gap: 0;
+    padding: 40px 16px 60px;
   }
-  .wizard-step-col { display: flex; flex-direction: column; align-items: center; }
-  .wizard-dot {
-    width: 32px; height: 32px; border-radius: 50%;
-    border: 2px solid #ccc;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600; color: #aaa;
-    background: #fff; transition: all .25s;
-  }
-  .wizard-dot.active { border-color: #0073b1; color: #0073b1; background: #e8f4fd; }
-  .wizard-dot.done   { border-color: #3B6D11; background: #639922; color: #fff; }
-  .wizard-label { font-size: 11px; color: #888; margin-top: 4px; text-align: center; }
-  .wizard-line  { flex: 1; height: 2px; background: #ccc; margin: 14px 6px 0; min-width: 40px; transition: background .25s; }
-  .wizard-line.done { background: #639922; }
 
-  /* ── Panels ── */
+  .reg-card {
+    background: var(--white);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 560px;
+    padding: 40px 40px 36px;
+  }
+
+  /* ── Centered logo header ── */
+  .reg-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .reg-brand img {
+    max-width: 200px;
+    width: auto;
+    height: auto;
+    max-height: 80px;
+    border-radius: 0;
+    object-fit: contain;
+    margin-bottom: 10px;
+  }
+  .reg-brand-name { font-size: 1.2rem; font-weight: 800; color: var(--green); letter-spacing: -0.01em; }
+  .reg-brand-tag  { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+  .reg-title    { font-size: 1.4rem; font-weight: 700; color: var(--text); text-align: center; }
+  .reg-subtitle { font-size: 0.875rem; color: var(--muted); margin-top: 4px; margin-bottom: 28px; text-align: center; }
+
+  /* ── Wizard progress ── */
+  .wizard-bar {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 36px;
+  }
+  .wz-col {
+    display: flex; flex-direction: column; align-items: center;
+    flex: 0 0 auto;
+  }
+  .wz-dot {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    color: var(--muted);
+    background: var(--white);
+    transition: all 0.25s;
+    position: relative; z-index: 1;
+  }
+  .wz-dot.active {
+    border-color: var(--blue);
+    color: var(--white);
+    background: var(--blue);
+    box-shadow: 0 0 0 4px rgba(0,115,177,0.15);
+  }
+  .wz-dot.done {
+    border-color: var(--green);
+    background: var(--green);
+    color: var(--white);
+  }
+  .wz-dot.done::after {
+    content: '✓';
+    font-size: 14px;
+  }
+  .wz-dot.done span { display: none; }
+  .wz-label {
+    font-size: 11px; color: var(--muted);
+    margin-top: 5px; text-align: center;
+    max-width: 56px; line-height: 1.3;
+    font-weight: 500;
+  }
+  .wz-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    margin: 16px 4px 0;
+    transition: background 0.25s;
+    min-width: 24px;
+  }
+  .wz-line.done { background: var(--green); }
+
+  /* ── Logged-in banner ── */
+  .user-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--green-pale);
+    border: 1.5px solid #c0dd97;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 24px;
+  }
+  .user-banner-icon {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--white);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .user-banner-text strong { font-size: 0.9rem; color: var(--green); }
+  .user-banner-text span   { font-size: 0.8rem; color: #3B6D11; display: block; margin-top: 1px; }
+
+  /* ── Step panels ── */
   .step-panel { display: none; }
   .step-panel.active { display: block; }
 
-  /* ── Shared input styles (reuse your existing ones) ── */
-  .error-message {
-    color: red; font-size: 0.85rem; margin-top: 4px; display: none;
+  /* ── Fields grid ── */
+  .fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
   }
-  .input-group { display: flex; flex-direction: column; margin-bottom: 20px; }
-  .input-group label { font-weight: 600; margin-bottom: 6px; font-size: 0.95rem; }
-  .input-group input,
-  .input-group select {
-    padding: 10px 12px; border: 1.5px solid #ccc;
-    border-radius: 6px; font-size: 0.95rem;
-    transition: border-color .2s, box-shadow .2s;
-  }
-  .input-group input:focus { border-color: #007bff; box-shadow: 0 0 4px rgba(0,123,255,.3); outline: none; }
-  .input-group input.valid   { border-color: green; }
-  .input-group input.invalid { border-color: red; }
-  .input-group input::placeholder { color: #aaa; font-style: italic; }
+  .span2 { grid-column: span 2; }
 
-  /* ── Nav buttons ── */
-  .wizard-nav { display: flex; justify-content: space-between; margin-top: 1.5rem; gap: 12px; }
-  .btn-wizard-back {
-    padding: 10px 20px; border: 1.5px solid #ccc; background: #fff;
-    border-radius: 6px; font-size: 0.95rem; cursor: pointer;
+  /* ── Input groups ── */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+  .field label .req { color: var(--green-light); margin-left: 2px; }
+  .field small { font-size: 0.75rem; color: var(--muted); }
+
+  .field input,
+  .field select,
+  .field textarea {
+    height: 44px;
+    padding: 0 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.93rem;
+    color: var(--text);
+    background: var(--white);
+    transition: border-color 0.18s, box-shadow 0.18s;
+    outline: none;
+    width: 100%;
+    font-family: inherit;
   }
-  .btn-wizard-back:hover { background: #f5f5f5; }
-  .btn-wizard-next {
+  .field input[type="file"] {
+    height: auto;
+    padding: 8px 10px;
+    cursor: pointer;
+    background: var(--bg);
+    font-size: 0.85rem;
+  }
+  .field input[type="number"] { -moz-appearance: textfield; }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0,115,177,0.12);
+  }
+  .field input.valid   { border-color: #22c55e; }
+  .field input.invalid { border-color: var(--red); }
+  .field select.valid   { border-color: #22c55e; }
+  .field select.invalid { border-color: var(--red); }
+
+  /* Password */
+  .pw-wrap { position: relative; }
+  .pw-wrap input { padding-right: 52px; }
+  .pw-toggle {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 0.8rem; font-weight: 600;
+    padding: 4px; line-height: 1;
+  }
+  .pw-toggle:hover { color: var(--text); }
+
+  .pw-rules { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+  .pw-rule { font-size: 0.78rem; color: var(--red); display: flex; align-items: center; gap: 5px; }
+  .pw-rule.ok { color: #16a34a; }
+  .pw-rule::before { content: '•'; }
+
+  /* Error message */
+  .err-msg { font-size: 0.78rem; color: var(--red); display: none; margin-top: 2px; }
+
+  /* ── Section heading inside step ── */
+  .step-heading {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Wizard nav buttons ── */
+  .wz-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 28px;
+    gap: 12px;
+  }
+  .btn-back {
+    padding: 10px 20px;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    border-radius: var(--radius);
+    font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; color: var(--muted);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-back:hover { background: var(--bg); border-color: #9ca3af; color: var(--text); }
+
+  .btn-next {
     margin-left: auto;
-    padding: 10px 24px; background: #0073b1; color: #fff;
-    border: none; border-radius: 6px; font-size: 0.95rem;
-    font-weight: 600; cursor: pointer;
+    padding: 11px 26px;
+    background: var(--blue);
+    color: var(--white);
+    border: none; border-radius: var(--radius);
+    font-size: 0.95rem; font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.1s;
   }
-  .btn-wizard-next:hover { background: #005f91; }
-  .btn-wizard-submit {
+  .btn-next:hover  { background: var(--blue-dark); }
+  .btn-next:active { transform: scale(0.99); }
+
+  .btn-submit {
     margin-left: auto;
-    padding: 10px 24px; background: #28a745; color: #fff;
-    border: none; border-radius: 6px; font-size: 0.95rem;
-    font-weight: 600; cursor: pointer;
+    padding: 12px 28px;
+    background: var(--green);
+    color: var(--white);
+    border: none; border-radius: var(--radius);
+    font-size: 0.95rem; font-weight: 700;
+    cursor: pointer;
+    transition: background 0.18s, transform 0.1s;
   }
-  .btn-wizard-submit:hover { background: #218838; }
+  .btn-submit:hover  { background: var(--green-light); }
+  .btn-submit:active { transform: scale(0.99); }
 
   /* ── Map / autocomplete ── */
-  #detectLocationBtn {
+  #detect-btn {
     display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 16px; background: #0073b1; color: #fff;
-    border: none; border-radius: 6px; font-size: 0.9rem;
-    font-weight: 600; cursor: pointer; margin-bottom: 1rem;
+    padding: 10px 16px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.88rem; font-weight: 600;
+    cursor: pointer; color: var(--text);
+    margin-bottom: 14px;
+    transition: background 0.15s, border-color 0.15s;
   }
-  #detectLocationBtn:hover { background: #005f91; }
-  #map { width: 100%; height: 300px; border-radius: 8px; margin-bottom: 1rem; }
+  #detect-btn:hover { background: #f0f0f0; border-color: #9ca3af; }
+  #detect-btn i { color: var(--blue); }
+
   #autocomplete-input {
-    width: 100%; padding: 10px 12px; border: 1.5px solid #ccc;
-    border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;
+    width: 100%; padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.93rem; color: var(--text);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    margin-bottom: 12px;
   }
-  #autocomplete-input:focus { border-color: #007bff; box-shadow: 0 0 4px rgba(0,123,255,.3); outline: none; }
+  #autocomplete-input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0,115,177,0.12);
+  }
   .pac-container { z-index: 9999 !important; }
+
+  #map {
+    width: 100%; height: 280px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+
+  /* ── Footer link ── */
+  .reg-footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .reg-footer a { color: var(--green); font-weight: 600; text-decoration: none; }
+  .reg-footer a:hover { text-decoration: underline; }
+
+  /* ── Flash messages ── */
+  .flash-list { list-style: none; margin-bottom: 16px; }
+  .flash-item {
+    padding: 10px 14px; border-radius: var(--radius);
+    font-size: 0.875rem; margin-bottom: 8px;
+  }
+  .flash-item.error   { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+  .flash-item.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .flash-item.info    { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+  @media (max-width: 520px) {
+    .reg-card { padding: 28px 18px 24px; }
+    .fields-grid { grid-template-columns: 1fr; }
+    .span2 { grid-column: span 1; }
+    .wz-label { display: none; }
+  }
 </style>
 
+<div class="reg-page">
+  <div class="reg-card">
 
-<main class="form-container">
-  <section id="signup-panel" class="card ux-card">
-    <header id="form-header" class="idp-form-header">
-      <figure class="brand-logo">
-        <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" />
-      </figure>
-      <h1 class="h3">🎓 Certified Pro Registration</h1>
-      <p style="font-size:0.85rem;color:#555;">Join as a formally trained service provider.</p>
-    </header>
+    <!-- Logo header -->
+    <div class="reg-brand">
+      <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" />
+     
+     
+    </div>
 
-    <!-- ── Progress bar ── -->
-    <div class="wizard-steps">
-      <div class="wizard-step-col">
-        <div class="wizard-dot active" id="dot1">1</div>
-        <div class="wizard-label">Account</div>
+    <div class="reg-title">🎓 Certified Pro Registration</div>
+    <p class="reg-subtitle">Join as a formally trained and certified service provider.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list">
+          {% for category, message in messages %}
+            <li class="flash-item {{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Progress bar -->
+    <div class="wizard-bar">
+      <div class="wz-col">
+        <div class="wz-dot {% if current_user.is_authenticated %}done{% else %}active{% endif %}" id="dot1">
+          <span>1</span>
+        </div>
+        <div class="wz-label">Account</div>
       </div>
-      <div class="wizard-line" id="line1"></div>
-      <div class="wizard-step-col">
-        <div class="wizard-dot" id="dot2">2</div>
-        <div class="wizard-label">Documents</div>
+      <div class="wz-line {% if current_user.is_authenticated %}done{% endif %}" id="line1"></div>
+      <div class="wz-col">
+        <div class="wz-dot {% if current_user.is_authenticated %}active{% endif %}" id="dot2"><span>2</span></div>
+        <div class="wz-label">Documents</div>
       </div>
-      <div class="wizard-line" id="line2"></div>
-      <div class="wizard-step-col">
-        <div class="wizard-dot" id="dot3">3</div>
-        <div class="wizard-label">Service</div>
+      <div class="wz-line" id="line2"></div>
+      <div class="wz-col">
+        <div class="wz-dot" id="dot3"><span>3</span></div>
+        <div class="wz-label">Service</div>
       </div>
-      <div class="wizard-line" id="line3"></div>
-      <div class="wizard-step-col">
-        <div class="wizard-dot" id="dot4">4</div>
-        <div class="wizard-label">Location</div>
+      <div class="wz-line" id="line3"></div>
+      <div class="wz-col">
+        <div class="wz-dot" id="dot4"><span>4</span></div>
+        <div class="wz-label">Location</div>
       </div>
     </div>
 
-    <form id="registrationForm" method="POST" enctype="multipart/form-data"
-          action="{{ url_for('auth.register_certified') }}">
+    <form id="regForm" method="POST" enctype="multipart/form-data" action="{{ url_for('auth.register_certified') }}">
 
       <!-- ══ STEP 1 — Account ══ -->
-      <div class="step-panel active" id="panel1">
-  <div class="fields-grid">
-    <div class="input-group">
-      <label for="name">First Name *</label>
-      <input type="text" id="name" name="name" required />
-      <div class="error-message" id="name-error">First name is required.</div>
-    </div>
-    <div class="input-group">
-      <label for="surname">Surname *</label>
-      <input type="text" id="surname" name="surname" required />
-      <div class="error-message" id="surname-error">Surname is required.</div>
-    </div>
-    <div class="input-group span2">
-      <label for="email">Email *</label>
-      <input type="text" id="email" name="email" required />
-      <div class="error-message" id="email-error">Enter a valid email address.</div>
-    </div>
-    <div class="input-group span2">
-      <label for="contact">Contact Number *</label>
-      <input type="text" id="contact" name="contact" required />
-      <div class="error-message" id="contact-error">Enter a valid 10-digit contact number.</div>
-    </div>
-    <div class="input-group password-group span2">
-      <label for="password">Password *</label>
-      <div class="password-wrapper">
-        <input type="password" id="password" name="password" required />
-        <button type="button" id="toggle-pro-password">Show</button>
+      <div class="step-panel {% if not current_user.is_authenticated %}active{% endif %}" id="panel1">
+        {% if current_user.is_authenticated %}
+          <!-- This panel is skipped for logged-in users -->
+        {% else %}
+          <div class="step-heading">Your account details</div>
+          <div class="fields-grid">
+
+            <div class="field">
+              <label for="name">First name <span class="req">*</span></label>
+              <input type="text" id="name" name="name" placeholder="Jane" required />
+              <span class="err-msg" id="name-error">First name is required.</span>
+            </div>
+
+            <div class="field">
+              <label for="surname">Surname <span class="req">*</span></label>
+              <input type="text" id="surname" name="surname" placeholder="Doe" required />
+              <span class="err-msg" id="surname-error">Surname is required.</span>
+            </div>
+
+            <div class="field span2">
+              <label for="email">Email address <span class="req">*</span></label>
+              <input type="text" id="email" name="email" placeholder="jane@example.com" required />
+              <span class="err-msg" id="email-error">Enter a valid email address.</span>
+            </div>
+
+            <div class="field span2">
+              <label for="contact">Contact number <span class="req">*</span></label>
+              <input type="text" id="contact" name="contact" placeholder="0831234567 or +27831234567" required />
+              <span class="err-msg" id="contact-error">Enter a valid contact number.</span>
+            </div>
+
+            <div class="field span2">
+              <label for="password">Password <span class="req">*</span></label>
+              <div class="pw-wrap">
+                <input type="password" id="password" name="password" placeholder="Create a strong password" required />
+                <button type="button" class="pw-toggle" id="toggle-pw">Show</button>
+              </div>
+              <div class="pw-rules">
+                <span class="pw-rule" id="rule-length">At least 8 characters</span>
+                <span class="pw-rule" id="rule-upper">At least 1 uppercase letter</span>
+                <span class="pw-rule" id="rule-num">At least 1 number</span>
+              </div>
+              <span class="err-msg" id="pw-error">Password doesn't meet requirements.</span>
+            </div>
+
+            <div class="field span2">
+              <label for="confirm_password">Confirm password <span class="req">*</span></label>
+              <div class="pw-wrap">
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat your password" required />
+                <button type="button" class="pw-toggle" id="toggle-confirm">Show</button>
+              </div>
+              <span class="err-msg" id="confirm-error">Passwords do not match.</span>
+            </div>
+
+          </div>
+          <div class="wz-nav">
+            <button type="button" class="btn-next" onclick="nextStep(1)">Continue →</button>
+          </div>
+        {% endif %}
       </div>
-      <div id="password-rules">
-        <small id="rule-length" style="color:red;">• At least 8 characters</small>
-        <small id="rule-uppercase" style="color:red;">• At least 1 uppercase letter</small>
-        <small id="rule-number" style="color:red;">• At least 1 number</small>
-      </div>
-      <div class="error-message" id="password-error">Password must meet the requirements above.</div>
-    </div>
-    <div class="input-group span2">
-      <label for="confirm_password">Confirm Password *</label>
-      <input type="password" id="confirm_password" name="confirm_password" required />
-      <div class="error-message" id="confirm-error">Passwords do not match.</div>
-    </div>
-  </div>
-  <div class="wizard-nav">
-    <button type="button" class="btn-wizard-next" onclick="nextStep(1)">Next →</button>
-  </div>
-</div>
 
       <!-- ══ STEP 2 — Documents ══ -->
-      <div class="step-panel" id="panel2">
-  <div class="fields-grid">
-    <div class="input-group">
-      <label for="id_doc">🪪 Government ID *</label>
-      <input type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required />
-      <div class="error-message" id="idDocError"></div>
-    </div>
-    <div class="input-group">
-      <label for="cert_doc">📄 Certification / Business Reg. *</label>
-      <input type="file" id="cert_doc" name="cert_doc" accept=".pdf,.jpg,.jpeg,.png" required />
-      <div class="error-message" id="certDocError"></div>
-    </div>
-    <div class="input-group">
-      <label for="portfolio_files">📁 Portfolio Images</label>
-      <input type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple />
-      <small style="color:#6b7280;font-size:0.72rem;">Up to 3 images</small>
-      <div class="error-message" id="portfolioError"></div>
-    </div>
-    <div class="input-group">
-      <label for="intro_video">🎥 Video Introduction</label>
-      <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm" />
-      <small style="color:#6b7280;font-size:0.72rem;">Max 50 MB</small>
-      <div class="error-message" id="videoError"></div>
-    </div>
-  </div>
-  <div class="wizard-nav">
-    <button type="button" class="btn-wizard-back" onclick="goToStep(1)">← Back</button>
-    <button type="button" class="btn-wizard-next" onclick="nextStep(2)">Next →</button>
-  </div>
-</div>
+      <div class="step-panel {% if current_user.is_authenticated %}active{% endif %}" id="panel2">
+        <div class="step-heading">Upload your documents</div>
+
+        {% if current_user.is_authenticated %}
+          <div class="user-banner">
+            <div class="user-banner-icon">{{ current_user.Name[0] }}{{ current_user.Surname[0] }}</div>
+            <div class="user-banner-text">
+              <strong>{{ current_user.Name }} {{ current_user.Surname }}</strong>
+              <span>{{ current_user.Email }}</span>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="fields-grid">
+          <div class="field">
+            <label for="id_doc">🪪 Government ID <span class="req">*</span></label>
+            <input type="file" id="id_doc" name="id_doc" accept=".pdf,.jpg,.jpeg,.png" required />
+            <small>PDF, JPG or PNG — max 5 MB</small>
+            <span class="err-msg" id="id-error"></span>
+          </div>
+
+          <div class="field">
+            <label for="cert_doc">📄 Certification / Business Reg. <span class="req">*</span></label>
+            <input type="file" id="cert_doc" name="cert_doc" accept=".pdf,.jpg,.jpeg,.png" required />
+            <small>PDF, JPG or PNG — max 5 MB</small>
+            <span class="err-msg" id="cert-error"></span>
+          </div>
+
+          <div class="field">
+            <label for="portfolio_files">📁 Portfolio images</label>
+            <input type="file" id="portfolio_files" name="portfolio_files" accept=".jpg,.jpeg,.png" multiple />
+            <small>Up to 3 images — JPG or PNG</small>
+            <span class="err-msg" id="portfolio-error"></span>
+          </div>
+
+          <div class="field">
+            <label for="intro_video">🎥 Video introduction</label>
+            <input type="file" id="intro_video" name="intro_video" accept="video/mp4,video/mov,video/webm" />
+            <small>MP4, MOV or WebM — max 50 MB</small>
+            <span class="err-msg" id="video-error"></span>
+          </div>
+        </div>
+
+        <div class="wz-nav">
+          <button type="button" class="btn-back" onclick="goToStep({% if current_user.is_authenticated %}2{% else %}1{% endif %})">← Back</button>
+          <button type="button" class="btn-next" onclick="nextStep(2)">Continue →</button>
+        </div>
+      </div>
 
       <!-- ══ STEP 3 — Service ══ -->
-  <div class="step-panel" id="panel3">
-  <div class="fields-grid">
-    <div class="input-group">
-      <label for="category">🗂️ Service Category *</label>
-      <select id="category" name="category" required>
-        <option value="">-- Select a Category --</option>
-        <option value="Beauty & Personal Care">Beauty &amp; Personal Care</option>
-        <option value="Construction & Trades">Construction &amp; Trades</option>
-        <option value="Cleaning Services">Cleaning Services</option>
-        <option value="Events & Entertainment">Events &amp; Entertainment</option>
-        <option value="Automotive">Automotive</option>
-        <option value="Technology">Technology</option>
-        <option value="Education & Training">Education &amp; Training</option>
-        <option value="Health & Wellness">Health &amp; Wellness</option>
-        <option value="Professional Services">Professional Services</option>
-      </select>
-      <div class="error-message" id="category-error">Please select a category.</div>
-    </div>
-    <div class="input-group">
-      <label for="service">🧰 Service Offered *</label>
-      <select id="service" name="service" required disabled>
-        <option value="">-- Select a Category First --</option>
-      </select>
-      <div class="error-message" id="service-error">Please select a service.</div>
-    </div>
-    <div class="input-group span2">
-      <label for="experience">📅 Years of Experience *</label>
-      <input type="number" id="experience" name="experience" placeholder="e.g. 5" min="0" required />
-      <div class="error-message" id="experience-error">Experience is required.</div>
-    </div>
-  </div>
-  <div class="wizard-nav">
-    <button type="button" class="btn-wizard-back" onclick="goToStep(2)">← Back</button>
-    <button type="button" class="btn-wizard-next" onclick="nextStep(3)">Next →</button>
-  </div>
-</div>
+      <div class="step-panel" id="panel3">
+        <div class="step-heading">Your service details</div>
+        <div class="fields-grid">
+
+          <div class="field">
+            <label for="category">🗂️ Service category <span class="req">*</span></label>
+            <select id="category" name="category" required>
+              <option value="">Select a category</option>
+              <option value="Beauty & Personal Care">Beauty &amp; Personal Care</option>
+              <option value="Construction & Trades">Construction &amp; Trades</option>
+              <option value="Cleaning Services">Cleaning Services</option>
+              <option value="Events & Entertainment">Events &amp; Entertainment</option>
+              <option value="Automotive">Automotive</option>
+              <option value="Technology">Technology</option>
+              <option value="Education & Training">Education &amp; Training</option>
+              <option value="Health & Wellness">Health &amp; Wellness</option>
+              <option value="Professional Services">Professional Services</option>
+            </select>
+            <span class="err-msg" id="cat-error">Please select a category.</span>
+          </div>
+
+          <div class="field">
+            <label for="service">🧰 Service offered <span class="req">*</span></label>
+            <select id="service" name="service" required disabled>
+              <option value="">Select a category first</option>
+            </select>
+            <span class="err-msg" id="svc-error">Please select your service.</span>
+          </div>
+
+          <div class="field span2">
+            <label for="experience">📅 Years of experience <span class="req">*</span></label>
+            <input type="number" id="experience" name="experience" placeholder="e.g. 5" min="0" max="60" required />
+            <span class="err-msg" id="exp-error">Please enter your years of experience.</span>
+          </div>
+
+        </div>
+        <div class="wz-nav">
+          <button type="button" class="btn-back" onclick="goToStep(2)">← Back</button>
+          <button type="button" class="btn-next" onclick="nextStep(3)">Continue →</button>
+        </div>
+      </div>
 
       <!-- ══ STEP 4 — Location ══ -->
       <div class="step-panel" id="panel4">
+        <div class="step-heading">Your service location</div>
 
-        <div class="input-group">
-          <label for="autocomplete-input">📍 Location *</label>
-          <input id="autocomplete-input" type="text" placeholder="Search your address..." />
+        <div class="field" style="margin-bottom: 12px;">
+          <label>📍 Search your address <span class="req">*</span></label>
+          <input id="autocomplete-input" type="text" placeholder="Start typing your address…" />
           <input type="hidden" id="location"  name="location" />
           <input type="hidden" id="latitude"  name="latitude" />
           <input type="hidden" id="longitude" name="longitude" />
-          <div class="error-message" id="location-error">Location is required.</div>
+          <span class="err-msg" id="loc-error">Please select your location.</span>
         </div>
 
-        <button type="button" id="detectLocationBtn">
-          <i class="fas fa-crosshairs"></i> Detect My Location
+        <button type="button" id="detect-btn">
+          <i class="fas fa-crosshairs"></i> Use my current location
         </button>
 
         <div id="map"></div>
 
-        <div class="wizard-nav">
-          <button type="button" class="btn-wizard-back" onclick="goToStep(3)">← Back</button>
-          <button type="submit" id="submitBtn" class="btn-wizard-submit">Register as Certified Pro ✓</button>
+        <div class="wz-nav">
+          <button type="button" class="btn-back" onclick="goToStep(3)">← Back</button>
+          <button type="submit" class="btn-submit">Register as Certified Pro ✓</button>
         </div>
       </div>
 
     </form>
 
-    <p class="recovery-links">
-      Prefer to register as a regular user? <a href="{{ url_for('auth.signup_get') }}">Go back to user signup</a>
+    <p class="reg-footer">
+      Registering as a regular user instead? <a href="{{ url_for('auth.signup_get') }}">Go to sign up</a>
     </p>
-  </section>
-</main>
+
+  </div>
+</div>
 
 
-<!-- =====================
-     WIZARD NAVIGATION
-===================== -->
 <script>
-let currentStep = 1;
-const TOTAL_STEPS = 4;
-
-const isLoggedIn = {{ 'true' if current_user.is_authenticated else 'false' }};
+/* ─── Wizard state ─── */
+const IS_LOGGED_IN = {{ 'true' if current_user.is_authenticated else 'false' }};
+let currentStep = IS_LOGGED_IN ? 2 : 1;
 
 function goToStep(n) {
   document.getElementById('panel' + currentStep).classList.remove('active');
   document.getElementById('panel' + n).classList.add('active');
   [1,2,3,4].forEach(i => {
-    const dot  = document.getElementById('dot' + i);
-    dot.className = 'wizard-dot' + (i === n ? ' active' : i < n ? ' done' : '');
+    const dot = document.getElementById('dot' + i);
+    dot.className = 'wz-dot' + (i === n ? ' active' : i < n ? ' done' : '');
     if (i < 4) {
-      document.getElementById('line' + i).className = 'wizard-line' + (i < n ? ' done' : '');
+      document.getElementById('line' + i).className = 'wz-line' + (i < n ? ' done' : '');
     }
   });
   currentStep = n;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function nextStep(fromStep) {
-  if (!validateStep(fromStep)) return;
-  goToStep(fromStep + 1);
+function nextStep(from) {
+  if (!validateStep(from)) return;
+  goToStep(from + 1);
 }
 
-function validateStep(step) {
-  if (step === 1) {
-    if (isLoggedIn) return true;
-    return validateName() && validateSurname() && validateEmail()
-        && validateContact() && validatePassword() && validateConfirmPassword();
+/* ─── Field helpers ─── */
+const $ = id => document.getElementById(id);
+function showErr(el, msgEl, msg) {
+  if (!el) return;
+  el.classList.remove('valid'); el.classList.add('invalid');
+  if (msgEl) { if (msg) msgEl.textContent = msg; msgEl.style.display = 'block'; }
+}
+function showOk(el, msgEl) {
+  if (!el) return;
+  el.classList.remove('invalid'); el.classList.add('valid');
+  if (msgEl) msgEl.style.display = 'none';
+}
+function ruleOk(el, pass) { if (el) el.className = 'pw-rule' + (pass ? ' ok' : ''); }
+
+/* ─── Step 1 validators ─── */
+function validateName()    { return $('name')?.value.trim()    ? (showOk($('name'), $('name-error')), true)    : (showErr($('name'), $('name-error')), false); }
+function validateSurname() { return $('surname')?.value.trim() ? (showOk($('surname'), $('surname-error')), true) : (showErr($('surname'), $('surname-error')), false); }
+function validateEmail() {
+  if (!$('email')) return true;
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim());
+  ok ? showOk($('email'), $('email-error')) : showErr($('email'), $('email-error')); return ok;
+}
+function validateContact() {
+  if (!$('contact')) return true;
+  const ok = /^(\+27|0)[0-9]{9}$/.test($('contact').value.trim());
+  ok ? showOk($('contact'), $('contact-error')) : showErr($('contact'), $('contact-error')); return ok;
+}
+function validatePassword() {
+  if (!$('password')) return true;
+  const v = $('password').value;
+  const l = v.length >= 8, u = /[A-Z]/.test(v), n = /\d/.test(v);
+  ruleOk($('rule-length'), l); ruleOk($('rule-upper'), u); ruleOk($('rule-num'), n);
+  const ok = l && u && n;
+  ok ? showOk($('password'), $('pw-error')) : showErr($('password'), $('pw-error')); return ok;
+}
+function validateConfirm() {
+  if (!$('confirm_password')) return true;
+  const ok = $('confirm_password').value !== '' && $('confirm_password').value === $('password')?.value;
+  ok ? showOk($('confirm_password'), $('confirm-error')) : showErr($('confirm_password'), $('confirm-error')); return ok;
+}
+
+/* ─── Step 2 validators ─── */
+function validateFile(inputId, allowed, maxMB, errId, maxCount) {
+  const inp = $(inputId), errEl = $(errId);
+  if (!inp || !inp.files.length) return true;
+  errEl.style.display = 'none';
+  if (inp.files.length > (maxCount || 1)) {
+    errEl.textContent = `Max ${maxCount || 1} file(s) allowed.`; errEl.style.display = 'block'; inp.value = ''; return false;
   }
-  if (step === 2) {
-    return validateFile(
-        document.getElementById('id_doc'),
-        ['.pdf','.jpg','.jpeg','.png'], 5,
-        document.getElementById('idDocError')
-      ) &&
-      validateFile(
-        document.getElementById('cert_doc'),
-        ['.pdf','.jpg','.jpeg','.png'], 5,
-        document.getElementById('certDocError')
-      ) &&
-      validateFile(
-        document.getElementById('portfolio_files'),
-        ['.jpg','.jpeg','.png'], 5,
-        document.getElementById('portfolioError'), 3
-      ) &&
-      validateFile(
-        document.getElementById('intro_video'),
-        ['.mp4','.mov','.webm'], 50,
-        document.getElementById('videoError')
-      );
-  }
-  if (step === 3) {
-    return validateCategory() && validateService() && validateExperience();
+  for (const f of inp.files) {
+    const ext = '.' + f.name.split('.').pop().toLowerCase();
+    if (allowed && !allowed.includes(ext)) {
+      errEl.textContent = `Invalid file type: ${f.name}`; errEl.style.display = 'block'; inp.value = ''; return false;
+    }
+    if (f.size > maxMB * 1024 * 1024) {
+      errEl.textContent = `${f.name} exceeds ${maxMB} MB.`; errEl.style.display = 'block'; inp.value = ''; return false;
+    }
   }
   return true;
 }
-</script>
 
+/* ─── Step 3 validators ─── */
+function validateCategory() {
+  const el = $('category');
+  if (!el) return true;
+  el.value ? showOk(el, $('cat-error')) : showErr(el, $('cat-error'));
+  return !!el.value;
+}
+function validateService() {
+  const el = $('service');
+  if (!el) return true;
+  el.value ? showOk(el, $('svc-error')) : showErr(el, $('svc-error'));
+  return !!el.value;
+}
+function validateExperience() {
+  const el = $('experience');
+  if (!el) return true;
+  const ok = el.value.trim() !== '' && Number(el.value) >= 0;
+  ok ? showOk(el, $('exp-error')) : showErr(el, $('exp-error')); return ok;
+}
 
-<!-- =====================
-     FORM VALIDATION
-===================== -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
+/* ─── Step 4 validator ─── */
+function validateLocation() {
+  const ok = !!$('location')?.value.trim();
+  const errEl = $('loc-error');
+  if (errEl) errEl.style.display = ok ? 'none' : 'block';
+  return ok;
+}
 
-  const inputs = {
-    name:       document.getElementById('name'),
-    surname:    document.getElementById('surname'),
-    email:      document.getElementById('email'),
-    contact:    document.getElementById('contact'),
-    password:   document.getElementById('password'),
-    confirm:    document.getElementById('confirm_password'),
-    category:   document.getElementById('category'),
-    service:    document.getElementById('service'),
-    experience: document.getElementById('experience'),
-    location:   document.getElementById('location'),
-  };
-
-  const errors = {
-    name:       document.getElementById('name-error'),
-    surname:    document.getElementById('surname-error'),
-    email:      document.getElementById('email-error'),
-    contact:    document.getElementById('contact-error'),
-    password:   document.getElementById('password-error'),
-    confirm:    document.getElementById('confirm-error'),
-    category:   document.getElementById('category-error'),
-    service:    document.getElementById('service-error'),
-    experience: document.getElementById('experience-error'),
-    location:   document.getElementById('location-error'),
-  };
-
-  function showError(input, errorEl) {
-    if (!input || !errorEl) return;
-    input.classList.remove('valid'); input.classList.add('invalid');
-    errorEl.style.display = 'block';
+/* ─── Route step validation ─── */
+function validateStep(step) {
+  if (step === 1) {
+    if (IS_LOGGED_IN) return true;
+    return validateName() & validateSurname() & validateEmail() & validateContact() & validatePassword() & validateConfirm();
   }
-  function showValid(input, errorEl) {
-    if (!input || !errorEl) return;
-    input.classList.remove('invalid'); input.classList.add('valid');
-    errorEl.style.display = 'none';
+  if (step === 2) {
+    return validateFile('id_doc',         ['.pdf','.jpg','.jpeg','.png'], 5,  'id-error') &
+           validateFile('cert_doc',       ['.pdf','.jpg','.jpeg','.png'], 5,  'cert-error') &
+           validateFile('portfolio_files',['.jpg','.jpeg','.png'],        5,  'portfolio-error', 3) &
+           validateFile('intro_video',    ['.mp4','.mov','.webm'],        50, 'video-error');
   }
+  if (step === 3) {
+    return validateCategory() & validateService() & validateExperience();
+  }
+  return true;
+}
 
-  const simple = (key) => () => inputs[key]?.value.trim()
-    ? (showValid(inputs[key], errors[key]), true)
-    : (showError(inputs[key], errors[key]), false);
+/* ─── Live validation bindings ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  $('name')?.addEventListener('input', validateName);
+  $('surname')?.addEventListener('input', validateSurname);
+  $('email')?.addEventListener('input', validateEmail);
+  $('contact')?.addEventListener('input', validateContact);
+  $('password')?.addEventListener('input', () => { validatePassword(); validateConfirm(); });
+  $('confirm_password')?.addEventListener('input', validateConfirm);
+  $('category')?.addEventListener('change', validateCategory);
+  $('service')?.addEventListener('change', validateService);
+  $('experience')?.addEventListener('input', validateExperience);
 
-  window.validateName       = simple('name');
-  window.validateSurname    = simple('surname');
-  window.validateCategory   = simple('category');
-  window.validateService    = simple('service');
-  window.validateExperience = simple('experience');
-  window.validateLocation   = simple('location');
-
-  window.validateEmail = function() {
-    if (!inputs.email) return true;
-    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputs.email.value.trim());
-    ok ? showValid(inputs.email, errors.email) : showError(inputs.email, errors.email);
-    return ok;
-  };
-
-  window.validateContact = function() {
-    if (!inputs.contact) return true;
-    const ok = /^\d{10}$/.test(inputs.contact.value.trim());
-    ok ? showValid(inputs.contact, errors.contact) : showError(inputs.contact, errors.contact);
-    return ok;
-  };
-
-  const ruleLength    = document.getElementById('rule-length');
-  const ruleUppercase = document.getElementById('rule-uppercase');
-  const ruleNumber    = document.getElementById('rule-number');
-
-  window.validatePassword = function() {
-    if (!inputs.password) return true;
-    const v = inputs.password.value;
-    const l = v.length >= 8, u = /[A-Z]/.test(v), n = /\d/.test(v);
-    if (ruleLength)    ruleLength.style.color    = l ? 'green' : 'red';
-    if (ruleUppercase) ruleUppercase.style.color = u ? 'green' : 'red';
-    if (ruleNumber)    ruleNumber.style.color    = n ? 'green' : 'red';
-    const ok = l && u && n;
-    ok ? showValid(inputs.password, errors.password) : showError(inputs.password, errors.password);
-    return ok;
-  };
-
-  window.validateConfirmPassword = function() {
-    if (!inputs.confirm) return true;
-    const ok = inputs.confirm.value && inputs.confirm.value === inputs.password?.value;
-    ok ? showValid(inputs.confirm, errors.confirm) : showError(inputs.confirm, errors.confirm);
-    return ok;
-  };
-
-  window.validateFile = function(input, allowed, maxMB, errorEl, maxCount = 1) {
-    if (!input) return true;
-    errorEl.style.display = 'none';
-    if (!input.files.length) return true;
-    for (let file of input.files) {
-      const ext = '.' + file.name.split('.').pop().toLowerCase();
-      if (!allowed.includes(ext)) {
-        errorEl.textContent = `Invalid file type: ${file.name}`;
-        errorEl.style.display = 'block'; input.value = ''; return false;
-      }
-      if (file.size > maxMB * 1024 * 1024) {
-        errorEl.textContent = `${file.name} exceeds ${maxMB} MB.`;
-        errorEl.style.display = 'block'; input.value = ''; return false;
-      }
-    }
-    if (input.files.length > maxCount) {
-      errorEl.textContent = `Max ${maxCount} file(s) allowed.`;
-      errorEl.style.display = 'block'; input.value = ''; return false;
-    }
-    return true;
-  };
-
-  if (inputs.name)     inputs.name.addEventListener('input', validateName);
-  if (inputs.surname)  inputs.surname.addEventListener('input', validateSurname);
-  if (inputs.email)    inputs.email.addEventListener('input', validateEmail);
-  if (inputs.contact)  inputs.contact.addEventListener('input', validateContact);
-  if (inputs.password) inputs.password.addEventListener('input', () => { validatePassword(); validateConfirmPassword(); });
-  if (inputs.confirm)  inputs.confirm.addEventListener('input', validateConfirmPassword);
-  inputs.category?.addEventListener('change', validateCategory);
-  inputs.service?.addEventListener('change', validateService);
-  inputs.experience?.addEventListener('input', validateExperience);
-
-  const toggleBtn = document.getElementById('toggle-pro-password');
-  if (toggleBtn && inputs.password) {
-    toggleBtn.addEventListener('click', () => {
-      inputs.password.type = inputs.password.type === 'password' ? 'text' : 'password';
-      toggleBtn.textContent = inputs.password.type === 'password' ? 'Show' : 'Hide';
+  // Password toggle
+  function makeToggle(btnId, inputId) {
+    $(btnId)?.addEventListener('click', () => {
+      const inp = $(inputId);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      $(btnId).textContent = inp.type === 'password' ? 'Show' : 'Hide';
     });
   }
+  makeToggle('toggle-pw', 'password');
+  makeToggle('toggle-confirm', 'confirm_password');
 
-  // Final submit validation (location required on step 4)
-  document.getElementById('registrationForm').addEventListener('submit', e => {
-    if (!validateLocation()) { e.preventDefault(); }
+  // Final submit guard
+  $('regForm').addEventListener('submit', e => {
+    if (!validateLocation()) e.preventDefault();
   });
 });
 </script>
 
-
-<!-- =====================
-     CATEGORY → SERVICE CASCADE
-===================== -->
+<!-- ─── Category → Service cascade ─── -->
 <script>
-const SERVICES_BY_CATEGORY = {
+const SERVICES = {
   "Beauty & Personal Care":  ["Hair Stylist","Barber","Makeup Artist","Nail Technician","Beautician","Massage Therapist"],
   "Construction & Trades":   ["Builder","Plumber","Electrician","Painter","Welder","Carpenter","Tiler","Roofer","Handyman"],
   "Cleaning Services":       ["House Cleaner","Office Cleaner","Carpet Cleaner","Window Cleaner"],
@@ -491,93 +753,71 @@ const SERVICES_BY_CATEGORY = {
   "Professional Services":   ["Architect","Accountant","Consultant","Lawyer"],
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  const catEl = document.getElementById("category");
-  const svcEl = document.getElementById("service");
-  catEl.addEventListener("change", () => {
-    const svcs = SERVICES_BY_CATEGORY[catEl.value] || [];
-    svcEl.innerHTML = "";
-    if (!catEl.value) { svcEl.disabled = true; svcEl.innerHTML = '<option value="">-- Select a Category First --</option>'; return; }
-    svcEl.disabled = false;
-    svcEl.innerHTML = '<option value="">-- Select Your Service --</option>' +
-      svcs.map(s => `<option value="${s}">${s}</option>`).join('');
+document.addEventListener('DOMContentLoaded', () => {
+  const cat = document.getElementById('category');
+  const svc = document.getElementById('service');
+  if (!cat || !svc) return;
+  cat.addEventListener('change', () => {
+    const list = SERVICES[cat.value] || [];
+    svc.disabled = !cat.value;
+    svc.innerHTML = cat.value
+      ? '<option value="">Select your service</option>' + list.map(s => `<option value="${s}">${s}</option>`).join('')
+      : '<option value="">Select a category first</option>';
   });
 });
 </script>
 
-
-<!-- =====================
-     GOOGLE MAPS + PLACES
-===================== -->
+<!-- ─── Google Maps ─── -->
 <script>
 let map, marker, geocoder;
 
 function initMap() {
   const defaultPos = { lat: -29.8587, lng: 31.0218 };
-
-  map = new google.maps.Map(document.getElementById("map"), {
+  map = new google.maps.Map(document.getElementById('map'), {
     center: defaultPos, zoom: 12,
     mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
   });
-
   geocoder = new google.maps.Geocoder();
+  marker = new google.maps.Marker({ position: defaultPos, map, draggable: true, title: 'Drag to set location' });
 
-  marker = new google.maps.Marker({
-    position: defaultPos, map, draggable: true, title: "Drag to set your location",
+  const ac = new google.maps.places.Autocomplete(document.getElementById('autocomplete-input'), {
+    componentRestrictions: { country: 'za' },
+    fields: ['geometry', 'formatted_address'],
   });
-
-  const autocompleteInput = document.getElementById("autocomplete-input");
-  const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
-    componentRestrictions: { country: "za" },
-    fields: ["geometry", "formatted_address"],
+  ac.addListener('place_changed', () => {
+    const p = ac.getPlace();
+    if (!p.geometry) return;
+    setLocation(p.geometry.location.lat(), p.geometry.location.lng(), p.formatted_address);
+    map.panTo(p.geometry.location); map.setZoom(15);
   });
-
-  autocomplete.addListener("place_changed", () => {
-    const place = autocomplete.getPlace();
-    if (!place.geometry) return;
-    const lat = place.geometry.location.lat();
-    const lng = place.geometry.location.lng();
-    setLocation(lat, lng, place.formatted_address);
-    map.panTo({ lat, lng }); map.setZoom(15);
-  });
-
-  marker.addListener("dragend", () => {
+  marker.addListener('dragend', () => {
     const pos = marker.getPosition();
     reverseGeocode(pos.lat(), pos.lng());
   });
-
-  document.getElementById("detectLocationBtn").addEventListener("click", () => {
-    if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
+  document.getElementById('detect-btn').addEventListener('click', () => {
+    if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        const lat = pos.coords.latitude, lng = pos.coords.longitude;
-        map.panTo({ lat, lng }); map.setZoom(15);
-        marker.setPosition({ lat, lng });
-        reverseGeocode(lat, lng);
-      },
-      () => alert("Could not get your location. Please allow location access and try again.")
+      pos => { const lat = pos.coords.latitude, lng = pos.coords.longitude; map.panTo({ lat, lng }); map.setZoom(15); marker.setPosition({ lat, lng }); reverseGeocode(lat, lng); },
+      ()  => alert('Could not get your location. Please allow location access.')
     );
   });
 }
 
 function setLocation(lat, lng, address) {
-  document.getElementById("latitude").value  = lat;
-  document.getElementById("longitude").value = lng;
-  document.getElementById("location").value  = address;
-  document.getElementById("autocomplete-input").value = address;
+  document.getElementById('latitude').value  = lat;
+  document.getElementById('longitude').value = lng;
+  document.getElementById('location').value  = address;
+  document.getElementById('autocomplete-input').value = address;
   marker.setPosition({ lat, lng });
 }
 
 function reverseGeocode(lat, lng) {
   geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-    if (status === "OK" && results[0]) setLocation(lat, lng, results[0].formatted_address);
-    else { document.getElementById("latitude").value = lat; document.getElementById("longitude").value = lng; }
+    if (status === 'OK' && results[0]) setLocation(lat, lng, results[0].formatted_address);
+    else { document.getElementById('latitude').value = lat; document.getElementById('longitude').value = lng; }
   });
 }
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCiEtsuTYyF5GYph3n3V0_cKTl-k_pMz0g&libraries=places&callback=initMap" async defer></script>
 
-<script
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCiEtsuTYyF5GYph3n3V0_cKTl-k_pMz0g&libraries=places&callback=initMap"
-  async defer>
-</script>
 {% endblock %}

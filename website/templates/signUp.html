@@ -3,164 +3,342 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign Up</title>
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='loginfinal.css') }}" />
+  <title>Sign Up – ProNearBy</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
-
   <style>
-    .error-message { color: red; font-size: 0.85em; margin-top: 3px; display: none; }
-    .valid   { border-color: green; }
-    .invalid { border-color: red; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .signup-grid {
+    :root {
+      --green:       #3B6D11;
+      --green-light: #639922;
+      --green-pale:  #eaf3de;
+      --blue:        #0073b1;
+      --blue-dark:   #005f91;
+      --text:        #1a1a1a;
+      --muted:       #6b7280;
+      --border:      #d1d5db;
+      --bg:          #f9fafb;
+      --white:       #ffffff;
+      --red:         #dc2626;
+      --radius:      10px;
+      --shadow:      0 4px 24px rgba(0,0,0,0.09);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      color: var(--text);
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 480px;
+      padding: 40px 40px 32px;
+    }
+
+    /* ── Centered logo header ── */
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .brand-header img {
+      max-width: 200px;
+      width: auto;
+      height: auto;
+      max-height: 80px;
+      border-radius: 0;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+    .brand-header .brand-name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--green);
+      letter-spacing: -0.01em;
+    }
+    .brand-header .brand-tag {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Page title ── */
+    .page-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .page-subtitle {
+      font-size: 0.875rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    /* ── Flash messages ── */
+    .flash-list { list-style: none; margin-bottom: 16px; }
+    .flash-item {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      margin-bottom: 8px;
+    }
+    .flash-item.error   { background: #fef2f2; color: var(--red);    border: 1px solid #fecaca; }
+    .flash-item.success { background: #f0fdf4; color: #166534;       border: 1px solid #bbf7d0; }
+    .flash-item.info    { background: #eff6ff; color: #1e40af;       border: 1px solid #bfdbfe; }
+
+    /* ── Form grid ── */
+    .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px 16px;
+      gap: 16px;
     }
-    .signup-grid .span2 { grid-column: span 2; }
+    .span2 { grid-column: span 2; }
+
+    /* ── Fields ── */
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .field label .req { color: var(--green-light); margin-left: 2px; }
+
+    .field input {
+      height: 44px;
+      padding: 0 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color 0.18s, box-shadow 0.18s;
+      outline: none;
+      width: 100%;
+      font-family: inherit;
+    }
+    .field input:focus  { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,115,177,0.12); }
+    .field input.valid  { border-color: #22c55e; }
+    .field input.invalid{ border-color: var(--red); }
+
+    /* ── Password ── */
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 54px; }
+    .pw-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 0.8rem; font-weight: 600; padding: 4px; line-height: 1;
+    }
+    .pw-toggle:hover { color: var(--text); }
+
+    .pw-rules { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+    .pw-rule { font-size: 0.78rem; color: var(--red); display: flex; align-items: center; gap: 5px; }
+    .pw-rule.ok { color: #16a34a; }
+    .pw-rule::before { content: '•'; }
+
+    .err-msg { font-size: 0.78rem; color: var(--red); display: none; margin-top: 2px; }
+
+    /* ── Submit ── */
+    .btn-submit {
+      width: 100%; height: 48px;
+      background: var(--green); color: var(--white);
+      border: none; border-radius: var(--radius);
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; margin-top: 24px;
+      transition: background 0.18s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+    .btn-submit:hover  { background: var(--green-light); }
+    .btn-submit:active { transform: scale(0.99); }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 20px 0; color: var(--muted); font-size: 0.8rem;
+    }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Google btn ── */
+    .btn-google {
+      width: 100%; height: 44px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      background: var(--white); color: var(--text);
+      font-size: 0.9rem; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-google:hover { background: var(--bg); border-color: #9ca3af; }
+    .btn-google img   { width: 20px; height: 20px; }
+
+    /* ── Footer links ── */
+    .footer-links {
+      margin-top: 20px; text-align: center;
+      font-size: 0.85rem; color: var(--muted);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .footer-links a { color: var(--green); font-weight: 600; text-decoration: none; }
+    .footer-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 500px) {
+      .card { padding: 28px 18px 24px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .span2 { grid-column: span 1; }
+    }
   </style>
 </head>
 <body>
-  <main class="form-container">
-    <section id="signup-panel" class="card ux-card">
-      <header id="form-header" class="idp-form-header">
-        <figure class="brand-logo">
-          <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" />
-        </figure>
-        <h1 class="h3">Create an Account</h1>
-      </header>
+<div class="card">
 
-      <form id="signup-form" method="POST" action="{{ url_for('auth.signup_post') }}" autocomplete="off" novalidate>
+  <!-- Logo header -->
+  <div class="brand-header">
+    <img src="{{ url_for('static', filename='assets/ProNearByLogo.jpg') }}" alt="ProNearBy Logo" />
+    <div class="brand-name">ProNearBy</div>
+    <div class="brand-tag">Find trusted professionals near you</div>
+  </div>
 
-        <div class="signup-grid">
+  <div class="page-title">Create your account</div>
+  <p class="page-subtitle">Join thousands of people already using ProNearBy.</p>
 
-          <div class="input-group">
-            <label for="name">Name *</label>
-            <input type="text" id="name" name="name" value="{{ name or '' }}" required />
-            <div class="error-message" id="name-error">Name is required.</div>
-          </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flash-list">
+        {% for category, message in messages %}
+          <li class="flash-item {{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
 
-          <div class="input-group">
-            <label for="surname">Surname *</label>
-            <input type="text" id="surname" name="surname" value="{{ surname or '' }}" required />
-            <div class="error-message" id="surname-error">Surname is required.</div>
-          </div>
+  <form id="signup-form" method="POST" action="{{ url_for('auth.signup_post') }}" autocomplete="off" novalidate>
+    <div class="form-grid">
 
-          <div class="input-group span2">
-            <label for="email">Email *</label>
-            <input type="text" id="email" name="email" value="{{ email or '' }}" required />
-            <div class="error-message" id="email-error">Enter a valid email address.</div>
-          </div>
+      <div class="field">
+        <label for="name">First name <span class="req">*</span></label>
+        <input type="text" id="name" name="name" value="{{ name or '' }}" placeholder="Jane" required />
+        <span class="err-msg" id="name-error">Please enter your first name.</span>
+      </div>
 
-          <div class="input-group span2">
-            <label for="contact">Contact Number *</label>
-            <input type="text" id="contact" name="contact" value="{{ contact or '' }}" required />
-            <div class="error-message" id="contact-error">Enter a valid contact number (10 digits).</div>
-          </div>
+      <div class="field">
+        <label for="surname">Surname <span class="req">*</span></label>
+        <input type="text" id="surname" name="surname" value="{{ surname or '' }}" placeholder="Doe" required />
+        <span class="err-msg" id="surname-error">Please enter your surname.</span>
+      </div>
 
-          <div class="input-group password-group span2">
-            <label for="password">Password *</label>
-            <div class="password-wrapper">
-              <input type="password" id="password" name="password" required />
-              <button type="button" id="toggle-password">Show</button>
-            </div>
-            <div id="password-rules">
-              <small id="rule-length"    style="color:red;">• At least 6 characters</small>
-              <small id="rule-uppercase" style="color:red;">• At least 1 uppercase letter</small>
-              <small id="rule-number"    style="color:red;">• At least 1 number</small>
-            </div>
-            <div class="error-message" id="password-error">Password must meet the requirements above.</div>
-          </div>
+      <div class="field span2">
+        <label for="email">Email address <span class="req">*</span></label>
+        <input type="text" id="email" name="email" value="{{ email or '' }}" placeholder="jane@example.com" required />
+        <span class="err-msg" id="email-error">Enter a valid email address.</span>
+      </div>
 
-          <div class="input-group span2">
-            <label for="confirm_password">Confirm Password *</label>
-            <input type="password" id="confirm_password" name="confirm_password" required />
-            <div class="error-message" id="confirm-error">Passwords do not match.</div>
-          </div>
+      <div class="field span2">
+        <label for="contact">Contact number <span class="req">*</span></label>
+        <input type="text" id="contact" name="contact" value="{{ contact or '' }}" placeholder="0831234567" required />
+        <span class="err-msg" id="contact-error">Enter a valid 10-digit number.</span>
+      </div>
 
+      <div class="field span2">
+        <label for="password">Password <span class="req">*</span></label>
+        <div class="pw-wrap">
+          <input type="password" id="password" name="password" placeholder="Create a strong password" required />
+          <button type="button" class="pw-toggle" id="toggle-password">Show</button>
         </div>
+        <div class="pw-rules">
+          <span class="pw-rule" id="rule-length">At least 6 characters</span>
+          <span class="pw-rule" id="rule-uppercase">At least 1 uppercase letter</span>
+          <span class="pw-rule" id="rule-number">At least 1 number</span>
+        </div>
+        <span class="err-msg" id="password-error">Password doesn't meet the requirements.</span>
+      </div>
 
-        <button type="submit" id="submitBtn" class="btn btn-primary">Sign Up</button>
-      </form>
+      <div class="field span2">
+        <label for="confirm_password">Confirm password <span class="req">*</span></label>
+        <div class="pw-wrap">
+          <input type="password" id="confirm_password" name="confirm_password" placeholder="Repeat your password" required />
+          <button type="button" class="pw-toggle" id="toggle-confirm">Show</button>
+        </div>
+        <span class="err-msg" id="confirm-error">Passwords do not match.</span>
+      </div>
 
-      <p class="recovery-links">
-        Already have an account? <a href="{{ url_for('auth.login_get') }}">Sign in</a>
-      </p>
-      <p class="recovery-links">
-        Want to offer services? <a href="{{ url_for('auth.choose_pro_type') }}">Become a Professional</a>
-      </p>
-    </section>
-  </main>
+    </div>
 
-  <script>
-    const nameInput    = document.getElementById('name');
-    const surnameInput = document.getElementById('surname');
-    const emailInput   = document.getElementById('email');
-    const contactInput = document.getElementById('contact');
-    const passwordInput = document.getElementById('password');
-    const confirmInput  = document.getElementById('confirm_password');
+    <button type="submit" class="btn-submit">Create account</button>
+  </form>
 
-    const nameError     = document.getElementById('name-error');
-    const surnameError  = document.getElementById('surname-error');
-    const emailError    = document.getElementById('email-error');
-    const contactError  = document.getElementById('contact-error');
-    const passwordError = document.getElementById('password-error');
-    const confirmError  = document.getElementById('confirm-error');
+  <div class="divider">or</div>
 
-    function showError(input, el) { input.classList.remove('valid'); input.classList.add('invalid'); el.style.display = 'block'; }
-    function showValid(input, el) { input.classList.remove('invalid'); input.classList.add('valid'); el.style.display = 'none'; }
+  <a href="{{ url_for('auth.google_login') }}" class="btn-google">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+    Continue with Google
+  </a>
 
-    function validateName()    { return nameInput.value.trim()    ? (showValid(nameInput, nameError), true)    : (showError(nameInput, nameError), false); }
-    function validateSurname() { return surnameInput.value.trim() ? (showValid(surnameInput, surnameError), true) : (showError(surnameInput, surnameError), false); }
+  <div class="footer-links">
+    <span>Already have an account? <a href="{{ url_for('auth.login_get') }}">Sign in</a></span>
+    <span>Want to offer services? <a href="{{ url_for('auth.choose_pro_type') }}">Become a Professional →</a></span>
+  </div>
 
-    function validateEmail() {
-      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim());
-      ok ? showValid(emailInput, emailError) : showError(emailInput, emailError);
-      return ok;
-    }
+</div>
 
-    function validateContact() {
-      const ok = /^\d{10}$/.test(contactInput.value.trim());
-      ok ? showValid(contactInput, contactError) : showError(contactInput, contactError);
-      return ok;
-    }
+<script>
+  const $ = id => document.getElementById(id);
 
-    function validatePassword() {
-      const v = passwordInput.value;
-      const l = v.length >= 6, u = /[A-Z]/.test(v), n = /\d/.test(v);
-      document.getElementById('rule-length').style.color    = l ? 'green' : 'red';
-      document.getElementById('rule-uppercase').style.color = u ? 'green' : 'red';
-      document.getElementById('rule-number').style.color    = n ? 'green' : 'red';
-      const ok = l && u && n;
-      ok ? showValid(passwordInput, passwordError) : showError(passwordInput, passwordError);
-      return ok;
-    }
+  function showErr(inp, el) { inp.classList.remove('valid'); inp.classList.add('invalid'); el.style.display = 'block'; }
+  function showOk(inp, el)  { inp.classList.remove('invalid'); inp.classList.add('valid'); el.style.display = 'none'; }
+  function ruleOk(el, pass) { el.className = 'pw-rule' + (pass ? ' ok' : ''); }
 
-    function validateConfirmPassword() {
-      const ok = confirmInput.value !== '' && confirmInput.value === passwordInput.value;
-      ok ? showValid(confirmInput, confirmError) : showError(confirmInput, confirmError);
-      return ok;
-    }
+  function validateName()    { return $('name').value.trim()    ? (showOk($('name'), $('name-error')), true)    : (showErr($('name'), $('name-error')), false); }
+  function validateSurname() { return $('surname').value.trim() ? (showOk($('surname'), $('surname-error')), true) : (showErr($('surname'), $('surname-error')), false); }
 
-    nameInput.addEventListener('input', validateName);
-    surnameInput.addEventListener('input', validateSurname);
-    emailInput.addEventListener('input', validateEmail);
-    contactInput.addEventListener('input', validateContact);
-    passwordInput.addEventListener('input', () => { validatePassword(); validateConfirmPassword(); });
-    confirmInput.addEventListener('input', validateConfirmPassword);
+  function validateEmail() {
+    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('email').value.trim());
+    ok ? showOk($('email'), $('email-error')) : showErr($('email'), $('email-error')); return ok;
+  }
+  function validateContact() {
+    const ok = /^\d{10}$/.test($('contact').value.trim());
+    ok ? showOk($('contact'), $('contact-error')) : showErr($('contact'), $('contact-error')); return ok;
+  }
+  function validatePassword() {
+    const v = $('password').value;
+    const l = v.length >= 6, u = /[A-Z]/.test(v), n = /\d/.test(v);
+    ruleOk($('rule-length'), l); ruleOk($('rule-uppercase'), u); ruleOk($('rule-number'), n);
+    const ok = l && u && n;
+    ok ? showOk($('password'), $('password-error')) : showErr($('password'), $('password-error')); return ok;
+  }
+  function validateConfirm() {
+    const ok = $('confirm_password').value !== '' && $('confirm_password').value === $('password').value;
+    ok ? showOk($('confirm_password'), $('confirm-error')) : showErr($('confirm_password'), $('confirm-error')); return ok;
+  }
 
-    document.getElementById('toggle-password').addEventListener('click', function() {
-      passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
-      this.textContent   = passwordInput.type === 'password' ? 'Show' : 'Hide';
+  $('name').addEventListener('input', validateName);
+  $('surname').addEventListener('input', validateSurname);
+  $('email').addEventListener('input', validateEmail);
+  $('contact').addEventListener('input', validateContact);
+  $('password').addEventListener('input', () => { validatePassword(); validateConfirm(); });
+  $('confirm_password').addEventListener('input', validateConfirm);
+
+  function makeToggle(btnId, inputId) {
+    $(btnId).addEventListener('click', () => {
+      const inp = $(inputId);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      $(btnId).textContent = inp.type === 'password' ? 'Show' : 'Hide';
     });
+  }
+  makeToggle('toggle-password', 'password');
+  makeToggle('toggle-confirm', 'confirm_password');
 
-    document.getElementById('signup-form').addEventListener('submit', e => {
-      if (!validateName() || !validateSurname() || !validateEmail() || !validateContact() || !validatePassword() || !validateConfirmPassword()) {
-        e.preventDefault();
-      }
-    });
-  </script>
+  $('signup-form').addEventListener('submit', e => {
+    const ok = validateName() & validateSurname() & validateEmail() & validateContact() & validatePassword() & validateConfirm();
+    if (!ok) e.preventDefault();
+  });
+</script>
 </body>
 </html>
