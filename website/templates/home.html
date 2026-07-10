@@ -103,7 +103,7 @@
                 </div>
             {% elif file.endswith(('.mp4', '.mov', '.avi', '.webm')) %}
                 <div class="media-wrapper">
-                    <video autoplay playsinline loop class="media-item">
+                    <video autoplay muted playsinline loop class="media-item">
   <source src="{{ url_for('static', filename=file) }}">
 </video>
                     {% if loop.index0 == max_visible - 1 and extra_count > 0 %}

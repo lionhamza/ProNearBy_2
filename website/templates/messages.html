@@ -3,38 +3,92 @@
 
 {% block div %}
 <div class="chat-container">
+
   <!-- User List -->
-<div id="userList" class="user-list">
-  <h3>Chats</h3>
-  {% for user in users %}
-    <a href="{{ url_for('views.messages', user_id=user.ID) }}" class="chat-user {% if selected_user and user.ID == selected_user.ID %}active{% endif %}">
-      {{ user.Name }} {{ user.Surname }}
-      {% if unread_counts[user.ID] > 0 %}
-        <span class="unread-badge">{{ unread_counts[user.ID] }}</span>
-      {% endif %}
-    </a>
-  {% endfor %}
-</div>
+  <div id="userList" class="user-list">
+    <div class="user-list-header">
+      <h3>Chats</h3>
+      <div class="chat-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="chatSearchInput" placeholder="Search chats..." autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="user-list-scroll">
+      {% for user in users %}
+        <a href="{{ url_for('views.messages', user_id=user.ID) }}"
+           class="chat-user {% if selected_user and user.ID == selected_user.ID %}active{% endif %}"
+           data-name="{{ (user.Name ~ ' ' ~ user.Surname)|lower }}">
+          <span class="avatar avatar-md avatar-{{ (user.ID % 5) + 1 }}">{{ user.Name[0] }}{{ user.Surname[0] }}</span>
+          <span class="chat-user-name">{{ user.Name }} {{ user.Surname }}</span>
+          {% if unread_counts[user.ID] > 0 %}
+            <span class="unread-badge">{{ unread_counts[user.ID] }}</span>
+          {% endif %}
+        </a>
+      {% else %}
+        <p class="no-chats">No conversations yet. Once you message a Pro, they'll show up here.</p>
+      {% endfor %}
+    </div>
+  </div>
 
   <!-- Chat Box -->
   <div id="chatBox" class="chat-box {% if selected_user %}active{% endif %}">
     {% if selected_user %}
-      <a href="#" class="back-link" onclick="goBackToList()">← Back</a>
-      <h3>Chat with {{ selected_user.Name }}</h3>
+      <div class="chat-box-header">
+        <a href="#" class="back-link" onclick="goBackToList(); return false;" aria-label="Back to chats">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <span class="avatar avatar-lg avatar-{{ (selected_user.ID % 5) + 1 }}">{{ selected_user.Name[0] }}{{ selected_user.Surname[0] }}</span>
+        <div class="header-text">
+          <h3>{{ selected_user.Name }} {{ selected_user.Surname }}</h3>
+        </div>
+      </div>
+
       <div class="message-history">
+        {% set ns = namespace(prev_date=None, prev_sender=None) %}
         {% for msg in messages %}
-          <div class="{% if msg.sender_id == session['user_id'] %}sent{% else %}received{% endif %}">
-            <p>{{ msg.content }}</p>
-            <span>{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
-          </div>
+          {% set msg_date = msg.timestamp.strftime('%Y-%m-%d') %}
+          {% if msg_date != ns.prev_date %}
+            <div class="date-divider">
+              <span>{{ msg.timestamp.strftime('%B %d, %Y').replace(' 0', ' ') }}</span>
+            </div>
+            {% set ns.prev_sender = None %}
+          {% endif %}
+          {% set ns.prev_date = msg_date %}
+
+          {% set is_system = (msg.is_system is defined and msg.is_system) or msg.content.startswith('My Information -') %}
+
+          {% if is_system %}
+            <div class="msg-row system">
+              <div class="system-card">{{ msg.content }}</div>
+            </div>
+            {% set ns.prev_sender = None %}
+          {% else %}
+            {% set is_sent = msg.sender_id == session['user_id'] %}
+            {% set grouped = ns.prev_sender == msg.sender_id %}
+            <div class="msg-row {{ 'sent' if is_sent else 'received' }} {{ 'grouped' if grouped else '' }}">
+              {% if not is_sent %}
+                <span class="avatar avatar-md avatar-{{ (selected_user.ID % 5) + 1 }} {{ 'spacer' if grouped else '' }}">{{ selected_user.Name[0] }}{{ selected_user.Surname[0] }}</span>
+              {% endif %}
+              <div class="msg-col">
+                <p>{{ msg.content }}</p>
+                <span class="msg-time">{{ msg.timestamp.strftime('%H:%M') }}</span>
+              </div>
+            </div>
+            {% set ns.prev_sender = msg.sender_id %}
+          {% endif %}
         {% endfor %}
       </div>
+
       <form method="POST" class="message-form">
-        <input type="text" name="message" placeholder="Type your message..." required />
-        <button type="submit">Send</button>
+        <input type="text" name="message" id="messageInput" placeholder="Type your message..." required autocomplete="off" />
+        <button type="submit" id="sendBtn" disabled>Send</button>
       </form>
     {% else %}
-      <p>Select a user to start chatting.</p>
+      <div class="chat-box-empty">
+        <i class="fas fa-comments"></i>
+        <p>Select a conversation to start chatting.</p>
+      </div>
     {% endif %}
   </div>
 </div>
@@ -59,9 +113,29 @@
       }
     }
 
-    // ✅ Instantly set to bottom (no scroll animation)
+    // Instantly set to bottom (no scroll animation)
     if (messageHistory) {
       messageHistory.scrollTop = messageHistory.scrollHeight;
+    }
+
+    // Enable Send only once there's something to send
+    const messageInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
+    if (messageInput && sendBtn) {
+      messageInput.addEventListener("input", () => {
+        sendBtn.disabled = messageInput.value.trim().length === 0;
+      });
+    }
+
+    // Client-side filter for the chat search box
+    const searchInput = document.getElementById("chatSearchInput");
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        const q = searchInput.value.trim().toLowerCase();
+        document.querySelectorAll(".chat-user").forEach(el => {
+          el.style.display = el.dataset.name.includes(q) ? "flex" : "none";
+        });
+      });
     }
   });
 
@@ -71,7 +145,7 @@
     document.getElementById("userList").style.display = "block";
   }
 
-  // ✅ After sending a message, keep it stuck at bottom
+  // After sending a message, keep it stuck at bottom
   document.querySelector(".message-form")?.addEventListener("submit", function () {
     const messageHistory = document.querySelector(".message-history");
     if (messageHistory) {
@@ -79,8 +153,5 @@
     }
   });
 </script>
-
-
-
 
 {% endblock %}

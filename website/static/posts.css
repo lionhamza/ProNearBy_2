@@ -127,11 +127,9 @@
 }
 
 .media-grid.single-media .media-wrapper .media-item {
-  height: auto;
-  max-height: 420px;
+  height: 420px;
   width: 100%;
-  object-fit: contain;
-  background: #111;
+  object-fit: cover;
 }
 
 .media-item:hover {

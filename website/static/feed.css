@@ -375,3 +375,9 @@ body {
     min-width: 100%;
   }
 }
+
+/* Google Places autocomplete dropdown - must be above modal (z-index 9999) */
+.pac-container {
+  z-index: 99999 !important;
+  pointer-events: all !important;
+}

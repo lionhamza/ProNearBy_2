@@ -13,8 +13,39 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" type="image/x-icon" />
   <link rel="stylesheet" href="{{ url_for('static', filename='mobile_home_fix.css') }}">
-   <link rel="stylesheet" href="{{ url_for('static', filename='mobile_home_fix.css') }}">
-  {% block extra_css %}{% endblock %}   ← ADD THIS
+  {% block extra_css %}{% endblock %}
+
+  <!-- ✅ Define callback BEFORE the API script so Google can find it immediately -->
+  <script>
+  function initGooglePlaces() {
+    const locationInput = document.getElementById("location");
+    if (!locationInput) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+      types: ["geocode"],
+      componentRestrictions: { country: "za" }
+    });
+
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry) return;
+      document.getElementById("user-lat").value = place.geometry.location.lat();
+      document.getElementById("user-lng").value = place.geometry.location.lng();
+    });
+
+    // Stop Enter from submitting the form while suggestion dropdown is open
+    locationInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") e.preventDefault();
+    });
+  }
+  </script>
+
+  <!-- ✅ callback=initGooglePlaces fires your function the moment the API is ready -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCiEtsuTYyF5GYph3n3V0_cKTl-k_pMz0g&libraries=places&callback=initGooglePlaces"
+    async
+    defer>
+  </script>
 </head>
 <body>
   <header>
@@ -26,669 +57,400 @@
     </a>
 
     <!-- Search form in center -->
-<form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
-  <!-- Always visible -->
-  <input
-    type="text"
-    class="header-search-input"
-    name="search"
-    placeholder="Search for a Pro..."
-    value="{{ request.args.get('search', '') }}"
-    onclick="showMobileSearch()"
-  />
-
-  <!-- Hidden on small screens -->
-  <div class="location-search-wrapper" id="locationSearch">
-    <div class="location-input-wrapper">
+    <form class="search-form" method="GET" action="{{ url_for('views.mock_feed') }}">
+      <!-- Always visible -->
       <input
         type="text"
-        id="location"
-        class="header-search-input location-input"
-        name="location"
-        placeholder="Which location..."
-        value="{{ request.args.get('location', '') }}"
+        class="header-search-input"
+        name="search"
+        placeholder="Search for a Pro..."
+        value="{{ request.args.get('search', '') }}"
+        onclick="showMobileSearch()"
       />
-      <button type="button" id="detectLocationBtn" class="location-btn">
-        <i class="fas fa-location-arrow"></i>
-      </button>
-    </div>
-    <button type="submit" class="header-search-button">Search</button>
-  </div>
 
-  <!-- ✅ Hidden inputs for latitude and longitude -->
-  <input type="hidden" id="user-lat" name="lat" value="{{ request.args.get('lat', '') }}">
-  <input type="hidden" id="user-lng" name="lng" value="{{ request.args.get('lng', '') }}">
-</form>
+      <!-- Hidden on small screens -->
+      <div class="location-search-wrapper" id="locationSearch">
+        <div class="location-input-wrapper">
+          <input
+            type="text"
+            id="location"
+            class="header-search-input"
+            name="location"
+            placeholder="Which location..."
+            value="{{ request.args.get('location', '') }}"
+            autocomplete="off"
+          />
+          <button type="button" id="detectLocationBtn" class="location-btn">
+            <i class="fas fa-location-arrow"></i>
+          </button>
+        </div>
+        <button type="submit" class="header-search-button">Search</button>
+      </div>
 
-
+      <!-- Hidden inputs for latitude and longitude -->
+      <input type="hidden" id="user-lat" name="lat" value="{{ request.args.get('lat', '') }}">
+      <input type="hidden" id="user-lng" name="lng" value="{{ request.args.get('lng', '') }}">
+    </form>
 
     <!-- Nav links -->
     <div class="nav-links">
       <a href="{{ url_for('views.Base') }}" class="nav-link">Home</a>
       <a href="{{ url_for('views.mock_feed') }}" class="nav-link">
-          <i class="fas fa-stream"></i> Professional Feed
-        </a>
+        <i class="fas fa-stream"></i> Professional Feed
+      </a>
     </div>
 
     <!-- Icons and notification -->
-    <!-- Icons and notification -->
-<div class="icons-container">
+    <div class="icons-container">
 
-  <!-- Messages with badge -->
-  <a href="{{ url_for('views.messages') }}" class="icon-badge">
-    <img src="{{ url_for('static', filename='assets/message.png') }}" alt="Messages" class="header-icon" />
-    {% if unread_messages_count and unread_messages_count > 0 %}
-      <span class="badge">{{ unread_messages_count }}</span>
-    {% endif %}
-  </a>
-  <a href="{{ url_for('views.wallet') }}" class="icon-link">
-    <img src="{{ url_for('static', filename='assets/wallet_icon.png') }}" alt="Wallet" class="header-icon" />
-  </a>
+      <!-- Messages with badge -->
+      <a href="{{ url_for('views.messages') }}" class="icon-badge">
+        <img src="{{ url_for('static', filename='assets/message.png') }}" alt="Messages" class="header-icon" />
+        {% if unread_messages_count and unread_messages_count > 0 %}
+          <span class="badge">{{ unread_messages_count }}</span>
+        {% endif %}
+      </a>
 
-  <!-- Notifications with badge -->
-  <div class="notification-wrapper icon-badge">
-    <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="Notifications" class="header-icon" id="notificationBell" />
-    {% if pending_requests_count and pending_requests_count > 0 %}
-      <span class="badge">{{ pending_requests_count }}</span>
-    {% endif %}
+      <!-- Wallet -->
+      <a href="{{ url_for('views.wallet') }}" class="icon-link">
+        <img src="{{ url_for('static', filename='assets/wallet_icon.png') }}" alt="Wallet" class="header-icon" />
+      </a>
 
-    <div class="notification-dropdown" id="notificationDropdown">
-  <h4>Notifications</h4>
-  {% if service_requests %}
-    {% for request in service_requests %}
-      <div class="notification-item">
-        <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
-        <small>
-          {{ request.service_type }} |
-          {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
-          {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
-        </small>
-        <div class="notification-actions">
-          {% if user.user_type in ['certifiedPro','experiencedPro'] and request.receiver_id == user.ID %}
-            <!-- PRO ACTIONS -->
-            {% if request.status == 'pending' %}
-              <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
-                <button type="submit" class="accept-btn">Accept</button>
-              </form>
-              <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
-                <button type="submit" class="decline-btn">Decline</button>
-              </form>
-            {% elif request.status == 'accepted' %}
-              <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
-                <button type="submit" class="complete-btn">Mark as Completed</button>
-              </form>
-            {% elif request.status == 'completed' %}
-              <span class="completed-label">✅ Completed</span>
-            {% endif %}
-          
+      <!-- Notifications with badge -->
+      <div class="notification-wrapper icon-badge">
+        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="Notifications" class="header-icon" id="notificationBell" />
+        {% if pending_requests_count and pending_requests_count > 0 %}
+          <span class="badge">{{ pending_requests_count }}</span>
+        {% endif %}
+
+        <div class="notification-dropdown" id="notificationDropdown">
+          <h4>Notifications</h4>
+          {% if service_requests %}
+            {% for request in service_requests %}
+              <div class="notification-item">
+                <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
+                <small>
+                  {{ request.service_type }} |
+                  {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
+                  {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
+                </small>
+                <div class="notification-actions">
+                  {% if user.user_type in ['certifiedPro','experiencedPro'] and request.receiver_id == user.ID %}
+                    {% if request.status == 'pending' %}
+                      <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
+                        <button type="submit" class="accept-btn">Accept</button>
+                      </form>
+                      <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
+                        <button type="submit" class="decline-btn">Decline</button>
+                      </form>
+                    {% elif request.status == 'accepted' %}
+                      <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
+                        <button type="submit" class="complete-btn">Mark as Completed</button>
+                      </form>
+                    {% elif request.status == 'completed' %}
+                      <span class="completed-label">✅ Completed</span>
+                    {% endif %}
+                  {% else %}
+                    {% if request.status == 'awaiting_confirmation' and current_user.ID == request.sender_id %}
+                      <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=request.id) }}">
+                        <button type="submit" class="confirm-btn">Confirm Completion</button>
+                      </form>
+                    {% elif request.status == 'completed' %}
+                      <span class="completed-label">✅ Completed</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{{ request.status|capitalize }}</span>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
           {% else %}
-            <!-- REGULAR USER ACTIONS -->
-            {% if request.status == 'awaiting_confirmation' and current_user.ID == request.sender_id %}
-              <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=request.id) }}">
-                <button type="submit" class="confirm-btn">Confirm Completion</button>
-              </form>
-            {% elif request.status == 'completed' %}
-              <span class="completed-label">✅ Completed</span>
-            {% else %}
-              <span class="badge bg-secondary">{{ request.status|capitalize }}</span>
-            {% endif %}
+            <p class="no-notifications">No new notifications</p>
           {% endif %}
         </div>
       </div>
-    {% endfor %}
-  {% else %}
-    <p class="no-notifications">No new notifications</p>
-  {% endif %}
-</div>
 
+      <!-- Logout -->
+      <a href="{{ url_for('auth.logout') }}" class="icon-link logout-icon">
+        <i class="fas fa-sign-out-alt"></i>
+      </a>
     </div>
- <!-- Wallet -->
 
-  <!-- Logout -->
-  <a href="{{ url_for('auth.logout') }}" class="icon-link logout-icon">
-    <i class="fas fa-sign-out-alt"></i>
-  </a>
-</div>
+    <!-- Mobile hamburger -->
+    <div class="mobile-menu-icon" onclick="toggleMobileMenu()">
+      <i class="fas fa-bars"></i>
+    </div>
 
-<!-- Mobile hamburger -->
-<div class="mobile-menu-icon" onclick="toggleMobileMenu()">
-  <i class="fas fa-bars"></i>
-</div>
+  </div>
+  </header>
 
-</div>
-</header>
-
-<div class="mobile-menu" id="mobileMenu">
-  <a href="{{ url_for('views.Base') }}">Home</a>
-  <a href="{{ url_for('views.mock_feed') }}">Professional Feed</a>
-  <a href="{{ url_for('views.messages') }}">Messages</a>
-  <a href="#" onclick="toggleMobileNotificationDropdown()">Notifications</a>
-  
-  {% if user %}
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="{{ url_for('views.Base') }}">Home</a>
+    <a href="{{ url_for('views.mock_feed') }}">Professional Feed</a>
+    <a href="{{ url_for('views.messages') }}">Messages</a>
+    <a href="#" onclick="toggleMobileNotificationDropdown()">Notifications</a>
+    {% if user %}
     {% if user.user_type == 'regular' %}
-        <a href="{{ url_for('views.regular_profile', user_id=user.ID) }}">My Profile</a>
+    <a href="{{ url_for('views.regular_profile', user_id=user.ID) }}">My Profile</a>
     {% else %}
-        <a href="{{ url_for('views.profile', user_id=user.ID) }}">My Profile</a>
+    <a href="{{ url_for('views.profile', user_id=user.ID) }}">My Profile</a>
     {% endif %}
-  {% endif %}
-  <a href="{{ url_for('auth.logout') }}">Logout</a>
-</div>
-
-<!-- Mobile Notification Dropdown -->
-<div class="mobile-notification-dropdown" id="mobileNotificationDropdown" style="display: none;">
-  <h4>Notifications</h4>
-  {% if service_requests %}
+    {% endif %}
+    <a href="{{ url_for('views.wallet') }}">wallet</a>
+    <a href="{{ url_for('auth.logout') }}">Logout</a>
+  </div>
+  
+  <!-- Mobile Notification Dropdown -->
+  <div class="mobile-notification-dropdown" id="mobileNotificationDropdown" style="display: none;">
+    <h4>Notifications</h4>
+    {% if service_requests %}
     {% for request in service_requests %}
-      <div class="notification-item">
-        <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
-        <small>
-          {{ request.service_type }} |
-          {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
-          {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
-        </small>
-        <div class="notification-actions">
-          {% if user.user_type in ['certifiedPro','experiencedPro'] and request.receiver_id == user.ID %}
-            <!-- PRO ACTIONS -->
-            {% if request.status == 'pending' %}
+        <div class="notification-item">
+          <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
+          <small>
+            {{ request.service_type }} |
+            {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
+            {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
+          </small>
+          <div class="notification-actions">
+            {% if user.user_type in ['certifiedPro','experiencedPro'] and request.receiver_id == user.ID %}
+              {% if request.status == 'pending' %}
               <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
-                <button type="submit" class="accept-btn">Accept</button>
-              </form>
-              <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
-                <button type="submit" class="decline-btn">Decline</button>
-              </form>
-            {% elif request.status == 'accepted' %}
+                  <button type="submit" class="accept-btn">Accept</button>
+                </form>
+                <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
+                  <button type="submit" class="decline-btn">Decline</button>
+                </form>
+              {% elif request.status == 'accepted' %}
               <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
                 <button type="submit" class="complete-btn">Mark as Completed</button>
               </form>
-            {% elif request.status == 'completed' %}
-              <span class="completed-label">✅ Completed</span>
-            {% endif %}
-
-          {% else %}
-            <!-- REGULAR USER ACTIONS -->
-            {% if request.status == 'awaiting_confirmation' and current_user.ID == request.sender_id %}
-              <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=request.id) }}">
-                <button type="submit" class="confirm-btn">Confirm Completion</button>
-              </form>
-            {% elif request.status == 'completed' %}
-              <span class="completed-label">✅ Completed</span>
+              {% elif request.status == 'completed' %}
+                <span class="completed-label">✅ Completed</span>
+                {% endif %}
             {% else %}
-              <span class="badge bg-secondary">{{ request.status|capitalize }}</span>
-            {% endif %}
-          {% endif %}
+              {% if request.status == 'awaiting_confirmation' and current_user.ID == request.sender_id %}
+                <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=request.id) }}">
+                  <button type="submit" class="confirm-btn">Confirm Completion</button>
+                </form>
+                {% elif request.status == 'completed' %}
+                <span class="completed-label">✅ Completed</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ request.status|capitalize }}</span>
+                {% endif %}
+                {% endif %}
+          </div>
         </div>
-      </div>
-    {% endfor %}
-  {% else %}
-    <p class="no-notifications">No new notifications</p>
-  {% endif %}
-</div>
-
-
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div class="flash-messages" id="flash-container">
-     {% for category, message in messages %}
-      <div class="flash-message {{ category }}">{{ message }}</div>
       {% endfor %}
-    </div>
+      {% else %}
+      <p class="no-notifications">No new notifications</p>
+    {% endif %}
+  </div>
+  
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+      <div class="flash-messages" id="flash-container">
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
-  {% endif %}
-{% endwith %}
   {% block div %}{% endblock %}
-  <!-- END OF MAIN CONTENT -->
 
-<script>
-  function showMobileSearch() {
-    const wrapper = document.getElementById("locationSearch");
-    wrapper.classList.toggle("show");
-  }
+  <!-- Lightbox, media-grid, nav-btn styles now live in home.css (single source of truth) -->
 
-  // Close location search when clicking outside
-  window.addEventListener("click", function (e) {
-    const searchInput = document.querySelector(".header-search-input");
-    const locationWrapper = document.getElementById("locationSearch");
-
-    // If search is open, and click is outside both input and wrapper, close it
-    if (
-      locationWrapper.classList.contains("show") &&
-      !searchInput.contains(e.target) &&
-      !locationWrapper.contains(e.target)
-    ) {
-      locationWrapper.classList.remove("show");
+  <!-- Lightbox JS -->
+  <script>
+    let currentMedia = [];
+    let currentIndex = 0;
+    function openLightbox(mediaArray, index) { currentMedia = mediaArray; currentIndex = index; showLightbox(); }
+    function showLightbox() {
+      const lb = document.getElementById('lightbox');
+      const lbImg = document.getElementById('lightbox-img');
+      const lbVideo = document.getElementById('lightbox-video');
+      const file = currentMedia[currentIndex];
+      const ext = file.split('.').pop().toLowerCase();
+      lb.style.display = 'flex';
+      if (['mp4','mov','avi','webm'].includes(ext)) {
+        lbImg.style.display = 'none'; lbVideo.style.display = 'block';
+        lbVideo.src = `/static/${file}`; lbVideo.play();
+      } else {
+        lbVideo.style.display = 'none'; lbVideo.pause();
+        lbImg.style.display = 'block'; lbImg.src = `/static/${file}`;
+      }
     }
-  });
+    function closeLightbox() {
+      document.getElementById('lightbox-video').pause();
+      document.getElementById('lightbox').style.display = 'none';
+    }
+    function nextMedia() { currentIndex = (currentIndex + 1) % currentMedia.length; showLightbox(); }
+    function prevMedia() { currentIndex = (currentIndex - 1 + currentMedia.length) % currentMedia.length; showLightbox(); }
+  </script>
 
-  // Prevent clicks inside search form from triggering outside close
-  document.querySelector(".search-form").addEventListener("click", function (e) {
-    e.stopPropagation();
-  });
-</script>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const mobileDropdown = document.getElementById('mobileNotificationDropdown');
-    const mobileToggleLink = document.querySelector('a[onclick="toggleMobileNotificationDropdown()"]');
-
-    // 1. Toggle dropdown when "Notifications" link is clicked
-    mobileToggleLink.addEventListener('click', function (e) {
-      e.preventDefault(); // stop the <a> navigation
-      e.stopPropagation(); // prevent bubbling
-      mobileDropdown.style.display = mobileDropdown.style.display === 'block' ? 'none' : 'block';
-    });
-
-    // 2. Close when clicking outside
-    document.addEventListener('click', function (e) {
-      if (!mobileDropdown.contains(e.target) && !mobileToggleLink.contains(e.target)) {
-        mobileDropdown.style.display = 'none';
+  <!-- All other scripts -->
+  <script>
+    // ── Mobile search toggle ──────────────────────────────────────
+    function showMobileSearch() {
+      document.getElementById("locationSearch").classList.toggle("show");
+    }
+    window.addEventListener("click", function (e) {
+      const searchInput = document.querySelector(".header-search-input");
+      const locationWrapper = document.getElementById("locationSearch");
+      if (locationWrapper.classList.contains("show") &&
+          !searchInput.contains(e.target) &&
+          !locationWrapper.contains(e.target)) {
+        locationWrapper.classList.remove("show");
       }
     });
+    document.querySelector(".search-form").addEventListener("click", e => e.stopPropagation());
 
-    // 3. Close when clicking a notification item
-    // 3. Close when clicking a notification item
-mobileDropdown.addEventListener('click', function (e) {
-  if (e.target.classList.contains('notification-item') || e.target.closest('.notification-item')) {
-    mobileDropdown.style.display = 'none';
-
-    // Also close the mobile menu
-    const mobileMenu = document.getElementById('mobileMenu');
-    mobileMenu.classList.remove('show');
-  }
-});
-
-
-  });
-</script>
-<!-- Lightbox -->
-
-
-<style>
-.nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.5);
-  color: white;
-  border: none;
-  font-size: 2rem;
-  padding: 0 10px;
-  cursor: pointer;
-  z-index: 10000;
-}
-
-.nav-btn.left { left: 10px; }
-.nav-btn.right { right: 10px; }
-
-.lightbox {
-  display: none; /* hide initially */
-  position: fixed;
-  z-index: 9999;
-  left: 0; 
-  top: 0;
-  width: 100%; 
-  height: 100%;
-  background: rgba(0,0,0,0.9);
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.lightbox img, .lightbox video {
-  max-width: 90%;
-  max-height: 90%;
-  border-radius: 8px;
-}/* Base grid (keep once) */
-.media-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 8px;
-}
-
-/* Single item fills width */
-
-.media-grid.single-media {
-  grid-template-columns: 1fr;
-}
-
-.media-grid.single-media .media-wrapper img,
-.media-grid.single-media .media-wrapper video {
-  
-  height: auto;
-  max-height: 350px;
-  max-width:500px   /* reduce from 80vh to a fixed, balanced size */
-  object-fit: contain; /* keeps aspect ratio */
-  border-radius: 10px; /* keeps style consistent with multi-image posts */
-}
-
-/* Exactly 3 items: make a mosaic without the empty slot */
-.media-grid.three-media {
-  /* force 2 columns so we can make one tile tall */
-  grid-template-columns: 2fr 1fr;   /* big left, small right */
-  grid-auto-rows: 140px;            /* FIXED row height so span works */
-  grid-auto-flow: dense;            /* pack items tightly, no gaps */
-}
-
-/* make the FIRST card tall (fills the “missing 4th” space) */
-.media-grid.three-media .media-wrapper:nth-child(1) {
-  grid-row: span 2;
-}
-
-/* ensure media fills its grid area */
-.media-grid.three-media .media-wrapper {
-  overflow: hidden;                 /* nice crop */
-  border-radius: 8px;
-}
-.media-grid.three-media .media-wrapper img,
-.media-grid.three-media .media-wrapper video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;                /* cover the tile cleanly */
-}
-
-
-
-</style>
-
-<script>
-
-let currentMedia = [];
-let currentIndex = 0;
-
-function openLightbox(mediaArray, index) {
-    currentMedia = mediaArray;
-    currentIndex = index;
-    showLightbox();
-}
-
-function showLightbox() {
-    const lb = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lightbox-img');
-    const lbVideo = document.getElementById('lightbox-video');
-
-    const file = currentMedia[currentIndex];
-    const ext = file.split('.').pop().toLowerCase();
-
-    lb.style.display = 'flex';
-
-    if(['mp4','mov','avi','webm'].includes(ext)){
-        lbImg.style.display = 'none';
-        lbVideo.style.display = 'block';
-        lbVideo.src = `/static/${file}`;
-        lbVideo.play();
-    } else {
-        lbVideo.style.display = 'none';
-        lbVideo.pause();
-        lbImg.style.display = 'block';
-        lbImg.src = `/static/${file}`;
+    // ── Mobile menu ───────────────────────────────────────────────
+    function toggleMobileMenu() {
+      document.getElementById('mobileMenu').classList.toggle('show');
     }
-}
+    window.addEventListener('click', function (e) {
+      const menu = document.getElementById('mobileMenu');
+      const icon = document.querySelector('.mobile-menu-icon');
+      if (!menu.contains(e.target) && !icon.contains(e.target)) menu.classList.remove('show');
+    });
 
-function closeLightbox() {
-    const lbVideo = document.getElementById('lightbox-video');
-    lbVideo.pause();
-    document.getElementById('lightbox').style.display = 'none';
-}
+    // ── Notification bell ─────────────────────────────────────────
+    const bell     = document.getElementById('notificationBell');
+    const dropdown = document.getElementById('notificationDropdown');
+    bell.addEventListener('click', () => {
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    });
+    window.addEventListener('click', function (e) {
+      if (!bell.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+    });
 
-function nextMedia() {
-    currentIndex = (currentIndex + 1) % currentMedia.length;
-    showLightbox();
-}
-
-function prevMedia() {
-    currentIndex = (currentIndex - 1 + currentMedia.length) % currentMedia.length;
-    showLightbox();
-}
-</script>
-
-</body>
-
-<script>
-  const bell = document.getElementById('notificationBell');
-  const dropdown = document.getElementById('notificationDropdown');
-
-  bell.addEventListener('click', () => {
-    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-  });
-
-  window.addEventListener('click', function(e) {
-    if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
-      dropdown.style.display = 'none';
-    }
-  });
-</script>
-<script>
-  // Automatically fade out flash messages after 1 second
-  setTimeout(() => {
-    const container = document.getElementById("flash-container");
-    if (container) {
-      container.style.transition = "opacity 0.5s ease";
-      container.style.opacity = 0;
-      setTimeout(() => container.remove(), 500);  // fully remove from DOM
-    }
-  }, 1500);
-</script>
-<script>
-  function toggleMobileMenu() {
-    const menu = document.getElementById('mobileMenu');
-    menu.classList.toggle('show');
-  }
-
-  // Close when clicking outside
-  window.addEventListener('click', function (e) {
-    const menu = document.getElementById('mobileMenu');
-    const icon = document.querySelector('.mobile-menu-icon');
-    if (!menu.contains(e.target) && !icon.contains(e.target)) {
-      menu.classList.remove('show');
-    }
-  });
-</script>
-
-<script>
-  // Auto-detect GPS on page load so distance shows on feed without manual location entry
-  window.addEventListener("load", function () {
-    const latInput = document.getElementById("user-lat");
-    const lngInput = document.getElementById("user-lng");
-
-    if (latInput && lngInput && !latInput.value && !lngInput.value && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function (position) {
-        latInput.value = position.coords.latitude;
-        lngInput.value = position.coords.longitude;
-
-        // If user is already on the feed page, reload it with coordinates so distance shows immediately
-        if (window.location.pathname.includes("mock-feed")) {
-          const url = new URL(window.location.href);
-          url.searchParams.set("lat", position.coords.latitude);
-          url.searchParams.set("lng", position.coords.longitude);
-          window.location.replace(url.toString());
+    // ── Mobile notification dropdown ──────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+      const mobileDropdown   = document.getElementById('mobileNotificationDropdown');
+      const mobileToggleLink = document.querySelector('a[onclick="toggleMobileNotificationDropdown()"]');
+      mobileToggleLink.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        mobileDropdown.style.display = mobileDropdown.style.display === 'block' ? 'none' : 'block';
+      });
+      document.addEventListener('click', function (e) {
+        if (!mobileDropdown.contains(e.target) && !mobileToggleLink.contains(e.target))
+          mobileDropdown.style.display = 'none';
+      });
+      mobileDropdown.addEventListener('click', function (e) {
+        if (e.target.classList.contains('notification-item') || e.target.closest('.notification-item')) {
+          mobileDropdown.style.display = 'none';
+          document.getElementById('mobileMenu').classList.remove('show');
         }
       });
-    }
-  });
-</script>
-
-<script>
-  function showMobileSearch() {
-    const wrapper = document.getElementById("locationSearch");
-    wrapper.classList.toggle("show");
-  }
-</script>
-<script>
-document.querySelectorAll('.like-button').forEach(button => {
-  button.addEventListener('click', async (e) => {
-    e.preventDefault();  // prevent form from submitting and reloading the page
-
-    const postId = button.getAttribute('data-post-id');
-    const icon = document.getElementById(`like-icon-${postId}`);
-    const likeCount = document.getElementById(`like-count-${postId}`);
-
-    const response = await fetch(`/like/${postId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
     });
 
-    const result = await response.json();
-    if (result.success) {
-      icon.src = result.liked ? '/static/assets/likeP.png' : '/static/assets/like.png';
-      likeCount.textContent = result.like_count;
-    }
-  });
-});
-  document.querySelectorAll("video").forEach(video => {
-  let observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        video.play();
-      } else {
-        video.pause();
+    // ── Flash messages fade out ───────────────────────────────────
+    setTimeout(() => {
+      const container = document.getElementById("flash-container");
+      if (container) {
+        container.style.transition = "opacity 0.5s ease";
+        container.style.opacity = 0;
+        setTimeout(() => container.remove(), 500);
       }
-    });
-  }, { threshold: 0.5 });
+    }, 1500);
 
-  observer.observe(video);
-});
-</script>
-
-<!-- Google Places API -->
-<script
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCiEtsuTYyF5GYph3n3V0_cKTl-k_pMz0g&libraries=places"
-  async
-  defer>
-</script>
-
-<script>
-let autocomplete;
-
-function initGooglePlaces() {
-
-    const locationInput =
-        document.getElementById("location");
-
-    if (!locationInput) return;
-
-    autocomplete =
-        new google.maps.places.Autocomplete(
-            locationInput,
-            {
-                types: ["geocode"]
-            }
-        );
-
-    autocomplete.addListener(
-        "place_changed",
-        () => {
-
-            const place =
-                autocomplete.getPlace();
-
-            if (!place.geometry) return;
-
-            document.getElementById(
-                "user-lat"
-            ).value =
-                place.geometry.location.lat();
-
-            document.getElementById(
-                "user-lng"
-            ).value =
-                place.geometry.location.lng();
-        }
-    );
-}
-
-window.addEventListener("load", () => {
-
-    const checker =
-        setInterval(() => {
-
-            if (
-                window.google &&
-                google.maps &&
-                google.maps.places
-            ) {
-
-                clearInterval(checker);
-
-                initGooglePlaces();
-            }
-
-        }, 100);
-
-});
-</script>
-
-<script>
-document
-.getElementById("detectLocationBtn")
-.addEventListener("click", () => {
-
-    if (!navigator.geolocation) {
-
-        alert(
-            "Geolocation is not supported by your browser."
-        );
-
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-
-        (position) => {
-
-            const latitude =
-                position.coords.latitude;
-
-            const longitude =
-                position.coords.longitude;
-
-            document.getElementById(
-                "user-lat"
-            ).value = latitude;
-
-            document.getElementById(
-                "user-lng"
-            ).value = longitude;
-
-            const geocoder =
-                new google.maps.Geocoder();
-
-            geocoder.geocode(
-                {
-                    location: {
-                        lat: latitude,
-                        lng: longitude
-                    }
-                },
-
-                (results, status) => {
-
-                    if (
-                        status === "OK" &&
-                        results &&
-                        results.length > 0
-                    ) {
-
-                        document.getElementById(
-                            "location"
-                        ).value =
-                            results[0]
-                            .formatted_address;
-                    }
-                }
-            );
-
+    // ── GPS detect button (header) ────────────────────────────────
+    document.getElementById("detectLocationBtn").addEventListener("click", () => {
+      if (!navigator.geolocation) { alert("Geolocation is not supported by your browser."); return; }
+      const btn = document.getElementById("detectLocationBtn");
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          document.getElementById("user-lat").value = lat;
+          document.getElementById("user-lng").value = lng;
+          new google.maps.Geocoder().geocode({ location: { lat, lng } }, (results, status) => {
+            btn.innerHTML = '<i class="fas fa-location-arrow"></i>';
+            if (status === "OK" && results && results.length > 0)
+              document.getElementById("location").value = results[0].formatted_address;
+          });
         },
-
-        (error) => {
-
-            console.error(error);
-
-            alert(
-                "Unable to retrieve your location."
-            );
-
+        error => {
+          btn.innerHTML = '<i class="fas fa-location-arrow"></i>';
+          console.error(error);
+          alert("Unable to retrieve your location.");
         }
-    );
-});
-</script>
+      );
+    });
 
+    // ── Auto-detect location (silent, once per session) ────────────
+    // Runs automatically for signed-in users so distance/sorting works
+    // everywhere, including a plain click on "Professional Feed" with no
+    // search performed. No banner, no button — the only prompt the person
+    // sees is the browser's own native geolocation permission dialog,
+    // and only the first time in a given browser session.
+    (function () {
+      const isLoggedIn = {{ 'true' if session.get('user_id') else 'false' }};
+      if (!isLoggedIn || !navigator.geolocation) return;
+
+      const alreadyHasLocation = {{ 'true' if (session.get('user_lat') and session.get('user_lng')) else 'false' }};
+      if (alreadyHasLocation) return; // already saved from a previous page/session
+
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          const latInput = document.getElementById("user-lat");
+          const lngInput = document.getElementById("user-lng");
+          if (latInput && !latInput.value) latInput.value = lat;
+          if (lngInput && !lngInput.value) lngInput.value = lng;
+
+          fetch("{{ url_for('views.set_location') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ lat, lng })
+          }).then(() => {
+            // If we're already on the feed and it rendered without
+            // coordinates, refresh once now that we have them.
+            if (window.location.pathname.includes("mock-feed") &&
+                !new URL(window.location.href).searchParams.get("lat")) {
+              const url = new URL(window.location.href);
+              url.searchParams.set("lat", lat);
+              url.searchParams.set("lng", lng);
+              window.location.replace(url.toString());
+            }
+          }).catch(err => console.error("Couldn't save location:", err));
+        },
+        error => {
+          // Permission denied or unavailable — fail silently, search by
+          // typed location still works.
+          console.warn("Location not available:", error.message);
+        }
+      );
+    })();
+
+    // ── Like buttons ──────────────────────────────────────────────
+    document.querySelectorAll('.like-button').forEach(button => {
+      button.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const postId    = button.getAttribute('data-post-id');
+        const icon      = document.getElementById(`like-icon-${postId}`);
+        const likeCount = document.getElementById(`like-count-${postId}`);
+        const response  = await fetch(`/like/${postId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const result    = await response.json();
+        if (result.success) {
+          icon.src = result.liked ? '/static/assets/likeP.png' : '/static/assets/like.png';
+          likeCount.textContent = result.like_count;
+        }
+      });
+    });
+
+    // ── Auto-play videos in viewport ──────────────────────────────
+    document.querySelectorAll("video").forEach(video => {
+      new IntersectionObserver((entries) => {
+        entries.forEach(entry => { entry.isIntersecting ? video.play() : video.pause(); });
+      }, { threshold: 0.5 }).observe(video);
+    });
+  </script>
+
+</body>
 </html>

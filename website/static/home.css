@@ -187,14 +187,17 @@ header {
 
 
 .header-search-input {
-  padding: 8px 12px;
+  padding: 12px 18px;
   border: 1px solid #ccc;
-  border-radius: 20px;
-  font-size: 14px;
-  min-width: 140px;
-  width: 255px; /* increase width */
+  border-radius: 24px;
+  font-size: 16px;
+  min-width: 200px;
+  width: 340px; /* increase width */
   transition: border-color 0.3s ease, box-shadow 0.3s ease; /* smooth effect */
 }
+
+
+
 
 .header-search-input:focus {
   border-color: #007bff; /* blue border on focus */
@@ -202,13 +205,22 @@ header {
   outline: none; /* remove default outline */
 }
 
+.location-search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 340px; /* increase width */
+  flex-shrink: 0;
+}
+
 .search-form {
   display: flex;
   align-items: center;
   gap: 10px;
   flex: 1;
-  max-width: 600px;
+  max-width: 900px;
   justify-content: center;
+  flex-wrap: nowrap;
 }
 
 .error-message {
@@ -243,8 +255,9 @@ header {
 
 
 .header-search-button {
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 12px 26px;
+  border-radius: 24px;
+  font-size: 16px;
   background-color: #0073b1;
   color: white;
   border: none;
@@ -794,193 +807,19 @@ header {
 
 .flash-messages {
   position: fixed;
-  top: 90px;
+  top: 60px;
   right: 20px;
+  border-radius: 5px;
   z-index: 9999;
   padding: 10px;
-  border-radius: 5px;
 }
 
 .flash-message {
   padding: 12px 20px;
   border-radius: 5px;
   font-weight: bold;
-  color: #fff;
   margin-bottom: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
-.flash-message.success {
-  background-color: #1c72d4; /* green */
-}
-
-/*Posts*/
-.post-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 18px;
-  width: 100%;
-  max-width: 500px;
-  margin: 20px auto;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
-  color: #222;
-  transition: box-shadow 0.3s ease;
-}
-
-.post-card:hover {
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
-}
-
-.post-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
-.post-profile-pic {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 12px;
-  border: 2px solid #2b6cb0;
-}
-
-.post-user-info {
-  flex-grow: 1;
-  line-height: 1.2;
-}
-
-.post-user-info strong {
-  display: block;
-  font-size: 15px;
-  color: #1a202c;
-}
-
-.post-timestamp {
-  font-size: 12px;
-  color: #888;
-}
-
-.post-options {
-  cursor: pointer;
-  font-size: 20px;
-  color: #888;
-}
-
-.post-body p {
-  font-size: 15px;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.post-img {
-  width: 100%;
-  max-height: 300px;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-.post-actions {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 12px;
-  border-top: 1px solid #eee;
-  padding-top: 10px;
-}
-
-.post-btn { 
-  background: none;
-  border: none;
-  color: #2b6cb0;
-  font-size: 14px;
-  cursor: pointer;
-  margin-right: 15px;
-  transition: color 0.3s ease;
-}
-
-.post-btn:hover {
-  color: #1a365d;
-}
-.like-button {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-}
-
-.like-icon {
-  width: 25px;
-  height: 25px;
-  object-fit: contain;
-  vertical-align: middle;
-}
-
-
-
-.media-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.media-item {
-  width: 100%;
-  max-height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-.media-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.media-item {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.media-item:hover {
-  transform: scale(1.02);
-}
-
-.media-wrapper {
-  position: relative;
-}
-
-.media-wrapper .overlay {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  font-size: 28px;
-  font-weight: bold;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.flash-messages {
-  position: fixed;
-  top: 60px;
-  right: 20px;
-  border-radius: 5px;
-  }
-
-.flash-message {
-  margin-bottom: 8px;
-  font-weight: bold;
 }
 
 .flash-message.success {
@@ -1404,14 +1243,6 @@ header {
   cursor: pointer;
 }
 
-.post-user-name {
-  display: block;
-  font-size: 15px;
-  color: #1a202c;
-  font-weight: bold;
-  text-decoration: none;
-}
-
 .post-user-name:hover {
   text-decoration: underline;
   cursor: pointer;
@@ -1551,19 +1382,7 @@ header {
 .arrow {
   transition: transform 0.3s;
 }
-.no-posts {
-  text-align: center;
-  padding: 40px 20px;
-  color: #7097e0;
-  font-size: 1.2em;
-}
 
-.no-posts-img {
-  width: 160px;
-  height: auto;
-  opacity: 0.6;
-  margin-bottom: 10px;
-}
 .unread {
     background-color: #f0f8ff; /* light blue for unread messages */
 }
@@ -1604,58 +1423,25 @@ header {
   font-weight: bold;
 }
 
-/* Fix conflict between location input + header search */
+/* Location search input styling */
 .location-input-wrapper {
   position: relative;
   display: inline-block;
-  width: auto; /* let it size like the search bar */
+  width: auto;
+  max-width: 420px;
 }
 
 .location-input-wrapper .location-input {
-  width: 255px; /* match .header-search-input */
-  padding-right: 40px; /* keep space for button */
-  border-radius: 20px;
+  width: 100%;
+  max-width: 420px;
+  padding-right: 44px;
+  border-radius: 24px;
   border: 1px solid #ccc;
-  padding: 8px 12px;
-  font-size: 14px;
-}
-
-/* Button inside input */
-.location-btn {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
+  padding: 12px 18px;
   font-size: 16px;
-  color: #666;
-}
-
-.location-btn:hover {
-  color: #0073b1;
-}
-/* Wrapper around input + button */
-.location-input-wrapper {
-  position: relative;
-  display: inline-block;
-  width: 100%;
-  max-width: 255px; /* keep it tidy on desktop */
-}
-
-/* Input styling (matches header-search-input) */
-.location-input-wrapper .location-input {
-  width: 100%;
-  padding-right: 40px; /* leave space for button */
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  font-size: 14px;
   box-sizing: border-box;
 }
 
-/* Icon button inside input */
 .location-btn {
   position: absolute;
   top: 50%;
@@ -1672,64 +1458,10 @@ header {
 }
 
 .location-btn:hover {
-  color: #0073b1; /* theme blue */
+  color: #0073b1;
 }
 
 /* Mobile fix */
-@media (max-width: 768px) {
-  .location-input-wrapper {
-    max-width: 100%; /* let it stretch full width */
-  }
-
-  .location-input-wrapper .location-input {
-    padding-right: 40px; /* keep room for icon */
-    font-size: 16px; /* slightly bigger for touch */
-  }
-
-  .location-btn {
-    right: 10px; /* keep aligned inside on small screens */
-    font-size: 18px; /* make tap target bigger */
-  }
-}
-/* Default: desktop/big screens */
-.location-input-wrapper {
-  position: relative;
-  display: inline-block;
-  width: auto; /* shrink to fit */
-}
-
-.location-input-wrapper .location-input {
-  width: 255px;              /* match .header-search-input */
-  padding-right: 40px;       /* make room for button */
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-
-/* Keep button inside */
-.location-btn {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 16px;
-  color: #666;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.location-btn:hover {
-  color: #0073b1;
-}
-
-/* Override for small screens */
 @media (max-width: 768px) {
   .location-input-wrapper {
     width: 100%;
@@ -1737,7 +1469,8 @@ header {
   }
 
   .location-input-wrapper .location-input {
-    width: 100%; /* stretch full width on mobile */
+    width: 100%;
+    padding-right: 40px;
     font-size: 16px;
   }
 
@@ -1751,5 +1484,328 @@ header {
 @media (max-width: 768px) {
   .logo-link {
     display: none;
+  }
+}
+
+/* ===== FIXES: centered name ===== */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.sidebar .username {
+  text-align: center !important;
+  width: 100%;
+}
+
+.mobile-profile-info .username {
+  text-align: center !important;
+  width: 100%;
+}
+
+/* =========================================================
+   POSTS — consolidated styling
+   Single source of truth for all post/media/lightbox rules.
+   ========================================================= */
+
+/* ---- Card shell ---- */
+.post-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.06);
+  color: #222;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.post-card:hover {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 10px 22px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* ---- Header ---- */
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.post-profile-pic {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid #2b6cb0;
+}
+
+.post-user-info {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.post-user-name,
+.post-user-info strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a202c;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-user-name:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.post-timestamp {
+  font-size: 12.5px;
+  color: #8a8a8a;
+}
+
+.post-options {
+  cursor: pointer;
+  font-size: 20px;
+  color: #999;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.post-options:hover {
+  background-color: #f0f0f0;
+}
+
+/* ---- Body ---- */
+.post-body p {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---- Media grid ---- */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.media-grid.single-media {
+  grid-template-columns: 1fr;
+}
+
+.media-wrapper {
+  position: relative;
+  background: #f0f0f0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.media-item {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.media-grid.single-media .media-wrapper .media-item {
+  height: 420px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.media-item:hover {
+  transform: scale(1.02);
+}
+
+/* 3-item mosaic: first tile tall on the left, two stacked on the right */
+.media-grid.three-media {
+  grid-template-columns: 2fr 1fr;
+  grid-auto-rows: 140px;
+  grid-auto-flow: dense;
+}
+
+.media-grid.three-media .media-wrapper:nth-child(1) {
+  grid-row: span 2;
+  height: 100%;
+}
+
+.media-grid.three-media .media-wrapper .media-item {
+  height: 100%;
+}
+
+.media-wrapper .overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* ---- Empty state ---- */
+.no-posts {
+  text-align: center;
+  padding: 50px 20px;
+  color: #7097e0;
+  font-size: 1.1em;
+}
+
+.no-posts-img {
+  width: 150px;
+  height: auto;
+  opacity: 0.6;
+  margin-bottom: 12px;
+}
+
+/* ---- Lightbox ---- */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.lightbox img,
+.lightbox video {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+}
+
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: none;
+  font-size: 1.8rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 10000;
+  transition: background-color 0.2s ease;
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.nav-btn.left { left: 16px; }
+.nav-btn.right { right: 16px; }
+
+.lightbox .close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  font-size: 30px;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* ---- Actions / like button ---- */
+.post-actions {
+  margin-top: 12px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.post-actions form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.like-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.like-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.like-button:hover {
+  background-color: #fdecec;
+}
+
+.like-button:active {
+  transform: scale(0.9);
+}
+
+.like-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  vertical-align: middle;
+  pointer-events: none;
+  display: block;
+}
+
+.post-actions span[id^="like-count-"] {
+  font-size: 14px;
+  color: #555;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 768px) {
+  .post-card {
+    padding: 14px;
+    margin: 0 auto 14px;
+    border-radius: 12px;
+  }
+
+  .media-item {
+    height: 130px;
+  }
+
+  .media-grid.three-media {
+    grid-auto-rows: 110px;
+  }
+
+  .media-grid.single-media .media-wrapper .media-item {
+    max-height: 320px;
   }
 }

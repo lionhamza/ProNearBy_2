@@ -39,6 +39,35 @@ def haversine_km(lat1, lon1, lat2, lon2):
 
 
 # ──────────────────────────────────────────────
+#  UTILITY: resolve the current user's location
+# ──────────────────────────────────────────────
+
+def resolve_user_location(lat, lng):
+    """
+    Fills in lat/lng from the session or the user's saved profile location
+    whenever they weren't passed explicitly (e.g. on the URL). This lets
+    distance/sorting work anywhere the signed-in user's location is needed,
+    not just on requests that carry ?lat=&lng=.
+    """
+    if lat is not None and lng is not None:
+        return lat, lng
+
+    if 'user_id' not in session:
+        return lat, lng
+
+    lat = lat if lat is not None else session.get('user_lat')
+    lng = lng if lng is not None else session.get('user_lng')
+
+    if lat is None or lng is None:
+        current = User.query.get(session['user_id'])
+        if current and current.Latitude and current.Longitude:
+            lat = lat if lat is not None else current.Latitude
+            lng = lng if lng is not None else current.Longitude
+
+    return lat, lng
+
+
+# ──────────────────────────────────────────────
 #  UTILITY: File helpers
 # ──────────────────────────────────────────────
 
@@ -177,6 +206,36 @@ def Base():
     )
 
 
+@views.route('/set-location', methods=['POST'])
+def set_location():
+    """
+    Persists the signed-in user's chosen location (from the "Use current
+    location" banner) to their session and profile, so it can anchor
+    distance sorting anywhere in the app without needing lat/lng on the URL.
+    """
+    if 'user_id' not in session:
+        return jsonify({"success": False, "error": "Not logged in"}), 401
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        lat = float(data.get('lat'))
+        lng = float(data.get('lng'))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "Invalid coordinates"}), 400
+
+    session['user_lat'] = lat
+    session['user_lng'] = lng
+
+    user = User.query.get(session['user_id'])
+    if user:
+        user.Latitude = lat
+        user.Longitude = lng
+        db.session.commit()
+
+    return jsonify({"success": True, "lat": lat, "lng": lng})
+
+
 @views.route('/profile/<int:user_id>')
 def profile(user_id):
     if 'user_id' not in session:
@@ -302,6 +361,12 @@ def mock_feed():
     location_query = request.args.get('location', '').strip()
     lat = request.args.get('lat', type=float)
     lng = request.args.get('lng', type=float)
+
+    # Fall back to the signed-in user's saved location (session, then
+    # profile) whenever lat/lng weren't passed on the URL. This is what
+    # makes distance sorting work when someone just clicks "Professional
+    # Feed" in the nav instead of arriving with ?lat=&lng=.
+    lat, lng = resolve_user_location(lat, lng)
 
     # Base query — distance is NOT computed in SQL
     query = User.query.filter(User.user_type.in_(["certifiedPro", "experiencedPro"]))
@@ -455,9 +520,12 @@ def request_service():
     preferred_date = request.form.get('preferred_date')
     preferred_time = request.form.get('preferred_time')
 
+    # ── user's GPS coords submitted from the modal hidden fields ──
+    user_lat = request.form.get('user_lat', type=float)
+    user_lng = request.form.get('user_lng', type=float)
+
     image_file = request.files.get('image')
     image_filename = None
-
     if image_file and image_file.filename != '':
         upload_folder = os.path.join('static', 'uploads')
         os.makedirs(upload_folder, exist_ok=True)
@@ -477,9 +545,32 @@ def request_service():
         preferred_date=datetime.strptime(preferred_date, '%Y-%m-%d').date() if preferred_date else None,
         preferred_time=datetime.strptime(preferred_time, '%H:%M').time() if preferred_time else None
     )
-
     db.session.add(new_request)
     db.session.commit()
+
+    # ── email the professional ──
+    pro = User.query.get(int(receiver_id))
+    if pro and pro.Email:
+        # compute distance only when both sides have coords
+        dist_km = None
+        eta_minutes = None
+        if (user_lat is not None and user_lng is not None
+                and pro.Latitude and pro.Longitude):
+            dist_km = round(haversine_km(user_lat, user_lng, pro.Latitude, pro.Longitude), 1)
+            eta_minutes = round((dist_km / 50) * 60)   # 50 km/h average
+
+        send_service_request_email_to_pro(
+            pro_email=pro.Email,
+            pro_name=pro.Name,
+            service_type=service_type or "Service Request",
+            service=service,
+            description=description,
+            preferred_date=preferred_date,
+            preferred_time=preferred_time,
+            dist_km=dist_km,
+            eta_minutes=eta_minutes,
+        )
+
     flash('Service request sent successfully!', 'success')
     return redirect(request.referrer or url_for('views.mock_feed'))
 
@@ -846,3 +937,46 @@ def add_payment_method():
     # Whatever you do here, never post raw card numbers to your own server --
     # only a gateway-issued token should ever reach PaymentMethod.provider_token.
     return render_template('add_payment_method.html')
+
+def send_service_request_email_to_pro(pro_email, pro_name, service_type,
+                                       service, description,
+                                       preferred_date, preferred_time,
+                                       dist_km, eta_minutes):
+    """
+    Notify the professional of a new service or quote request.
+    Distance is shown; the user's exact address/coordinates are never included.
+    """
+    distance_line = ""
+    if dist_km is not None:
+        distance_line = f"📍 Client distance: approximately {dist_km} km away (~{eta_minutes} min drive)\n"
+
+    request_label = "Quote Request" if "quote" in (service_type or "").lower() else "Service Request"
+
+    body = f"""
+Hi {pro_name},
+
+You have a new {request_label} on ProNearBy!
+
+━━━━━━━━━━━━━━━━━━━━━━
+Request type : {request_label}
+Service      : {service}
+Description  : {description}
+{distance_line}Preferred date : {preferred_date or 'Not specified'}
+Preferred time : {preferred_time or 'Not specified'}
+━━━━━━━━━━━━━━━━━━━━━━
+
+👉 Log in to ProNearBy to accept or decline:
+{url_for('views.Base', _external=True)}
+
+Once you accept, you and the client will be able to message each other.
+The client's exact location will only be shared after you accept.
+
+Best regards,
+The ProNearBy Team
+"""
+    msg = Message(
+        subject=f"New {request_label} on ProNearBy – {service}",
+        recipients=[pro_email],
+        body=body.strip()
+    )
+    mail.send(msg)
