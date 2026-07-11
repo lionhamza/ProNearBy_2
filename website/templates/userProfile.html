@@ -10,15 +10,14 @@
     <p class="bio">{{ profile_owner.Bio }}</p>
     <hr />
     {% if profile_owner.ID == current_user_id %}
-  <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
-{% elif profile_owner.Distance is not none %}
-  <p><strong>Distance:</strong> {{ profile_owner.Distance }} km away
-    {% if profile_owner.ETA_minutes %}(~{{ profile_owner.ETA_minutes }} min){% endif %}
-  </p>
+      <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
+      <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
+    {% elif profile_owner.ETA_minutes is not none %}
+  <p><strong>Estimated Time:</strong> ~{{ profile_owner.ETA_minutes }} min away</p>
 {% endif %}
-    <p><strong>Experience:</strong> {{ profile_owner.Experience }}</p>
-    <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
-    <p><strong>Rating:</strong> ⭐ {{ profile_owner.Rating }} ({{ profile_owner.Reviews }} reviews)</p>
+    {% if profile_owner.ID != current_user_id %}
+      <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
+    {% endif %}
     <hr />
     {% if profile_owner.ID == current_user_id %}
       <button class="edit-profile-btn" id="openEditModal">Edit Profile</button>
@@ -30,9 +29,39 @@
 
   <!-- Profile container -->
   <section class="content-section">
-    <div class="cardP" style="background-image: url('{{ url_for('static', filename= profile_owner.CoverImage or 'assets/DefaultCP.png') }}');">
+    <div class="cardP{% if not profile_owner.CoverImage %} cardP--default{% endif %}"{% if profile_owner.CoverImage %} style="background-image: url('{{ url_for('static', filename=profile_owner.CoverImage) }}');"{% endif %}>
       <div class="cardCircle">
         <img src="{{ url_for('static', filename=profile_owner.Image or 'assets/defualtPP.png') }}" alt="Profile" />
+        {% if profile_owner.user_type in ['certifiedPro', 'experiencedPro'] %}
+          <span class="verified-badge" title="Verified professional">
+            <i class="fas fa-check"></i>
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- Desktop-only credibility strip: turns the sidebar stats into
+           an at-a-glance trust signal right where the photo is, since
+           that's what actually helps someone decide to book a pro. -->
+      <div class="hero-stats">
+        <div class="hero-stat hero-stat--rating">
+          <i class="fas fa-star"></i>
+          <span>{{ profile_owner.Rating }}</span>
+          <small>({{ profile_owner.Reviews }})</small>
+        </div>
+        <span class="hero-stat-divider"></span>
+        <div class="hero-stat hero-stat--experience">
+          <i class="fas fa-briefcase"></i>
+          <span>{{ profile_owner.Experience }}</span>
+          <small>yrs</small>
+        </div>
+        {% if profile_owner.ID != current_user_id and profile_owner.Distance is not none %}
+        <span class="hero-stat-divider"></span>
+        <div class="hero-stat hero-stat--distance">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>{{ profile_owner.Distance }}</span>
+          <small>km</small>
+        </div>
+        {% endif %}
       </div>
     </div>
     <div class="mobile-profile-info">
@@ -51,21 +80,20 @@
       <hr />
       {% if profile_owner.ID == current_user_id %}
   <p><strong>Location:</strong> {{ profile_owner.Location }}</p>
-{% elif profile_owner.Distance is not none %}
-  <p><strong>Distance:</strong> {{ profile_owner.Distance }} km away
-    {% if profile_owner.ETA_minutes %}(~{{ profile_owner.ETA_minutes }} min){% endif %}
-  </p>
+  <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
+{% elif profile_owner.ETA_minutes is not none %}
+  <p><strong>Estimated Time:</strong> ~{{ profile_owner.ETA_minutes }} min away</p>
 {% endif %}
       <p><strong>Experience:</strong> {{ profile_owner.Experience }}</p>
-      <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
+      {% if profile_owner.ID != current_user_id %}
+        <p><strong>Availability:</strong> {{ profile_owner.availability }}</p>
+      {% endif %}
       <p><strong>Rating:</strong> ⭐ {{ profile_owner.Rating }} ({{ profile_owner.Reviews }} reviews)</p>
 
       {% if profile_owner.ID != current_user_id %}
         <button type="button" class="edit-profile-btn openServiceRequestModal">Request Service</button>
       {% endif %}
     </div>
-
-<div style="margin-top: 20px;"></div>
 
 {% if profile_owner.ID == current_user_id %}
   <div class="button_container">

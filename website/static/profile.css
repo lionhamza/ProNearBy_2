@@ -79,6 +79,8 @@
     border-radius: 4px;
     background: #e3e6eb;
     margin: 16px 0;
+    width: 100%;
+    align-self: stretch;
   }
 
   .sidebar p {
@@ -548,6 +550,8 @@
     border-radius: 4px;
     background: #e3e6eb;
     margin: 16px 0;
+    width: 100%;
+    align-self: stretch;
   }
 
   .sidebar p {

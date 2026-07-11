@@ -196,9 +196,6 @@ header {
   transition: border-color 0.3s ease, box-shadow 0.3s ease; /* smooth effect */
 }
 
-
-
-
 .header-search-input:focus {
   border-color: #007bff; /* blue border on focus */
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* optional glow */
@@ -209,7 +206,6 @@ header {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 340px; /* increase width */
   flex-shrink: 0;
 }
 
@@ -1808,4 +1804,59 @@ header {
   .media-grid.single-media .media-wrapper .media-item {
     max-height: 320px;
   }
+}
+
+/* =========================================================
+   TYPE SYSTEM — Manrope for names/headings (confident,
+   geometric — reads as "credentialed professional"),
+   Inter for body copy (quiet, highly legible for reviews/
+   bios/post text). Both load via base.html <head>.
+   ========================================================= */
+
+body {
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.username,
+.post-user-name,
+.post-user-info strong,
+.create_post-button,
+.header-search-button,
+.no-posts p {
+  font-family: 'Manrope', Arial, sans-serif;
+}
+
+/* =========================================================
+   VERIFIED BADGE + CREDIBILITY STRIP
+   Hidden by default (mobile keeps the existing simple
+   sidebar-style stats in .mobile-profile-info); switched on
+   for desktop widths in desktop_polish.css.
+   ========================================================= */
+
+.verified-badge {
+  display: none;
+}
+
+.hero-stats {
+  display: none;
+}
+
+.sidebar hr,
+.sidebar-divider {
+  border: none;
+  height: 1px;
+  border-radius: 4px;
+  background: #000011;
+  margin: 16px 0;
+}
+
+.sidebar hr,
+.sidebar-divider {
+  border: none !important;
+  height: 1px !important;
+  border-radius: 4px !important;
+  background: #e3e6eb !important;
+  margin: 16px 0 !important;
+  width: 100% !important;
+  align-self: stretch !important;
 }
