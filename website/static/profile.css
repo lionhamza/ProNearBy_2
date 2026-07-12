@@ -75,7 +75,7 @@
   .sidebar hr,
   .sidebar-divider {
     border: none;
-    height: 1px;
+    height: 4px;
     border-radius: 4px;
     background: #e3e6eb;
     margin: 16px 0;
@@ -146,7 +146,7 @@
 
   .button_container {
     width: 100%;
-    max-width: 650px;
+    max-width: 850px;
 
     min-height: 60px;
 
@@ -448,7 +448,7 @@
   /* Create post bar */
   .button_container {
     width: 100%;
-    max-width: 650px;
+    max-width: 850px;
     min-height: 60px;
     margin: 0 auto 18px auto;
 
@@ -546,7 +546,7 @@
   .sidebar hr,
   .sidebar-divider {
     border: none;
-    height: 1px;
+    height: 4px;
     border-radius: 4px;
     background: #e3e6eb;
     margin: 16px 0;

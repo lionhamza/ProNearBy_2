@@ -9,9 +9,31 @@ body {
     width: 700px;
     margin: 80px auto 20px;
     padding: 0 15px;
-    height: calc(100vh - 100px);
+}
+
+/* Desktop: give the scrollbar its own "top padding" by making the
+   scroll container start below the fixed header, rather than letting
+   the whole page scroll from y=0. The container spans the FULL window
+   width (left:0; right:0) so its native scrollbar renders at the true
+   window edge — the 700px content column is centered inside it with
+   padding (not margin), since margin can't center content that's
+   narrower than a full-bleed scroll box the same way. */
+@media (min-width: 769px) {
+  .feed-container {
+    width: auto;
+    margin: 0;
+    box-sizing: border-box;
+
+    position: fixed;
+    top: 80px;      /* <- scrollbar "top padding": clears the header */
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    padding: 0 calc(50% - 350px) 20px;  /* centers the 700px column */
     overflow-y: auto;
     overflow-x: hidden;
+  }
 }
 
 /* Search section */

@@ -68,6 +68,33 @@ def resolve_user_location(lat, lng):
 
 
 # ──────────────────────────────────────────────
+#  UTILITY: attach Distance/ETA_minutes onto a profile_owner
+# ──────────────────────────────────────────────
+
+def attach_distance(profile_owner, viewer_lat, viewer_lng):
+    """
+    Computes Distance (km) and ETA_minutes from the signed-in viewer's
+    location to profile_owner, and sets them as plain attributes on the
+    User instance so templates can read profile_owner.Distance /
+    profile_owner.ETA_minutes the same way they already do for the mock
+    feed's MockPro objects. Leaves both as None when either side is
+    missing coordinates.
+    """
+    distance = None
+    eta_minutes = None
+
+    if (viewer_lat is not None and viewer_lng is not None
+            and profile_owner.Latitude and profile_owner.Longitude):
+        distance = round(haversine_km(viewer_lat, viewer_lng, profile_owner.Latitude, profile_owner.Longitude), 2)
+        average_speed_kmh = 50
+        eta_minutes = round((distance / average_speed_kmh) * 60)
+
+    profile_owner.Distance = distance
+    profile_owner.ETA_minutes = eta_minutes
+    return profile_owner
+
+
+# ──────────────────────────────────────────────
 #  UTILITY: File helpers
 # ──────────────────────────────────────────────
 
@@ -244,6 +271,15 @@ def profile(user_id):
     current_user_id = session['user_id']
     profile_owner = User.query.get(user_id)
 
+    # Resolve the signed-in viewer's location (session, then their saved
+    # profile lat/lng) so Distance/ETA_minutes can be computed the same
+    # way the mock feed does — this is what was missing before, which is
+    # why they never showed up on a profile visited directly from the feed.
+    lat = request.args.get('lat', type=float)
+    lng = request.args.get('lng', type=float)
+    lat, lng = resolve_user_location(lat, lng)
+    attach_distance(profile_owner, lat, lng)
+
     posts = Post.query.filter_by(user_id=user_id).order_by(Post.timestamp.desc()).all()
     liked_post_ids = [like.post_id for like in Like.query.filter_by(user_id=current_user_id).all()]
 
@@ -276,15 +312,22 @@ def my_profile():
 def login():
     return render_template("login.html")
 
-
 @views.route('/profile/<int:user_id>/update', methods=['POST'])
 def update_profile(user_id):
     user = User.query.get_or_404(user_id)
 
-    user.Bio = request.form['bio']
-    user.Location = request.form['location']
-    user.Experience = request.form['experience']
-    user.availability = request.form['availability']
+    user.Location = request.form.get('location', user.Location)
+    user.Experience = request.form.get('experience', user.Experience)
+    user.availability = request.form.get('availability', user.availability)
+
+    # Populated by the Google Places autocomplete / GPS-detect button,
+    # same pattern as the Request Service modal — keeps Distance/ETA
+    # accurate anywhere the user's own coordinates matter.
+    lat = request.form.get('user_lat', type=float)
+    lng = request.form.get('user_lng', type=float)
+    if lat is not None and lng is not None:
+        user.Latitude = lat
+        user.Longitude = lng
 
     if 'profile_pic' in request.files:
         file = request.files['profile_pic']
@@ -305,7 +348,6 @@ def update_profile(user_id):
     db.session.commit()
     flash('Profile successfully updated!', 'success')
     return redirect(url_for('views.profile', user_id=user_id))
-
 
 @views.route('/profile/<int:user_id>/post', methods=['POST'])
 def create_post(user_id):

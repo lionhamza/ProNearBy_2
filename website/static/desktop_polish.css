@@ -144,7 +144,7 @@
 
   .button_container {
     width: 100%;
-    max-width: 650px;
+    max-width: 750px;
 
     min-height: 60px;
 
@@ -446,7 +446,7 @@
   /* Create post bar */
   .button_container {
     width: 100%;
-    max-width: 650px;
+    max-width: 750px;
     min-height: 60px;
     margin: 0 auto 18px auto;
 
@@ -658,6 +658,7 @@
   }
 
   /* ---- Avatar ---- */
+/* ---- Avatar ---- */
   .cardCircle {
     width: 128px !important;
     height: 128px !important;
@@ -666,6 +667,14 @@
     border-width: 4px !important;
     box-shadow: 0 8px 20px rgba(16,35,59,.28) !important;
     z-index: 2;
+    overflow: visible !important; /* let the verified badge sit outside the circle */
+  }
+
+  .cardCircle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%; /* clip the photo itself, since the container no longer clips */
   }
 
   .verified-badge {
@@ -771,12 +780,13 @@
     box-shadow: 0 6px 16px rgba(0,115,177,.34);
   }
 
-  /* ---- "Posts" label ---- */
+
+/* ---- "Posts" label ---- */
   .apost {
     position: relative;
   }
 
-  .apost::before {
+  .apost.show-posts-label::before {
     content: "Posts";
     display: block;
     font-family: 'Manrope', Arial, sans-serif;

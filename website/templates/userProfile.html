@@ -112,7 +112,7 @@
 
 
     <!-- Posts -->
-<div class="apost">
+<div class="apost{% if profile_owner.ID != current_user_id %} show-posts-label{% endif %}">
   {% if profile_owner.posts %}
     {% for post in profile_owner.posts|sort(attribute='timestamp', reverse=True) %}
       <div class="post-card">
@@ -205,10 +205,30 @@
       <span class="close" id="closeModal">&times;</span>
       <form action="{{ url_for('views.update_profile', user_id=profile_owner.ID) }}" method="POST" enctype="multipart/form-data" class="edit-form">
         <h3>Edit Profile</h3>
-        <label>Bio:</label>
-        <textarea name="bio">{{ profile_owner.Bio }}</textarea>
+
         <label>Location:</label>
-        <input type="text" name="location" value="{{ profile_owner.Location }}">
+        <div style="position: relative;">
+          <input
+            type="text"
+            name="location"
+            id="edit-location-input"
+            value="{{ profile_owner.Location }}"
+            placeholder="Start typing your suburb or city…"
+            autocomplete="off"
+            style="padding-right: 44px;"
+          >
+          <button
+            type="button"
+            id="edit-detect-btn"
+            title="Use my current location"
+            style="position:absolute; right:10px; top:50%; transform:translateY(-50%);
+                   background:none; border:none; cursor:pointer; color:#0073b1; font-size:16px; padding:0;">
+            <i class="fas fa-location-arrow"></i>
+          </button>
+        </div>
+        <input type="hidden" name="user_lat" id="edit-user-lat">
+        <input type="hidden" name="user_lng" id="edit-user-lng">
+
         <label>Experience:</label>
         <input type="text" name="experience" value="{{ profile_owner.Experience }}">
         <label>Availability:</label>
@@ -293,6 +313,85 @@
     closeEditBtn.onclick = () => {
       editModal.style.display = "none";
     };
+  }
+
+  // === EDIT PROFILE: Google Places autocomplete + GPS detect ===
+  // Same pattern as the Request Service modal on the feed page.
+  let editAutoComplete = null;
+
+  function tryAttachEditAutocomplete() {
+    if (editAutoComplete) return;
+
+    if (!window.google || !google.maps || !google.maps.places) {
+      setTimeout(tryAttachEditAutocomplete, 200);
+      return;
+    }
+
+    const locationInput = document.getElementById("edit-location-input");
+    const latInput = document.getElementById("edit-user-lat");
+    const lngInput = document.getElementById("edit-user-lng");
+
+    if (!locationInput) return;
+
+    editAutoComplete = new google.maps.places.Autocomplete(locationInput, {
+      types: ["geocode"],
+      componentRestrictions: { country: "za" }
+    });
+
+    editAutoComplete.addListener("place_changed", () => {
+      const place = editAutoComplete.getPlace();
+      if (place.geometry) {
+        latInput.value = place.geometry.location.lat();
+        lngInput.value = place.geometry.location.lng();
+      }
+    });
+
+    locationInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") e.preventDefault();
+    });
+  }
+
+  tryAttachEditAutocomplete();
+
+  const editDetectBtn = document.getElementById("edit-detect-btn");
+  if (editDetectBtn) {
+    editDetectBtn.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      editDetectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          document.getElementById("edit-user-lat").value = lat;
+          document.getElementById("edit-user-lng").value = lng;
+
+          if (window.google) {
+            new google.maps.Geocoder().geocode(
+              { location: { lat, lng } },
+              (results, status) => {
+                editDetectBtn.innerHTML = '<i class="fas fa-location-arrow"></i>';
+                if (status === "OK" && results.length) {
+                  document.getElementById("edit-location-input").value =
+                    results[0].formatted_address;
+                }
+              }
+            );
+          } else {
+            editDetectBtn.innerHTML = '<i class="fas fa-location-arrow"></i>';
+          }
+        },
+        err => {
+          editDetectBtn.innerHTML = '<i class="fas fa-location-arrow"></i>';
+          console.error(err);
+          alert("Unable to get your location. Please type it manually.");
+        }
+      );
+    });
   }
 
   // === CREATE POST MODAL ===
