@@ -1879,3 +1879,43 @@ body {
   width: 100% !important;
   align-self: stretch !important;
 }
+
+/* Show more / Show less toggle */
+.toggle-text {
+  color: #2b6cb0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  margin-left: 4px;
+  user-select: none;   /* prevents the text-selection highlight you saw */
+  display: inline-block;
+}
+
+.toggle-text:hover {
+  text-decoration: underline;
+  color: #1a4d80;
+}
+
+.post-text {
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+
+.toggle-text {
+  color: #2b6cb0;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  margin-left: 4px;
+  user-select: none;
+  display: inline;      /* was inline-block — that added the extra gap */
+}
+
+.toggle-text:hover {
+  text-decoration: underline;
+  color: #1a4d80;
+}
+
+.media-grid {
+  margin-top: 4px;       /* tighten space between text and media */
+}

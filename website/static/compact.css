@@ -1,0 +1,214 @@
+/* =========================================================
+   COMPACT MODE
+   Load this AFTER desktop_polish.css in base.html so it wins
+   the cascade. Only overrides sizing/spacing — no layout or
+   color changes, so nothing else should break.
+   ========================================================= */
+
+/* ---- Header (desktop only — mobile has its own header behavior,
+   including a header that needs to grow taller when the location
+   field + Search button expand under the search input; forcing a
+   fixed height/width here broke that) ---- */
+@media (min-width: 769px) {
+  header {
+    height: 50px;
+  }
+
+  .logo-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .header-search-input {
+    padding: 6px 12px;
+    font-size: 13px;
+    width: 220px;
+    min-width: 140px;
+  }
+
+  .header-search-button {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  .location-input-wrapper .location-input {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .header-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .nav-link {
+    font-size: 12px;
+  }
+
+  .main-layout {
+    height: calc(100vh - 50px);
+    margin-top: 50px;
+  }
+  .content-section {
+    height: calc(100vh - 50px);
+  }
+
+  /* Stop the search form from flex-growing to fill the header and
+     centering its inputs inside that inflated box — that's what was
+     creating the big empty gaps on either side of it. Let it size to
+     its content and sit right next to the logo and nav links instead,
+     with the icons pushed to the far right. */
+  .header-container {
+    justify-content: flex-start;
+    gap: 24px;
+  }
+
+  .logo-link {
+    margin-right: 40px;
+  }
+
+  .search-form {
+    flex: 0 1 auto;
+    max-width: none;
+    margin-right: 100px;
+  }
+
+  .icons-container {
+    margin-left: auto;
+    gap: 24px;
+  }
+}
+
+/* ---- Sidebar ---- */
+@media (min-width: 769px) {
+  .sidebar {
+    width: 220px;
+    padding: 14px;
+  }
+
+  .sidebar .profile-pic {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 8px;
+  }
+
+  .sidebar .username {
+    font-size: 13.5px;
+  }
+
+  .sidebar .role {
+    font-size: 11.5px;
+  }
+
+  .sidebar .bio,
+  .sidebar p {
+    font-size: 11px;
+  }
+}
+
+.view-profile-btn,
+.edit-profile-btn,
+.browse-pros-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* ---- Feed width ---- */
+@media (min-width: 769px) {
+  .apost,
+  .post-card,
+  .button_container {
+    max-width: 440px;
+  }
+}
+
+@media (min-width: 769px) {
+  .feed-container {
+    /* Don't set width here — feed.css already makes this a fixed,
+       full-bleed box (left:0; right:0) on desktop and centers a
+       column inside it via this padding calc. Setting width directly
+       fights with left/right and breaks the layout. */
+    padding: 0 calc(50% - 240px) 20px;
+  }
+}
+
+/* ---- Post cards ---- */
+.post-card {
+  padding: 11px;
+}
+
+.post-profile-pic {
+  width: 32px;
+  height: 32px;
+}
+
+.post-user-name,
+.post-user-info strong {
+  font-size: 12.5px;
+}
+
+.post-timestamp {
+  font-size: 10.5px;
+}
+
+.post-body p {
+  font-size: 12.5px;
+}
+
+.like-icon {
+  width: 17px;
+  height: 17px;
+}
+
+@media (min-width: 769px) {
+  .media-item {
+    max-height: 340px;
+  }
+  .media-grid.single-media .media-item {
+    max-height: 300px;
+  }
+  .media-grid.three-media {
+    grid-auto-rows: 110px;
+  }
+}
+
+/* ---- Professional-feed cards (mock_feed.html) ---- */
+.pro-avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.pro-name {
+  font-size: 13px;
+}
+
+.pro-role,
+.pro-rating,
+.pro-bio,
+.pro-details {
+  font-size: 12px;
+}
+
+.pro-actions button {
+  height: 32px;
+  font-size: 12px;
+}
+
+/* ---- Profile page hero (profile.html) ---- */
+@media (min-width: 769px) {
+  .cardP {
+    height: 150px !important;
+    min-height: 150px !important;
+  }
+
+  .cardCircle {
+    width: 78px !important;
+    height: 78px !important;
+    max-width: 78px !important;
+    max-height: 78px !important;
+  }
+
+  .hero-stat {
+    font-size: 11.5px;
+  }
+}

@@ -84,7 +84,14 @@
     </div>
 
     <div class="post-body">
-      <p>{{ post.content }}</p>
+      {% set char_limit = 150 %}
+      {% if post.content|length > char_limit %}
+        {% set trimmed = post.content[:char_limit] %}
+        {% set short_text = trimmed[:trimmed.rfind(' ')] if ' ' in trimmed else trimmed %}
+        <p class="post-text" id="post-text-{{ post.id }}"><span class="text-short">{{ short_text }}…</span><span class="text-full" style="display:none;">{{ post.content }}</span><span class="toggle-text" onclick="togglePostText({{ post.id }})"> Show more</span></p>
+      {% else %}
+        <p class="post-text">{{ post.content }}</p>
+      {% endif %}
        {% if post.media %}
 <div class="media-grid {% if post.media|length == 1 %}single-media{% elif post.media|length == 3 %}three-media{% endif %}">
 
@@ -241,5 +248,19 @@
       error.style.display = 'block';
     }
   });
+</script>
+<script>
+  function togglePostText(postId) {
+    const container = document.getElementById(`post-text-${postId}`);
+    const shortSpan = container.querySelector('.text-short');
+    const fullSpan = container.querySelector('.text-full');
+    const toggle = container.querySelector('.toggle-text');
+
+    const isCollapsed = fullSpan.style.display === 'none';
+
+    shortSpan.style.display = isCollapsed ? 'none' : 'inline';
+    fullSpan.style.display = isCollapsed ? 'inline' : 'none';
+    toggle.textContent = isCollapsed ? ' Show less' : ' Show more';
+  }
 </script>
 {% endblock %}
