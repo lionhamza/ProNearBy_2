@@ -1,12 +1,13 @@
 import gc
 
 import weakref
-
+import sys
 import greenlet
 
 
 from . import TestCase
-from .leakcheck import fails_leakcheck
+from . import RUNNING_ON_FREETHREAD_BUILD
+from .leakcheck import fails_leakcheck_on_py314_or_less
 # These only work with greenlet gc support
 # which is no longer optional.
 assert greenlet.GREENLET_USE_GC
@@ -16,7 +17,6 @@ class TestGC(TestCase):
         o = weakref.ref(greenlet.greenlet(greenlet.getcurrent).switch())
         gc.collect()
         if o() is not None:
-            import sys
             print("O IS NOT NONE.", sys.getrefcount(o()))
         self.assertIsNone(o())
         self.assertFalse(gc.garbage, gc.garbage)
@@ -44,7 +44,7 @@ class TestGC(TestCase):
         self.assertIsNone(o())
         self.assertFalse(gc.garbage, gc.garbage)
 
-    @fails_leakcheck
+    @fails_leakcheck_on_py314_or_less
     def test_finalizer_crash(self):
         # This test is designed to crash when active greenlets
         # are made garbage collectable, until the underlying
@@ -84,3 +84,76 @@ class TestGC(TestCase):
         del g
         greenlet.getcurrent()
         gc.collect()
+
+    def test_issue515_freethread_c_stack_refs(self):
+        # Guards issue #515: a new greenlet inherited the parent's C-stack refs
+        # and the free-threaded collector segfaulted following the dangling
+        # nodes. This has to run out of process because the regression is a hard
+        # crash, not something we can catch.
+        # https://github.com/python-greenlet/greenlet/issues/515
+        if not RUNNING_ON_FREETHREAD_BUILD:
+            self.skipTest("Only free-threaded builds are affected")
+        output = self.run_script('fail_issue_515_freethread_gc.py')
+        self.assertIn('ISSUE 515 OK', output)
+
+    def test_c_stack_refs_suspended_gc(self):
+        # Issue #515: a greenlet suspended while holding a _PyCStackRef must have
+        # those refs visited by tp_traverse, or the free-threaded collector frees
+        # an object reachable only through the suspended C stack. Runs the repro
+        # out of process. https://github.com/python-greenlet/greenlet/issues/515
+        if not RUNNING_ON_FREETHREAD_BUILD:
+            self.skipTest("Only free-threaded builds are affected")
+        output = self.run_script('fail_c_stack_refs_suspended_gc.py')
+        self.assertIn('C STACK REFS GC OK', output)
+
+    def test_crashing_deferred_object(self):
+        if sys.version_info < (3, 15):
+            self.skipTest("Test is 3.15+ only")
+        import doctest
+        def with_doctest():
+            """
+            >>> import gc
+            >>> from greenlet import getcurrent, greenlet, GreenletExit
+            >>> def outer():
+            ...     gc.collect()
+            >>> outer_glet = greenlet(outer)
+            >>> outer_glet.switch()
+            """
+        doctest.run_docstring_examples(with_doctest, dict())
+
+    def test_cycle_in_suspended_frame(self):
+        if sys.version_info < (3, 15):
+            self.skipTest("Test is 3.15+ only")
+        import doctest
+        def with_doctest():
+            """
+            >>> import gc
+            >>> from greenlet import getcurrent, greenlet
+            >>> class Cycle:
+            ...     def __del__(self):
+            ...         print("(Running finalizer)")
+            >>> def collect_it():
+            ...     print("Collecting garbage")
+            ...     gc.collect()
+            >>> def inner():
+            ...     cycle1 = Cycle()
+            ...     cycle2 = Cycle()
+            ...     cycle1.cycle = cycle2
+            ...     cycle2.cycle = cycle1
+            ...     getcurrent().parent.switch()
+            >>> def outer():
+            ...     glet = greenlet(inner)
+            ...     glet.switch()
+            ...     collect_it()
+
+            >>> outer_glet = greenlet(outer)
+            >>> outer_glet.switch()
+            Collecting garbage
+            >>> outer_glet.dead
+            True
+            >>> collect_it()
+            Collecting garbage
+            (Running finalizer)
+            (Running finalizer)
+            """
+        doctest.run_docstring_examples(with_doctest, dict())

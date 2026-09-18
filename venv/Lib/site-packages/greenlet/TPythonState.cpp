@@ -27,6 +27,7 @@ PythonState::PythonState()
 #endif
 #if GREENLET_PY313
     ,delete_later(nullptr)
+    ,critical_section(0)
 #else
     ,trash_delete_nesting(0)
 #endif
@@ -91,6 +92,30 @@ PythonState::PythonState()
 #endif
 }
 
+#if GREENLET_PY314 && defined(Py_GIL_DISABLED)
+void PythonState::capture_c_stack_refs(const PyThreadState* tstate) noexcept
+{
+    // Runs from operator<< while our C stack is still live and coherent, so we
+    // can walk tstate's _PyCStackRef list and take a strong reference to every
+    // object it holds. tp_traverse visits these once we're suspended, because
+    // by then the nodes themselves have been relocated into the heap stack copy
+    // and the saved list head no longer points at them. Strong references (not
+    // _Py_VISIT_STACKREF, whose _PyGC_VisitStackRef isn't exported before 3.15);
+    // a std::vector rather than a Python list/tuple because operator<< must not
+    // allocate a GC-tracked object mid-switch. Rebuilt from scratch each time;
+    // the list is empty at a typical switch, so this is usually just an empty
+    // loop.
+    this->c_stack_ref_snapshot.clear();
+    for (const _PyCStackRef* node = ((_PyThreadStateImpl*)tstate)->c_stack_refs;
+         node != nullptr; node = node->next) {
+        if (!PyStackRef_IsNullOrInt(node->ref)) {
+            this->c_stack_ref_snapshot.push_back(
+                OwnedObject::owning(PyStackRef_AsPyObjectBorrow(node->ref)));
+        }
+    }
+}
+#endif
+
 
 inline void PythonState::may_switch_away() noexcept
 {
@@ -144,6 +169,9 @@ void PythonState::operator<<(const PyThreadState *const tstate) noexcept
     this->current_executor = tstate->current_executor;
     #ifdef Py_GIL_DISABLED
     this->c_stack_refs = ((_PyThreadStateImpl*)tstate)->c_stack_refs;
+    // Capture the deferred references now, while our C stack is still live, so
+    // tp_traverse can keep them from being collected while we're suspended.
+    this->capture_c_stack_refs(tstate);
     #endif
   #elif GREENLET_PY312
     this->py_recursion_depth = tstate->py_recursion_limit - tstate->py_recursion_remaining;
@@ -191,6 +219,20 @@ void PythonState::operator<<(const PyThreadState *const tstate) noexcept
     // ``greenlet.tests.test_greenlet_trash`` tries, but under 3.14,
     // at least, fails to do so.
     this->delete_later = Py_XNewRef(tstate->delete_later);
+#ifdef Py_GIL_DISABLED
+    // Switching greenlets swaps C stacks, which to the free-threaded runtime is
+    // the same predicament as detaching the thread: the PyCriticalSection nodes
+    // chained off tstate->critical_section live on the stack we're leaving, and
+    // their PyMutexes would stay locked behind our back. The greenlet we switch
+    // to could then block forever taking one of those same locks -- e.g. an
+    // asyncio event dispatched onto another fiber re-enters a Task/Future that
+    // the suspended fiber is mid-step on. So drop the locks here the way
+    // _PyThreadState_Detach() does and let operator>> re-take them on resume.
+    if (tstate->critical_section != 0) {
+        _PyCriticalSection_SuspendAll(const_cast<PyThreadState*>(tstate));
+    }
+#endif
+    this->critical_section = tstate->critical_section;
   #elif GREENLET_PY312
     this->trash_delete_nesting = tstate->trash.delete_nesting;
   #else // not 312 or 3.13+
@@ -250,6 +292,10 @@ void PythonState::operator>>(PyThreadState *const tstate) noexcept
     tstate->current_executor = this->current_executor;
     #ifdef Py_GIL_DISABLED
     ((_PyThreadStateImpl*)tstate)->c_stack_refs = this->c_stack_refs;
+    // We're the running greenlet again: our C-stack refs live in the thread
+    // state now and gc_visit_thread_stacks() covers them, so drop the strong
+    // references tp_traverse held on our behalf while we were suspended.
+    this->c_stack_ref_snapshot.clear();
     #endif
     this->unexpose_frames();
   #elif GREENLET_PY312
@@ -298,7 +344,17 @@ void PythonState::operator>>(PyThreadState *const tstate) noexcept
         tstate->delete_later = this->delete_later;
         Py_CLEAR(this->delete_later);
     }
-
+    tstate->critical_section = this->critical_section;
+#ifdef Py_GIL_DISABLED
+    // Re-acquire whatever operator<< suspended when this greenlet last yielded.
+    // A no-op for a greenlet that held no locks, and for a brand-new one whose
+    // chain starts empty. Mirrors the resume in _PyThreadState_Attach(); note
+    // _PyCriticalSection_Resume() dereferences the head, so the != 0 guard is
+    // load-bearing, not just a fast path.
+    if (tstate->critical_section != 0) {
+        _PyCriticalSection_Resume(tstate);
+    }
+#endif
 
   #elif GREENLET_PY312
     tstate->trash.delete_nesting = this->trash_delete_nesting;
@@ -330,7 +386,14 @@ void PythonState::set_initial_state(const PyThreadState* const tstate) noexcept
     this->py_recursion_depth = tstate->py_recursion_limit - tstate->py_recursion_remaining;
     this->current_executor = tstate->current_executor;
     #ifdef Py_GIL_DISABLED
-    this->c_stack_refs = ((_PyThreadStateImpl*)tstate)->c_stack_refs;
+    // Start with an empty C-stack-ref list, the way a brand-new thread does;
+    // do NOT copy the parent thread state's head. Those _PyCStackRef nodes sit
+    // on the parent greenlet's C stack, so once we start running on our own
+    // stack and overwrite that region, following them reads garbage. The
+    // free-threaded collector walks c_stack_refs for every thread in
+    // gc_visit_thread_stacks(), so leaving the stale head here crashed it.
+    // See https://github.com/python-greenlet/greenlet/issues/515.
+    this->c_stack_refs = nullptr;
     #endif
     // this->stackpointer is left null because this->_top_frame is
     // null so there is no value to copy.
@@ -348,21 +411,50 @@ void PythonState::set_initial_state(const PyThreadState* const tstate) noexcept
 #endif
 }
 // TODO: Better state management about when we own the top frame.
-int PythonState::tp_traverse(visitproc visit, void* arg, bool own_top_frame) noexcept
+int PythonState::tp_traverse(visitproc visit, void* arg, bool visit_top_frame) noexcept
 {
     Py_VISIT(this->_context.borrow());
-    if (own_top_frame) {
+    if (visit_top_frame) {
         Py_VISIT(this->_top_frame.borrow());
     }
-#if GREENLET_PY314
-    // TODO: Should we be visiting the c_stack_refs objects?
-    // CPython uses a specific macro to do that which takes into
-    // account boxing and null values and then calls
-    // ``_PyGC_VisitStackRef``, but we don't have access to that, and
-    // we can't duplicate it ourself (because it compares
-    // ``visitproc`` to another function we can't access).
-    // The naive way of looping over c_stack_refs->ref and visiting
-    // those crashes the process (at least with GIL disabled).
+#if GREENLET_PY315
+    // Visit the references held by our suspended frames.
+    // This is important specially on free-threading where the
+    // the suspended frames may contain deferred references to
+    // objects, and if they are not traversed then the interpreter
+    // can free objects early causing a use-after-free crash
+    // at runtime exit.
+    if (this->_top_frame) {
+        for (_PyInterpreterFrame* iframe = this->_top_frame->f_frame;
+             iframe != nullptr; iframe = iframe->previous) {
+            // Skip generator/coroutine frames; their object's traverse
+            // already visits them (gen_traverse), so we'd double-count.
+            // expose_frames leaves them in the ->previous chain.
+            if (iframe->owner != FRAME_OWNED_BY_THREAD) {
+                continue;
+            }
+            Py_VISIT(iframe->frame_obj);
+            Py_VISIT(iframe->f_locals);
+            _Py_VISIT_STACKREF(iframe->f_funcobj);
+            _Py_VISIT_STACKREF(iframe->f_executable);
+            int frame_result = _PyGC_VisitFrameStack(iframe, visit, arg);
+            if (frame_result) {
+                return frame_result;
+            }
+        }
+    }
+#endif
+#if GREENLET_PY314 && defined(Py_GIL_DISABLED)
+    // Visit the objects this greenlet's C-stack refs were holding when it
+    // suspended (captured by capture_c_stack_refs). The free-threaded collector
+    // only walks the running thread's _PyCStackRef list in
+    // gc_visit_thread_stacks(), so without this a collection could free an
+    // object reachable only through a suspended greenlet's C-stack ref and we'd
+    // use it after free once the greenlet resumed. The snapshot is empty while
+    // we're the running greenlet, so this is a no-op there.
+    for (const OwnedObject& ref : this->c_stack_ref_snapshot) {
+        Py_VISIT(ref.borrow());
+    }
 #endif
     // Note that we DO NOT visit ``delete_later``. Even if it's
     // non-null and we technically own a reference to it, its
@@ -376,11 +468,43 @@ int PythonState::tp_traverse(visitproc visit, void* arg, bool own_top_frame) noe
 void PythonState::tp_clear(bool own_top_frame) noexcept
 {
     PythonStateContext::tp_clear();
+#if GREENLET_PY314 && defined(Py_GIL_DISABLED)
+    this->c_stack_ref_snapshot.clear();
+#endif
     // If we get here owning a frame,
     // we got dealloc'd without being finished. We may or may not be
     // in the same thread.
     if (own_top_frame) {
+#if GREENLET_PY315
+        // Release the references held by our suspended frames.
+        // this->top_frame gets implicitly cleared by the Py_CLEAR(iframe->frame_obj)
+        // of the first complete frame, so in the end we relinquish ownership of it.
+        if (this->_top_frame) {
+            for (_PyInterpreterFrame* iframe = this->_top_frame->f_frame;
+                 iframe != nullptr; iframe = iframe->previous) {
+                if (iframe->owner != FRAME_OWNED_BY_THREAD) {
+                    continue;
+                }
+                // Clear the references held by this frame's evaluation stack.
+                _PyStackRef* locals = iframe->localsplus;
+                _PyStackRef* sp = iframe->stackpointer;
+                if (sp) {
+                    while (sp > locals) {
+                        sp--;
+                        PyStackRef_CLEAR(*sp);
+                    }
+                    iframe->stackpointer = locals;
+                }
+                Py_CLEAR(iframe->f_locals);
+                Py_CLEAR(iframe->frame_obj);
+                PyStackRef_CLEAR(iframe->f_funcobj);
+                PyStackRef_CLEAR(iframe->f_executable);
+            }
+        }
+        this->_top_frame.relinquish_ownership();
+#else
         this->_top_frame.CLEAR();
+#endif
     }
 }
 

@@ -203,11 +203,75 @@
   .reg-footer a { color: var(--green); font-weight: 600; text-decoration: none; }
   .reg-footer a:hover { text-decoration: underline; }
 
-  @media (max-width: 520px) {
-    .reg-card { padding: 28px 18px 24px; }
-    .fields-grid { grid-template-columns: 1fr; }
+  /* ── Mobile ── */
+  @media (max-width: 640px) {
+
+    body { background: var(--white); }
+
+    .reg-page {
+      padding: 0;
+      align-items: stretch;
+    }
+
+    .reg-card {
+      max-width: 100%;
+      min-height: 100dvh;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 24px 18px 32px;
+    }
+
+    .reg-brand img { max-height: 56px; max-width: 150px; }
+    .reg-title    { font-size: 1.15rem; }
+    .reg-subtitle { font-size: 0.8rem; margin-bottom: 22px; }
+
+    /* Wizard: keep labels, just shrink everything */
+    .wizard-bar { margin-bottom: 26px; }
+    .wz-dot   { width: 28px; height: 28px; font-size: 11px; }
+    .wz-label { display: block; font-size: 9px; max-width: 46px; }
+    .wz-line  { margin-top: 13px; min-width: 12px; }
+
+    /* Single column form */
+    .fields-grid { grid-template-columns: 1fr; gap: 12px; }
     .span2 { grid-column: span 1; }
-    .wz-label { display: none; }
+
+    /* Inputs: 16px stops iOS auto-zoom-on-focus */
+    .field input,
+    .field select,
+    #autocomplete-input {
+      font-size: 16px;
+      height: 46px;
+    }
+    .field input[type="file"] { font-size: 14px; }
+
+    .pw-toggle { font-size: 0.78rem; }
+
+    /* Nav buttons: full width, primary action on top */
+    .wz-nav {
+      flex-direction: column-reverse;
+      align-items: stretch;
+      gap: 10px;
+      margin-top: 22px;
+    }
+    .btn-back,
+    .btn-next,
+    .btn-submit {
+      width: 100%;
+      margin-left: 0;
+      height: 48px;
+      font-size: 0.95rem;
+    }
+
+    /* Location step */
+    #detect-btn { width: 100%; justify-content: center; }
+    #map { height: 200px; }
+
+    .user-banner { padding: 10px 12px; }
+
+    /* iPhone home-bar safe area */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .reg-card { padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+    }
   }
 </style>
 
