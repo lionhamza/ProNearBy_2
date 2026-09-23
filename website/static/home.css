@@ -2019,3 +2019,35 @@ body {
     padding: 20px;
   }
 }
+
+.contact-info-card {
+  width: 100%;
+  background: #f7f9fb;
+  border: 1px solid #e8ebf0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 10px 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.contact-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #333;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.contact-line:last-child {
+  margin-bottom: 0;
+}
+
+.contact-line i {
+  color: #0073b1;
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+}

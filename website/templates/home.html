@@ -20,18 +20,24 @@
 
     <hr />
 
-    {% if user.Email %}
-      <p><strong>Email:</strong> {{ user.Email }}</p>
-    {% endif %}
-    {% if user.CellPhone %}
-      <p><strong>Contact:</strong> {{ user.CellPhone }}</p>
-       <!-- Become a Pro button -->
-        <hr class="sidebar-divider" />
-      <button class="view-profile-btn">Edit Contact Info</button>
-      <a href="{{ url_for('auth.choose_pro_type') }}" class="browse-pros-btn">
-      <i class="fas fa-stream"></i> Become a Pro
-    </a>
-    {% endif %}
+    {% if user.Email or user.CellPhone %}
+<div class="contact-info-card">
+  {% if user.Email %}
+    <p class="contact-line"><i class="fas fa-envelope"></i> {{ user.Email }}</p>
+  {% endif %}
+  {% if user.CellPhone %}
+    <p class="contact-line"><i class="fas fa-phone"></i> {{ user.CellPhone }}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if user.CellPhone %}
+  <hr class="sidebar-divider" />
+  <button class="view-profile-btn">Edit Contact Info</button>
+  <a href="{{ url_for('auth.choose_pro_type') }}" class="browse-pros-btn">
+    <i class="fas fa-stream"></i> Become a Pro
+  </a>
+{% endif %}
 
   {% else %}
     <img src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}" alt="Profile Picture" class="profile-pic" />
