@@ -748,12 +748,22 @@ def like_post(post_id):
     })
 
 
+MAX_PROFILE_PIC_BYTES = 5 * 1024 * 1024  # 5MB
+
+
 @views.route('/update_contact/<int:user_id>', methods=['POST'])
 def update_contact(user_id):
     user = User.query.get_or_404(user_id)
 
-    new_email = request.form.get('email').strip().lower()
-    new_phone = request.form.get('cellphone').strip()
+    raw_email = request.form.get('email')
+    raw_phone = request.form.get('cellphone')
+
+    if not raw_email or not raw_phone:
+        flash("Email and phone number are required.", "error")
+        return redirect(url_for('views.Base'))
+
+    new_email = raw_email.strip().lower()
+    new_phone = raw_phone.strip()
 
     email_changed = new_email != user.Email
     phone_changed = new_phone != user.CellPhone
@@ -769,10 +779,31 @@ def update_contact(user_id):
             flash("This email is already in use by another account.", "error")
             return redirect(url_for('views.Base'))
 
-    phone_regex = r"^\+?[0-9]{7,15}$"
-    if not re.match(phone_regex, new_phone):
+    cleaned_phone = re.sub(r"[\s-]", "", new_phone)
+    phone_regex = r"^\+?[0-9]{9,15}$"
+    if not re.match(phone_regex, cleaned_phone):
         flash("Invalid phone number format.", "error")
         return redirect(url_for('views.Base'))
+    new_phone = cleaned_phone
+
+    if 'profile_pic' in request.files:
+        file = request.files['profile_pic']
+        if file and file.filename != '':
+            if not allowed_file(file.filename):
+                flash("Profile picture must be a PNG, JPG, or GIF.", "error")
+                return redirect(url_for('views.Base'))
+
+            file.seek(0, os.SEEK_END)
+            size = file.tell()
+            file.seek(0)
+            if size > MAX_PROFILE_PIC_BYTES:
+                flash("Profile picture is too large (max 5MB).", "error")
+                return redirect(url_for('views.Base'))
+
+            filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+            filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
+            file.save(filepath)
+            user.Image = f'uploads/{filename}'
 
     user.Email = new_email
     user.CellPhone = new_phone
@@ -786,14 +817,6 @@ def update_contact(user_id):
     if phone_changed:
         user.is_phone_verified = False
 
-    if 'profile_pic' in request.files:
-        file = request.files['profile_pic']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
-            file.save(filepath)
-            user.Image = f'uploads/{filename}'
-
     db.session.commit()
 
     if email_changed or phone_changed:
@@ -802,7 +825,6 @@ def update_contact(user_id):
 
     flash("Contact info updated successfully.", "success")
     return redirect(url_for('views.Base'))
-
 
 @views.route('/regular_profile/<int:user_id>')
 def regular_profile(user_id):

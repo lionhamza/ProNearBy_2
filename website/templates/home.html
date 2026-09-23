@@ -148,29 +148,43 @@
     <!-- Copy the above div and change content for more cards -->
   </section>
   
-  {% if user.ID == session.get('user_id') and user.user_type == 'regular' %}
-<!-- Edit Contact Info Modal -->
-<div id="editContactModal" class="modal">
+{% if user.ID == session.get('user_id') and user.user_type == 'regular' %}
+<div id="editContactModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editContactTitle" aria-hidden="true">
   <div class="modal-content">
-    <span class="close" id="closeContactModal">&times;</span>
-   
-<form action="{{ url_for('views.update_contact', user_id=user.ID) }}" method="POST" class="edit-form" enctype="multipart/form-data">
-  <h3>Edit Contact Info</h3>
+    <span class="close" id="closeContactModal" role="button" tabindex="0" aria-label="Close dialog">&times;</span>
 
-  <label for="email">Email:</label>
-  <input type="email" name="email" id="email" value="{{ user.Email }}" required>
-  <div class="error-message" id="email-error">Invalid email format.</div>
+    <form action="{{ url_for('views.update_contact', user_id=user.ID) }}"
+          method="POST"
+          class="edit-form"
+          enctype="multipart/form-data"
+          id="editContactForm"
+          novalidate>
 
-  <label for="cellphone">Cell Phone:</label>
-  <input type="text" name="cellphone" id="cellphone" value="{{ user.CellPhone }}" required>
-  <div class="error-message" id="phone-error">Invalid phone number format.</div>
+      <h3 id="editContactTitle">Edit Contact Info</h3>
 
-  <label for="profile_pic">Profile Picture:</label>
-  <input type="file" name="profile_pic" id="profile_pic" accept="image/*">
+      <div class="avatar-group">
+        <img id="avatarPreview"
+             src="{{ url_for('static', filename=user.Image or 'assets/defualtPP.png') }}"
+             alt="Profile picture preview"
+             class="avatar-preview">
+        <label for="profile_pic" class="avatar-upload-label">Change Photo</label>
+        <input type="file" name="profile_pic" id="profile_pic" accept="image/png, image/jpeg, image/gif" hidden>
+        <div class="error-message" id="pic-error"></div>
+      </div>
 
-  <button type="submit" class="save-btn">Save</button>
-</form>
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" value="{{ user.Email }}" required autocomplete="email" inputmode="email">
+      <div class="error-message" id="email-error"></div>
 
+      <label for="cellphone">Cell Phone</label>
+      <input type="tel" name="cellphone" id="cellphone" value="{{ user.CellPhone }}" required autocomplete="tel" inputmode="tel" placeholder="e.g. 0821234567">
+      <div class="error-message" id="phone-error"></div>
+
+      <button type="submit" class="save-btn" id="saveContactBtn">
+        <span class="btn-text">Save</span>
+        <span class="btn-spinner" hidden aria-hidden="true"></span>
+      </button>
+    </form>
   </div>
 </div>
 {% endif %}
@@ -195,60 +209,150 @@
     }
   }, 1000);
 </script>
+
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const modal = document.getElementById("editContactModal");
-    const closeBtn = document.getElementById("closeContactModal");
-    const openBtn = document.querySelector(".view-profile-btn"); // "Edit Contact Info" button
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('editContactModal');
+  if (!modal) return;
 
-    if (openBtn) {
-      openBtn.onclick = () => {
-        modal.style.display = "block";
-      };
+  const openBtn = document.querySelector('.view-profile-btn');
+  const closeBtn = document.getElementById('closeContactModal');
+  const form = document.getElementById('editContactForm');
+  const emailInput = document.getElementById('email');
+  const phoneInput = document.getElementById('cellphone');
+  const emailError = document.getElementById('email-error');
+  const phoneError = document.getElementById('phone-error');
+  const picInput = document.getElementById('profile_pic');
+  const picError = document.getElementById('pic-error');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const saveBtn = document.getElementById('saveContactBtn');
+
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PHONE_REGEX = /^\+?[0-9]{9,15}$/;
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+  const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif'];
+
+  function showError(el, msgEl, message) {
+    el.classList.add('invalid');
+    el.classList.remove('valid');
+    msgEl.textContent = message;
+    msgEl.classList.add('active');
+  }
+
+  function clearError(el, msgEl) {
+    el.classList.remove('invalid');
+    el.classList.add('valid');
+    msgEl.textContent = '';
+    msgEl.classList.remove('active');
+  }
+
+  function validateEmail() {
+    const value = emailInput.value.trim();
+    if (!EMAIL_REGEX.test(value)) {
+      showError(emailInput, emailError, 'Enter a valid email address, e.g. name@example.com.');
+      return false;
     }
+    clearError(emailInput, emailError);
+    return true;
+  }
 
-    if (closeBtn) {
-      closeBtn.onclick = () => {
-        modal.style.display = "none";
-      };
+  function validatePhone() {
+    const cleaned = phoneInput.value.replace(/[\s-]/g, '');
+    if (!PHONE_REGEX.test(cleaned)) {
+      showError(phoneInput, phoneError, 'Enter a valid phone number (9–15 digits, optional leading +).');
+      return false;
     }
+    clearError(phoneInput, phoneError);
+    return true;
+  }
 
-    window.onclick = (e) => {
-      if (e.target === modal) {
-        modal.style.display = "none";
-      }
-    };
+  function validatePicture() {
+    const file = picInput.files[0];
+    if (!file) return true;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      picError.textContent = 'Please choose a PNG, JPG, or GIF image.';
+      picError.classList.add('active');
+      picInput.value = '';
+      return false;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      picError.textContent = 'Image is too large — please choose one under 5MB.';
+      picError.classList.add('active');
+      picInput.value = '';
+      return false;
+    }
+    picError.textContent = '';
+    picError.classList.remove('active');
+    return true;
+  }
+
+  emailInput.addEventListener('input', validateEmail);
+  phoneInput.addEventListener('input', validatePhone);
+
+  picInput.addEventListener('change', () => {
+    if (!validatePicture()) return;
+    const file = picInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => { avatarPreview.src = e.target.result; };
+    reader.readAsDataURL(file);
   });
+
+  form.addEventListener('submit', (e) => {
+    const emailOk = validateEmail();
+    const phoneOk = validatePhone();
+    const picOk = validatePicture();
+
+    if (!emailOk || !phoneOk || !picOk) {
+      e.preventDefault();
+      (emailOk ? (phoneOk ? picInput : phoneInput) : emailInput).focus();
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.querySelector('.btn-text').textContent = 'Saving...';
+    saveBtn.querySelector('.btn-spinner').hidden = false;
+  });
+
+  function openModal() {
+    modal.style.display = 'block';
+    modal.setAttribute('aria-hidden', 'false');
+    emailInput.focus();
+    document.addEventListener('keydown', onKeydown);
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    document.removeEventListener('keydown', onKeydown);
+    if (openBtn) openBtn.focus();
+  }
+
+  function onKeydown(e) {
+    if (e.key === 'Escape') closeModal();
+  }
+
+  if (openBtn) {
+    openBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openModal();
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeModal);
+    closeBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') closeModal();
+    });
+  }
+
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+});
 </script>
-<script>
-  document.getElementById('email').addEventListener('input', function() {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const error = document.getElementById('email-error');
-    if (emailRegex.test(this.value)) {
-      this.classList.remove('invalid');
-      this.classList.add('valid');
-      error.style.display = 'none';
-    } else {
-      this.classList.add('invalid');
-      this.classList.remove('valid');
-      error.style.display = 'block';
-    }
-  });
 
-  document.getElementById('cellphone').addEventListener('input', function() {
-    const phoneRegex = /^\+?[0-9]{10,11}$/;
-    const error = document.getElementById('phone-error');
-    if (phoneRegex.test(this.value)) {
-      this.classList.remove('invalid');
-      this.classList.add('valid');
-      error.style.display = 'none';
-    } else {
-      this.classList.add('invalid');
-      this.classList.remove('valid');
-      error.style.display = 'block';
-    }
-  });
-</script>
 <script>
   function togglePostText(postId) {
     const container = document.getElementById(`post-text-${postId}`);
