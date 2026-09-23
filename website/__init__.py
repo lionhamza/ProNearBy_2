@@ -41,6 +41,7 @@ def create_app():
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USE_SSL'] = False    
     app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'pronearby.service@gmail.com')
     app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'ovlw fhpk nrbq ctkv')  # app password
     app.config['MAIL_DEFAULT_SENDER'] = 'ProNearBy <pronearby.service@gmail.com>'
@@ -63,7 +64,9 @@ def create_app():
     from .views import views
     from .auth import auth
     from .admin import admin
+    from .notifications import notifications_bp
 
+    app.register_blueprint(notifications_bp)
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(admin)

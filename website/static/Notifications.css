@@ -1,0 +1,64 @@
+/* static/notifications.css
+   home.css sets body { height:100vh; overflow:hidden }, so this page scrolls inside .notif-scroll. */
+.notif-scroll { margin-top: 80px; height: calc(100vh - 80px); overflow-y: auto; background: #f4f7f7; padding: 28px 16px 64px; }
+.notif-wrap { max-width: 720px; margin: 0 auto; }
+
+.notif-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.notif-head h1 { font-family: 'Manrope', sans-serif; font-size: 28px; font-weight: 800; color: #1a202c; }
+.notif-link-btn { background: none; border: 0; color: #2b6cb0; font: 500 14px 'Inter', sans-serif; cursor: pointer; padding: 6px 4px; }
+.notif-link-btn:hover { text-decoration: underline; }
+
+.notif-tabs { display: flex; gap: 4px; border-bottom: 1px solid #d9e1e4; margin-bottom: 8px; }
+.notif-tab { padding: 10px 14px; font: 500 14px 'Inter', sans-serif; color: #5b6770; text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.notif-tab:hover { color: #1a202c; }
+.notif-tab.active { color: #2b6cb0; border-bottom-color: #2b6cb0; font-weight: 600; }
+
+.notif-group-title { font: 600 13px 'Inter', sans-serif; color: #6b7780; margin: 24px 0 8px 2px; }
+.notif-list { list-style: none; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(20, 40, 50, .08); }
+
+.notif-item { position: relative; display: flex; align-items: flex-start; gap: 14px; padding: 16px 16px 16px 18px; border-bottom: 1px solid #edf1f2; }
+.notif-item:last-child { border-bottom: 0; }
+.notif-item.unread { background: #f1f7fd; }
+.notif-item.unread::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #2b6cb0; }
+
+.notif-icon { flex: 0 0 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; }
+.tone-blue   { background: #dcebfa; color: #2b6cb0; }
+.tone-green  { background: #dcf3e4; color: #237a46; }
+.tone-red    { background: #fbe1e1; color: #b83a3a; }
+.tone-amber  { background: #fdf0d2; color: #94640a; }
+.tone-purple { background: #e9e2f8; color: #5b3fb0; }
+.tone-teal   { background: #d8f0ef; color: #1b7b76; }
+.tone-grey   { background: #e8ecee; color: #5b6770; }
+
+.notif-body { flex: 1; min-width: 0; }
+.notif-title { font: 600 15px/1.4 'Inter', sans-serif; color: #1a202c; }
+.notif-title a { color: inherit; text-decoration: none; }
+.notif-title a:hover { color: #2b6cb0; }
+.notif-text { font: 400 14px/1.5 'Inter', sans-serif; color: #4a5560; margin-top: 2px; overflow-wrap: anywhere; }
+.notif-meta { font: 400 12px 'Inter', sans-serif; color: #8a949c; margin-top: 8px; }
+
+.notif-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.notif-actions form { margin: 0; }
+.notif-btn { font: 600 13px 'Inter', sans-serif; padding: 8px 16px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; }
+.notif-btn.primary { background: #2b6cb0; color: #fff; }
+.notif-btn.primary:hover { background: #2c5282; }
+.notif-btn.danger { background: #fff; color: #b83a3a; border-color: #e6bcbc; }
+.notif-btn.danger:hover { background: #fbe1e1; }
+.notif-chip { font: 500 13px 'Inter', sans-serif; color: #6b7780; background: #eef1f3; padding: 6px 12px; border-radius: 999px; }
+.notif-chip.done { color: #237a46; background: #dcf3e4; }
+
+.notif-read-btn { background: none; border: 0; width: 32px; height: 32px; border-radius: 50%; color: #8a949c; cursor: pointer; }
+.notif-read-btn:hover { background: #dcebfa; color: #2b6cb0; }
+
+.notif-empty { text-align: center; background: #fff; border-radius: 12px; padding: 56px 20px; margin-top: 16px; color: #6b7780; }
+.notif-empty i { font-size: 32px; color: #b6c2c8; margin-bottom: 12px; }
+.notif-empty h2 { font: 700 18px 'Manrope', sans-serif; color: #1a202c; margin-bottom: 4px; }
+.notif-empty p { font: 400 14px 'Inter', sans-serif; }
+
+.notif-btn:focus-visible, .notif-tab:focus-visible, .notif-link-btn:focus-visible, .notif-read-btn:focus-visible, .notif-title a:focus-visible { outline: 2px solid #2b6cb0; outline-offset: 2px; }
+
+@media (max-width: 600px) {
+  .notif-scroll { padding: 18px 10px 64px; }
+  .notif-head h1 { font-size: 24px; }
+  .notif-item { padding: 14px 10px 14px 14px; gap: 12px; }
+}

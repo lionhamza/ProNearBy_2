@@ -1,6 +1,6 @@
 from sqlalchemy import func
 from flask import Blueprint, render_template, request, redirect, url_for, flash
-from .models import User, Post, ServiceRequest, Message as MessageModel, Like, QuoteRequest, Wallet, Transaction
+from .models import User, Post, ServiceRequest, Message as MessageModel, Like, QuoteRequest, Wallet, Transaction, Notification
 from flask_login import login_required, current_user
 from . import db
 from flask import session
@@ -8,9 +8,11 @@ from datetime import datetime
 from flask import jsonify
 from flask_mail import Message
 from . import mail
+from .notifications import notify
 import math
 import os
 import re
+import uuid
 import random
 import string
 from sqlalchemy.orm import joinedload
@@ -105,6 +107,20 @@ def allowed_file(filename):
 
 
 # ──────────────────────────────────────────────
+#  UTILITY: safe email sending
+# ──────────────────────────────────────────────
+
+def safe_send(msg):
+    """Send an email but never let a mail failure break the request."""
+    try:
+        mail.send(msg)
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Email failed: {e}")
+        return False
+
+
+# ──────────────────────────────────────────────
 #  UTILITY: Verification code + email
 # ──────────────────────────────────────────────
 
@@ -119,7 +135,7 @@ def send_email_verification(email, code):
         recipients=[email],
         body=f"Your verification code is: {code}"
     )
-    mail.send(msg)
+    safe_send(msg)
 
 
 # ──────────────────────────────────────────────
@@ -143,7 +159,7 @@ Best regards,
 ProNearBy Team
 """
     )
-    mail.send(msg)
+    safe_send(msg)
 
 
 def send_decline_email_to_user(user_email, user_name, service):
@@ -163,7 +179,7 @@ Best regards,
 ProNearBy Team
 """
     )
-    mail.send(msg)
+    safe_send(msg)
 
 
 def send_request_accepted_email_to_user(user_email, user_name, pro_name, request_obj):
@@ -189,7 +205,7 @@ Best regards,
 The ProNearBy Team
 """
     )
-    mail.send(msg)
+    safe_send(msg)
 
 
 # ──────────────────────────────────────────────
@@ -554,7 +570,7 @@ def request_service():
         return redirect(url_for('auth.login_get'))
 
     sender_id = session['user_id']
-    receiver_id = request.form['receiver_id']
+    receiver_id = int(request.form['receiver_id'])
     service = request.form['service']
     service_type = request.form.get('service_type')
     location = request.form['location']
@@ -588,10 +604,22 @@ def request_service():
         preferred_time=datetime.strptime(preferred_time, '%H:%M').time() if preferred_time else None
     )
     db.session.add(new_request)
+    db.session.flush()   # gives new_request.id without committing yet
+
+    # ── in-app notification for the professional (saved in the same commit) ──
+    sender = User.query.get(sender_id)
+    notify(
+        receiver_id, 'service_request',
+        title=f"New request from {sender.Name} {sender.Surname or ''}".strip(),
+        body=f"{service_type or service}: {description[:120]}",
+        actor_id=sender_id,
+        related_type='service_request',
+        related_id=new_request.id,
+    )
     db.session.commit()
 
-    # ── email the professional ──
-    pro = User.query.get(int(receiver_id))
+    # ── email the professional (failures are logged, never fatal) ──
+    pro = User.query.get(receiver_id)
     if pro and pro.Email:
         # compute distance only when both sides have coords
         dist_km = None
@@ -641,10 +669,21 @@ def accept_request(request_id):
     db.session.add(msg)
 
     request_obj.status = 'accepted'
-    db.session.commit()
 
     user = User.query.get(request_obj.sender_id)
     pro = User.query.get(request_obj.receiver_id)
+
+    notify(
+        request_obj.sender_id, 'request_accepted',
+        title=f"{pro.Name} accepted your request",
+        body="The request details were sent to your messages.",
+        link=url_for('views.messages', user_id=request_obj.receiver_id),
+        actor_id=request_obj.receiver_id,
+        related_type='service_request',
+        related_id=request_obj.id,
+    )
+    db.session.commit()
+
     if user and user.Email:
         send_request_accepted_email_to_user(
             user.Email,
@@ -654,7 +693,7 @@ def accept_request(request_id):
         )
 
     flash("Service request accepted. Details sent to user!", "success")
-    return redirect(url_for('views.Base'))
+    return redirect(url_for('notifications.index'))
 
 
 @views.route('/request/<int:request_id>/decline', methods=['POST'])
@@ -665,18 +704,30 @@ def decline_request(request_id):
         flash("Unauthorized action", "error")
         return redirect(url_for('views.Base'))
 
-    request_obj.status = 'declined'
-    db.session.commit()
-
     user = User.query.get(request_obj.sender_id)
-    if user and user.Email:
-        send_decline_email_to_user(user.Email, user.Name, request_obj.service)
+    service_name = request_obj.service
+    sender_id = request_obj.sender_id
+    receiver_id = request_obj.receiver_id
+
+    # The request row is deleted below, so clear notifications that point at it
+    Notification.query.filter_by(related_type='service_request', related_id=request_obj.id).delete()
+
+    notify(
+        sender_id, 'request_declined',
+        title="Your request was declined",
+        body=f"{service_name}. You can try another professional.",
+        link=url_for('views.mock_feed'),
+        actor_id=receiver_id,
+    )
 
     db.session.delete(request_obj)
     db.session.commit()
 
+    if user and user.Email:
+        send_decline_email_to_user(user.Email, user.Name, service_name)
+
     flash("Service request declined. User notified.", "info")
-    return redirect(url_for('views.Base'))
+    return redirect(url_for('notifications.index'))
 
 
 @views.route('/complete_request/<int:request_id>', methods=['POST'])
@@ -689,10 +740,19 @@ def complete_request(request_id):
         return redirect(url_for('views.Base'))
 
     request_obj.status = 'awaiting_confirmation'
+
+    notify(
+        request_obj.sender_id, 'completion_requested',
+        title="Please confirm the job is done",
+        body=request_obj.service,
+        actor_id=request_obj.receiver_id,
+        related_type='service_request',
+        related_id=request_obj.id,
+    )
     db.session.commit()
 
     flash("You marked the service as completed. Waiting for user confirmation.", "success")
-    return redirect(url_for('views.Base'))
+    return redirect(url_for('notifications.index'))
 
 
 @views.route('/confirm_completion/<int:request_id>', methods=['POST'])
@@ -705,6 +765,15 @@ def confirm_completion_by_user(request_id):
         return redirect(url_for('views.Base'))
 
     request_obj.status = 'completed'
+
+    notify(
+        request_obj.receiver_id, 'completed',
+        title="The client confirmed the job is complete",
+        body=request_obj.service,
+        actor_id=request_obj.sender_id,
+        related_type='service_request',
+        related_id=request_obj.id,
+    )
     db.session.commit()
 
     messages_to_delete = MessageModel.query.filter(
@@ -719,7 +788,7 @@ def confirm_completion_by_user(request_id):
     db.session.commit()
 
     flash("You confirmed the service is complete! Messages between you and the pro were deleted.", "success")
-    return redirect(url_for('views.Base'))
+    return redirect(url_for('notifications.index'))
 
 
 @views.route("/like/<int:post_id>", methods=["POST"])
@@ -847,7 +916,7 @@ def verify_contact(user_id):
 @views.route('/request_quote', methods=['POST'])
 @login_required
 def request_quote():
-    receiver_id = request.form.get('receiver_id')
+    receiver_id = request.form.get('receiver_id', type=int)
     project_title = request.form.get('project_title')
     details = request.form.get('details')
     location = request.form.get('location')
@@ -857,8 +926,9 @@ def request_quote():
     attachment_file = request.files.get('attachment')
     attachment_filename = None
     if attachment_file and attachment_file.filename != '':
-        attachment_filename = f"uploads/{attachment_file.filename}"
-        attachment_file.save(os.path.join('static', attachment_filename))
+        filename = f"{uuid.uuid4().hex}_{secure_filename(attachment_file.filename)}"
+        attachment_filename = f"uploads/{filename}"
+        attachment_file.save(os.path.join(current_app.root_path, 'static', attachment_filename))
 
     new_quote = QuoteRequest(
         sender_id=current_user.ID,
@@ -867,15 +937,26 @@ def request_quote():
         details=details,
         location=location,
         attachment=attachment_filename,
-        preferred_date=preferred_date if preferred_date else None,
-        preferred_time=preferred_time if preferred_time else None
+        # Date/Time columns need real date/time objects, not strings
+        preferred_date=datetime.strptime(preferred_date, '%Y-%m-%d').date() if preferred_date else None,
+        preferred_time=datetime.strptime(preferred_time, '%H:%M').time() if preferred_time else None
     )
 
     db.session.add(new_quote)
+    db.session.flush()   # gives new_quote.id
+
+    notify(
+        receiver_id, 'quote_request',
+        title=f"New quote request from {current_user.Name}",
+        body=project_title,
+        actor_id=current_user.ID,
+        related_type='quote_request',
+        related_id=new_quote.id,
+    )
     db.session.commit()
 
     flash("Quote request sent to pro!", "success")
-    return redirect(url_for('views.dashboard'))
+    return redirect(request.referrer or url_for('views.mock_feed'))   # views.dashboard doesn't exist
 
 
 
@@ -955,6 +1036,12 @@ def add_funds():
         amount=Decimal(str(amount)),
         status='completed',
     ))
+    notify(
+        current_user.ID, 'wallet',
+        title="Funds added to your wallet",
+        body=f"R{Decimal(str(amount)):.2f} is now in your wallet.",
+        link=url_for('views.wallet'),
+    )
     db.session.commit()
 
     flash('Funds added successfully.', 'success')
@@ -987,6 +1074,12 @@ def withdraw_funds():
         amount=Decimal(str(amount)),
         status='pending',
     ))
+    notify(
+        current_user.ID, 'wallet',
+        title="Withdrawal requested",
+        body=f"R{Decimal(str(amount)):.2f} is being sent to your bank.",
+        link=url_for('views.wallet'),
+    )
     db.session.commit()
 
     flash('Withdrawal requested.', 'success')
@@ -1043,4 +1136,4 @@ The ProNearBy Team
         recipients=[pro_email],
         body=body.strip()
     )
-    mail.send(msg)
+    safe_send(msg)

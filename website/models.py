@@ -260,3 +260,45 @@ class Transaction(db.Model):
 
     def __repr__(self):
         return f'<Transaction {self.type} {self.amount} ({self.status})>'
+
+# Paste into website/models.py (needs the same `db`, `JSON`, `datetime` already imported there).
+# Then run:  flask db migrate -m "add notifications" && flask db upgrade
+# (or db.create_all() if you aren't using migrations).
+
+class Notification(db.Model):
+    """
+    One row = one thing a user should know about. Works for ANY event:
+    service requests, quotes, acceptances, wallet activity, admin messages...
+    Adding a new kind of notification never needs a new table, just a new `type`.
+    """
+    __tablename__ = 'notifications'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'), nullable=False)   # who receives it
+    actor_id = db.Column(db.Integer, db.ForeignKey('User_Info.ID'), nullable=True)   # who caused it (null = system)
+
+    type = db.Column(db.String(40), nullable=False)      # 'service_request', 'quote_request', 'request_accepted', ...
+    title = db.Column(db.String(200), nullable=False)    # "Thabo sent you a request"
+    body = db.Column(db.Text)                            # optional detail line
+    link = db.Column(db.String(300))                     # internal path to open, e.g. /messages?user_id=4
+
+    # Generic pointer to whatever this is about, so the page can look up live data
+    related_type = db.Column(db.String(40))              # 'service_request', 'quote_request', 'transaction', ...
+    related_id = db.Column(db.Integer)
+    data = db.Column(JSON, nullable=True)                # any extra payload, no schema change needed
+
+    is_read = db.Column(db.Boolean, nullable=False, default=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship('User', foreign_keys=[user_id],
+                           backref=db.backref('notifications', lazy='dynamic', cascade='all, delete-orphan'))
+    actor = db.relationship('User', foreign_keys=[actor_id])
+
+    __table_args__ = (
+        db.Index('ix_notif_user_read_created', 'user_id', 'is_read', 'created_at'),
+        db.Index('ix_notif_related', 'related_type', 'related_id'),
+    )
+
+    def __repr__(self):
+        return f'<Notification {self.type} -> user {self.user_id}>'

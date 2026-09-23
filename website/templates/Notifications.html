@@ -1,0 +1,109 @@
+{# templates/notifications.html  — change "base.html" to whatever your base template is called #}
+{% extends "base.html" %}
+{% block title %}Notifications | ProNearBy{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='notifications.css') }}">{% endblock %}
+
+{# icon + colour per type. Add a line here when you invent a new type. #}
+{% set type_meta = {
+  'service_request':      ('fa-concierge-bell',  'blue'),
+  'quote_request':        ('fa-file-invoice-dollar', 'purple'),
+  'request_accepted':     ('fa-check',           'green'),
+  'request_declined':     ('fa-times',           'red'),
+  'completion_requested': ('fa-hourglass-half',  'amber'),
+  'completed':            ('fa-check-double',    'green'),
+  'message':              ('fa-comment',         'blue'),
+  'wallet':               ('fa-wallet',          'teal'),
+  'system':               ('fa-bell',            'grey'),
+} %}
+
+{% block div %}
+<main class="notif-scroll">
+  <div class="notif-wrap">
+
+    <div class="notif-head">
+      <h1>Notifications</h1>
+      {% if has_unread %}
+      <form method="POST" action="{{ url_for('notifications.mark_all_read') }}">
+        <button type="submit" class="notif-link-btn">Mark all as read</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <nav class="notif-tabs" aria-label="Filter notifications">
+      <a href="{{ url_for('notifications.index') }}" class="notif-tab {{ 'active' if active_filter == 'all' }}">All</a>
+      <a href="{{ url_for('notifications.index', filter='unread') }}" class="notif-tab {{ 'active' if active_filter == 'unread' }}">
+        Unread{% if unread_notifications_count %} ({{ unread_notifications_count }}){% endif %}
+      </a>
+      <a href="{{ url_for('notifications.index', filter='requests') }}" class="notif-tab {{ 'active' if active_filter == 'requests' }}">Requests</a>
+    </nav>
+
+    {% for label, items in groups %}
+      <h2 class="notif-group-title">{{ label }}</h2>
+      <ul class="notif-list">
+        {% for n in items %}
+          {% set meta = type_meta.get(n.type, type_meta['system']) %}
+          {% set req = requests_by_id.get(n.related_id) if n.related_type == 'service_request' else none %}
+          <li class="notif-item {{ 'unread' if not n.is_read }}">
+            <span class="notif-icon tone-{{ meta[1] }}" aria-hidden="true"><i class="fas {{ meta[0] }}"></i></span>
+
+            <div class="notif-body">
+              <p class="notif-title">
+                {% if n.link %}<a href="{{ url_for('notifications.open', notification_id=n.id) }}">{{ n.title }}</a>
+                {% else %}{{ n.title }}{% endif %}
+              </p>
+              {% if n.body %}<p class="notif-text">{{ n.body }}</p>{% endif %}
+
+              {# Pro side: act on an incoming request #}
+              {% if req and n.type == 'service_request' and req.receiver_id == user.ID %}
+                <div class="notif-actions">
+                  {% if req.status == 'pending' %}
+                    <form method="POST" action="{{ url_for('views.accept_request', request_id=req.id) }}"><button class="notif-btn primary">Accept</button></form>
+                    <form method="POST" action="{{ url_for('views.decline_request', request_id=req.id) }}"><button class="notif-btn danger">Decline</button></form>
+                  {% elif req.status == 'accepted' %}
+                    <form method="POST" action="{{ url_for('views.complete_request', request_id=req.id) }}"><button class="notif-btn primary">Mark as completed</button></form>
+                  {% elif req.status == 'awaiting_confirmation' %}
+                    <span class="notif-chip">Waiting for the client to confirm</span>
+                  {% elif req.status == 'completed' %}
+                    <span class="notif-chip done">Completed</span>
+                  {% endif %}
+                </div>
+
+              {# Client side: confirm the job is done #}
+              {% elif req and n.type == 'completion_requested' and req.sender_id == user.ID %}
+                <div class="notif-actions">
+                  {% if req.status == 'awaiting_confirmation' %}
+                    <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=req.id) }}"><button class="notif-btn primary">Confirm completion</button></form>
+                  {% elif req.status == 'completed' %}
+                    <span class="notif-chip done">Completed</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+
+              <p class="notif-meta">
+                {% if n.actor %}{{ n.actor.Name }} {{ n.actor.Surname }} &middot; {% endif %}{{ n.created_at|timeago }}
+              </p>
+            </div>
+
+            {% if not n.is_read %}
+            <form method="POST" action="{{ url_for('notifications.mark_read', notification_id=n.id) }}">
+              <button class="notif-read-btn" title="Mark as read" aria-label="Mark as read"><i class="fas fa-check"></i></button>
+            </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div class="notif-empty">
+        <i class="far fa-bell"></i>
+        <h2>
+          {% if active_filter == 'unread' %}You're all caught up
+          {% elif active_filter == 'requests' %}No requests yet
+          {% else %}Nothing here yet{% endif %}
+        </h2>
+        <p>New requests, quotes and updates will show up here.</p>
+      </div>
+    {% endfor %}
+
+  </div>
+</main>
+{% endblock %}

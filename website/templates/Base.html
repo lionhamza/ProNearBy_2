@@ -120,59 +120,13 @@
         <img src="{{ url_for('static', filename='assets/wallet_icon.png') }}" alt="Wallet" class="header-icon" />
       </a>
 
-      <!-- Notifications with badge -->
-      <div class="notification-wrapper icon-badge">
-        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="Notifications" class="header-icon" id="notificationBell" />
-        {% if pending_requests_count and pending_requests_count > 0 %}
-          <span class="badge">{{ pending_requests_count }}</span>
+      <!-- Notifications: links to the full page, badge = unread count (injected globally) -->
+      <a href="{{ url_for('notifications.index') }}" class="icon-badge" aria-label="Notifications">
+        <img src="{{ url_for('static', filename='assets/notification.png') }}" alt="Notifications" class="header-icon" />
+        {% if unread_notifications_count and unread_notifications_count > 0 %}
+          <span class="badge">{{ unread_notifications_count }}</span>
         {% endif %}
-
-        <div class="notification-dropdown" id="notificationDropdown">
-          <h4>Notifications</h4>
-          {% if service_requests %}
-            {% for request in service_requests %}
-              <div class="notification-item">
-                <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
-                <small>
-                  {{ request.service_type }} |
-                  {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
-                  {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
-                </small>
-                <div class="notification-actions">
-                  {% if user.user_type in ['certifiedPro','experiencedPro'] and request.receiver_id == user.ID %}
-                    {% if request.status == 'pending' %}
-                      <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
-                        <button type="submit" class="accept-btn">Accept</button>
-                      </form>
-                      <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
-                        <button type="submit" class="decline-btn">Decline</button>
-                      </form>
-                    {% elif request.status == 'accepted' %}
-                      <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
-                        <button type="submit" class="complete-btn">Mark as Completed</button>
-                      </form>
-                    {% elif request.status == 'completed' %}
-                      <span class="completed-label">✅ Completed</span>
-                    {% endif %}
-                  {% else %}
-                    {% if request.status == 'awaiting_confirmation' and current_user.ID == request.sender_id %}
-                      <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=request.id) }}">
-                        <button type="submit" class="confirm-btn">Confirm Completion</button>
-                      </form>
-                    {% elif request.status == 'completed' %}
-                      <span class="completed-label">✅ Completed</span>
-                    {% else %}
-                      <span class="badge bg-secondary">{{ request.status|capitalize }}</span>
-                    {% endif %}
-                  {% endif %}
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <p class="no-notifications">No new notifications</p>
-          {% endif %}
-        </div>
-      </div>
+      </a>
 
       <!-- Logout -->
       <a href="{{ url_for('auth.logout') }}" class="icon-link logout-icon">
@@ -192,7 +146,7 @@
     <a href="{{ url_for('views.Base') }}">Home</a>
     <a href="{{ url_for('views.mock_feed') }}">Professional Feed</a>
     <a href="{{ url_for('views.messages') }}">Messages</a>
-    <a href="#" onclick="toggleMobileNotificationDropdown()">Notifications</a>
+    <a href="{{ url_for('notifications.index') }}">Notifications{% if unread_notifications_count %} ({{ unread_notifications_count }}){% endif %}</a>
     {% if user %}
     {% if user.user_type == 'regular' %}
     <a href="{{ url_for('views.regular_profile', user_id=user.ID) }}">My Profile</a>
@@ -202,53 +156,6 @@
     {% endif %}
     <a href="{{ url_for('views.wallet') }}">wallet</a>
     <a href="{{ url_for('auth.logout') }}">Logout</a>
-  </div>
-  
-  <!-- Mobile Notification Dropdown -->
-  <div class="mobile-notification-dropdown" id="mobileNotificationDropdown" style="display: none;">
-    <h4>Notifications</h4>
-    {% if service_requests %}
-    {% for request in service_requests %}
-        <div class="notification-item">
-          <strong>{{ request.sender.Name }} {{ request.sender.Surname }}</strong><br>
-          <small>
-            {{ request.service_type }} |
-            {% if request.preferred_date %}{{ request.preferred_date.strftime('%Y-%m-%d') }}{% endif %}
-            {% if request.preferred_time %} at {{ request.preferred_time.strftime('%H:%M') }}{% endif %}
-          </small>
-          <div class="notification-actions">
-            {% if user.user_type in ['certifiedPro','experiencedPro'] and request.receiver_id == user.ID %}
-              {% if request.status == 'pending' %}
-              <form method="POST" action="{{ url_for('views.accept_request', request_id=request.id) }}" style="display:inline;">
-                  <button type="submit" class="accept-btn">Accept</button>
-                </form>
-                <form method="POST" action="{{ url_for('views.decline_request', request_id=request.id) }}" style="display:inline;">
-                  <button type="submit" class="decline-btn">Decline</button>
-                </form>
-              {% elif request.status == 'accepted' %}
-              <form method="POST" action="{{ url_for('views.complete_request', request_id=request.id) }}" style="display:inline;">
-                <button type="submit" class="complete-btn">Mark as Completed</button>
-              </form>
-              {% elif request.status == 'completed' %}
-                <span class="completed-label">✅ Completed</span>
-                {% endif %}
-            {% else %}
-              {% if request.status == 'awaiting_confirmation' and current_user.ID == request.sender_id %}
-                <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=request.id) }}">
-                  <button type="submit" class="confirm-btn">Confirm Completion</button>
-                </form>
-                {% elif request.status == 'completed' %}
-                <span class="completed-label">✅ Completed</span>
-                {% else %}
-                <span class="badge bg-secondary">{{ request.status|capitalize }}</span>
-                {% endif %}
-                {% endif %}
-          </div>
-        </div>
-      {% endfor %}
-      {% else %}
-      <p class="no-notifications">No new notifications</p>
-    {% endif %}
   </div>
   
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -318,36 +225,6 @@
       const menu = document.getElementById('mobileMenu');
       const icon = document.querySelector('.mobile-menu-icon');
       if (!menu.contains(e.target) && !icon.contains(e.target)) menu.classList.remove('show');
-    });
-
-    // ── Notification bell ─────────────────────────────────────────
-    const bell     = document.getElementById('notificationBell');
-    const dropdown = document.getElementById('notificationDropdown');
-    bell.addEventListener('click', () => {
-      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-    });
-    window.addEventListener('click', function (e) {
-      if (!bell.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
-    });
-
-    // ── Mobile notification dropdown ──────────────────────────────
-    document.addEventListener('DOMContentLoaded', function () {
-      const mobileDropdown   = document.getElementById('mobileNotificationDropdown');
-      const mobileToggleLink = document.querySelector('a[onclick="toggleMobileNotificationDropdown()"]');
-      mobileToggleLink.addEventListener('click', function (e) {
-        e.preventDefault(); e.stopPropagation();
-        mobileDropdown.style.display = mobileDropdown.style.display === 'block' ? 'none' : 'block';
-      });
-      document.addEventListener('click', function (e) {
-        if (!mobileDropdown.contains(e.target) && !mobileToggleLink.contains(e.target))
-          mobileDropdown.style.display = 'none';
-      });
-      mobileDropdown.addEventListener('click', function (e) {
-        if (e.target.classList.contains('notification-item') || e.target.closest('.notification-item')) {
-          mobileDropdown.style.display = 'none';
-          document.getElementById('mobileMenu').classList.remove('show');
-        }
-      });
     });
 
     // ── Flash messages fade out ───────────────────────────────────
