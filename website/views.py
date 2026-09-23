@@ -100,6 +100,39 @@ def attach_distance(profile_owner, viewer_lat, viewer_lng):
 #  UTILITY: File helpers
 # ──────────────────────────────────────────────
 
+# ──────────────────────────────────────────────
+#  UTILITY: what a professional may see BEFORE accepting a job
+# ──────────────────────────────────────────────
+
+def approx_distance_for_pro(client_lat, client_lng, pro):
+    """
+    Returns (km, eta_minutes) for the professional to judge a job.
+    Deliberately ROUNDED to whole km ("under 1 km" = 0) so the number can't be
+    used to pin down the client's exact position. Returns (None, None) when
+    either side has no coordinates.
+    """
+    if (client_lat is None or client_lng is None or not pro
+            or not pro.Latitude or not pro.Longitude):
+        return None, None
+    raw = haversine_km(client_lat, client_lng, pro.Latitude, pro.Longitude)
+    km = 0 if raw < 1 else int(round(raw))
+    eta = max(1, round(((km or 0.5) / 50) * 60))   # 50 km/h average
+    return km, eta
+
+
+def when_text(preferred_date, preferred_time):
+    """'Fri 26 Sep at 14:30' / 'Fri 26 Sep' / 'Time not specified'."""
+    parts = []
+    try:
+        if preferred_date:
+            parts.append(datetime.strptime(preferred_date, '%Y-%m-%d').strftime('%a %d %b'))
+        if preferred_time:
+            parts.append(f"at {preferred_time}" if parts else preferred_time)
+    except ValueError:
+        pass
+    return " ".join(parts) or "Time not specified"
+
+
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
 
 def allowed_file(filename):
@@ -608,27 +641,31 @@ def request_service():
 
     # ── in-app notification for the professional (saved in the same commit) ──
     sender = User.query.get(sender_id)
+    pro = User.query.get(receiver_id)
+
+    # Client position: modal GPS fields, else their saved session/profile location.
+    # Only a ROUNDED distance is ever stored/shown; the address stays hidden until accept.
+    c_lat, c_lng = resolve_user_location(user_lat, user_lng)
+    dist_km, eta_minutes = approx_distance_for_pro(c_lat, c_lng, pro)
+
     notify(
         receiver_id, 'service_request',
         title=f"New request from {sender.Name} {sender.Surname or ''}".strip(),
-        body=f"{service_type or service}: {description[:120]}",
+        body=service,
         actor_id=sender_id,
         related_type='service_request',
         related_id=new_request.id,
+        data={
+            'distance_km': dist_km,
+            'eta_min': eta_minutes,
+            'when': when_text(preferred_date, preferred_time),
+            'description': (description or '')[:200],
+        },
     )
     db.session.commit()
 
     # ── email the professional (failures are logged, never fatal) ──
-    pro = User.query.get(receiver_id)
     if pro and pro.Email:
-        # compute distance only when both sides have coords
-        dist_km = None
-        eta_minutes = None
-        if (user_lat is not None and user_lng is not None
-                and pro.Latitude and pro.Longitude):
-            dist_km = round(haversine_km(user_lat, user_lng, pro.Latitude, pro.Longitude), 1)
-            eta_minutes = round((dist_km / 50) * 60)   # 50 km/h average
-
         send_service_request_email_to_pro(
             pro_email=pro.Email,
             pro_name=pro.Name,
@@ -945,6 +982,11 @@ def request_quote():
     db.session.add(new_quote)
     db.session.flush()   # gives new_quote.id
 
+    pro = User.query.get(receiver_id)
+    c_lat, c_lng = resolve_user_location(
+        request.form.get('user_lat', type=float), request.form.get('user_lng', type=float))
+    dist_km, eta_minutes = approx_distance_for_pro(c_lat, c_lng, pro)
+
     notify(
         receiver_id, 'quote_request',
         title=f"New quote request from {current_user.Name}",
@@ -952,6 +994,12 @@ def request_quote():
         actor_id=current_user.ID,
         related_type='quote_request',
         related_id=new_quote.id,
+        data={
+            'distance_km': dist_km,
+            'eta_min': eta_minutes,
+            'when': when_text(preferred_date, preferred_time),
+            'description': (details or '')[:200],
+        },
     )
     db.session.commit()
 
@@ -1105,7 +1153,8 @@ def send_service_request_email_to_pro(pro_email, pro_name, service_type,
     """
     distance_line = ""
     if dist_km is not None:
-        distance_line = f"📍 Client distance: approximately {dist_km} km away (~{eta_minutes} min drive)\n"
+        dist_text = "under 1 km" if dist_km == 0 else f"about {dist_km} km"
+        distance_line = f"📍 Client distance: {dist_text} away (~{eta_minutes} min drive)\n"
 
     request_label = "Quote Request" if "quote" in (service_type or "").lower() else "Service Request"
 

@@ -1,9 +1,9 @@
-{# templates/notifications.html  — change "base.html" to whatever your base template is called #}
+{# templates/notifications.html  (change "base.html" if your base has another name) #}
 {% extends "base.html" %}
 {% block title %}Notifications | ProNearBy{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='notifications.css') }}">{% endblock %}
 
-{# icon + colour per type. Add a line here when you invent a new type. #}
+{# icon + colour per type. Add a line when you invent a new type. #}
 {% set type_meta = {
   'service_request':      ('fa-concierge-bell',  'blue'),
   'quote_request':        ('fa-file-invoice-dollar', 'purple'),
@@ -17,14 +17,28 @@
 } %}
 
 {% block div %}
+<script>
+  /* Header height differs between screens, so measure it instead of guessing. */
+  (function () {
+    var h = document.querySelector('header');
+    function set() { document.documentElement.style.setProperty('--hdr', (h ? h.offsetHeight : 60) + 'px'); }
+    set(); window.addEventListener('resize', set);
+  })();
+</script>
+
 <main class="notif-scroll">
   <div class="notif-wrap">
 
     <div class="notif-head">
-      <h1>Notifications</h1>
+      <div>
+        <h1>Notifications</h1>
+        <p class="notif-lede">
+          {% if unread_notifications_count %}{{ unread_notifications_count }} unread{% else %}You're all caught up{% endif %}
+        </p>
+      </div>
       {% if has_unread %}
       <form method="POST" action="{{ url_for('notifications.mark_all_read') }}">
-        <button type="submit" class="notif-link-btn">Mark all as read</button>
+        <button type="submit" class="notif-mark-all"><i class="fas fa-check-double"></i> Mark all as read</button>
       </form>
       {% endif %}
     </div>
@@ -32,7 +46,7 @@
     <nav class="notif-tabs" aria-label="Filter notifications">
       <a href="{{ url_for('notifications.index') }}" class="notif-tab {{ 'active' if active_filter == 'all' }}">All</a>
       <a href="{{ url_for('notifications.index', filter='unread') }}" class="notif-tab {{ 'active' if active_filter == 'unread' }}">
-        Unread{% if unread_notifications_count %} ({{ unread_notifications_count }}){% endif %}
+        Unread{% if unread_notifications_count %}<span class="notif-count">{{ unread_notifications_count }}</span>{% endif %}
       </a>
       <a href="{{ url_for('notifications.index', filter='requests') }}" class="notif-tab {{ 'active' if active_filter == 'requests' }}">Requests</a>
     </nav>
@@ -43,28 +57,67 @@
         {% for n in items %}
           {% set meta = type_meta.get(n.type, type_meta['system']) %}
           {% set req = requests_by_id.get(n.related_id) if n.related_type == 'service_request' else none %}
-          <li class="notif-item {{ 'unread' if not n.is_read }}">
-            <span class="notif-icon tone-{{ meta[1] }}" aria-hidden="true"><i class="fas {{ meta[0] }}"></i></span>
+          {% set d = n.data.get('distance_km') if n.data else none %}
+          <li class="notif-card {{ 'unread' if not n.is_read }}">
 
-            <div class="notif-body">
-              <p class="notif-title">
-                {% if n.link %}<a href="{{ url_for('notifications.open', notification_id=n.id) }}">{{ n.title }}</a>
-                {% else %}{{ n.title }}{% endif %}
-              </p>
-              {% if n.body %}<p class="notif-text">{{ n.body }}</p>{% endif %}
+            <div class="notif-avatar">
+              {% if n.actor %}
+                <img src="{{ url_for('static', filename=(n.actor.Image or 'assets/defaultPP.png')) }}" alt=""
+                     onerror="this.onerror=null;this.src='{{ url_for('static', filename='assets/defaultPP.png') }}'">
+                <span class="notif-badge tone-{{ meta[1] }}"><i class="fas {{ meta[0] }}"></i></span>
+              {% else %}
+                <span class="notif-icon tone-{{ meta[1] }}"><i class="fas {{ meta[0] }}"></i></span>
+              {% endif %}
+            </div>
+
+            <div class="notif-main">
+              <div class="notif-top">
+                <p class="notif-title">
+                  {% if n.link %}<a href="{{ url_for('notifications.open', notification_id=n.id) }}">{{ n.title }}</a>{% else %}{{ n.title }}{% endif %}
+                </p>
+                <div class="notif-side">
+                  <time title="{{ n.created_at.strftime('%d %b %Y, %H:%M') }}">{{ n.created_at|timeago }}</time>
+                  {% if not n.is_read %}
+                  <form method="POST" action="{{ url_for('notifications.mark_read', notification_id=n.id) }}">
+                    <button class="notif-dot" title="Mark as read" aria-label="Mark as read"></button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+
+              {% if n.body %}<p class="notif-service">{{ n.body }}</p>{% endif %}
+              {% if n.data and n.data.get('description') %}<p class="notif-desc">{{ n.data.get('description') }}</p>{% endif %}
+
+              {# What the pro needs to decide: how far + when. Never the client's address. #}
+              {% if n.type in ['service_request', 'quote_request'] and n.data %}
+                <div class="notif-facts">
+                  <span class="notif-pill">
+                    <i class="fas fa-route"></i>
+                    {% if d is none %}Distance unavailable
+                    {% elif d == 0 %}Under 1 km away
+                    {% else %}About {{ d }} km away{% endif %}
+                    {% if n.data.get('eta_min') %}<em>~{{ n.data.get('eta_min') }} min</em>{% endif %}
+                  </span>
+                  <span class="notif-pill"><i class="far fa-calendar-alt"></i> {{ n.data.get('when') }}</span>
+                </div>
+                {% if not req or req.status == 'pending' %}
+                  <p class="notif-privacy"><i class="fas fa-lock"></i> Exact location is shared only after you accept.</p>
+                {% endif %}
+              {% endif %}
 
               {# Pro side: act on an incoming request #}
               {% if req and n.type == 'service_request' and req.receiver_id == user.ID %}
                 <div class="notif-actions">
                   {% if req.status == 'pending' %}
-                    <form method="POST" action="{{ url_for('views.accept_request', request_id=req.id) }}"><button class="notif-btn primary">Accept</button></form>
-                    <form method="POST" action="{{ url_for('views.decline_request', request_id=req.id) }}"><button class="notif-btn danger">Decline</button></form>
+                    <form method="POST" action="{{ url_for('views.accept_request', request_id=req.id) }}"><button class="notif-btn primary"><i class="fas fa-check"></i> Accept</button></form>
+                    <form method="POST" action="{{ url_for('views.decline_request', request_id=req.id) }}"><button class="notif-btn ghost-danger">Decline</button></form>
                   {% elif req.status == 'accepted' %}
+                    <span class="notif-chip ok"><i class="fas fa-check-circle"></i> Accepted</span>
                     <form method="POST" action="{{ url_for('views.complete_request', request_id=req.id) }}"><button class="notif-btn primary">Mark as completed</button></form>
                   {% elif req.status == 'awaiting_confirmation' %}
-                    <span class="notif-chip">Waiting for the client to confirm</span>
+                    <span class="notif-chip wait"><i class="fas fa-hourglass-half"></i> Waiting for client to confirm</span>
                   {% elif req.status == 'completed' %}
-                    <span class="notif-chip done">Completed</span>
+                    <span class="notif-chip done"><i class="fas fa-check-double"></i> Completed</span>
                   {% endif %}
                 </div>
 
@@ -72,29 +125,19 @@
               {% elif req and n.type == 'completion_requested' and req.sender_id == user.ID %}
                 <div class="notif-actions">
                   {% if req.status == 'awaiting_confirmation' %}
-                    <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=req.id) }}"><button class="notif-btn primary">Confirm completion</button></form>
+                    <form method="POST" action="{{ url_for('views.confirm_completion_by_user', request_id=req.id) }}"><button class="notif-btn primary"><i class="fas fa-check"></i> Confirm completion</button></form>
                   {% elif req.status == 'completed' %}
-                    <span class="notif-chip done">Completed</span>
+                    <span class="notif-chip done"><i class="fas fa-check-double"></i> Completed</span>
                   {% endif %}
                 </div>
               {% endif %}
-
-              <p class="notif-meta">
-                {% if n.actor %}{{ n.actor.Name }} {{ n.actor.Surname }} &middot; {% endif %}{{ n.created_at|timeago }}
-              </p>
             </div>
-
-            {% if not n.is_read %}
-            <form method="POST" action="{{ url_for('notifications.mark_read', notification_id=n.id) }}">
-              <button class="notif-read-btn" title="Mark as read" aria-label="Mark as read"><i class="fas fa-check"></i></button>
-            </form>
-            {% endif %}
           </li>
         {% endfor %}
       </ul>
     {% else %}
       <div class="notif-empty">
-        <i class="far fa-bell"></i>
+        <span class="notif-empty-icon"><i class="far fa-bell"></i></span>
         <h2>
           {% if active_filter == 'unread' %}You're all caught up
           {% elif active_filter == 'requests' %}No requests yet
